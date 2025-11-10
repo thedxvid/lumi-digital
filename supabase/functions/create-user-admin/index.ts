@@ -1,0 +1,190 @@
+
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface CreateUserRequest {
+  email: string;
+  password: string;
+  full_name: string;
+  role: 'user' | 'admin';
+  access_granted: boolean;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Missing Supabase environment variables');
+      throw new Error('Configuração do servidor incompleta');
+    }
+
+    // Criar cliente com service role key para operações administrativas
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { email, password, full_name, role, access_granted }: CreateUserRequest = await req.json();
+
+    console.log('🔧 Criando usuário:', { email, full_name, role, access_granted });
+
+    // Validações detalhadas
+    if (!email || !password || !full_name) {
+      throw new Error('Email, senha e nome completo são obrigatórios');
+    }
+
+    if (password.length < 6) {
+      throw new Error('Senha deve ter pelo menos 6 caracteres');
+    }
+
+    // Verificar se email é válido
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('Email inválido');
+    }
+
+    // Verificar se o usuário já existe
+    const { data: existingUser, error: checkError } = await supabase.auth.admin.listUsers();
+    if (checkError) {
+      console.error('❌ Erro ao verificar usuários existentes:', checkError);
+    } else {
+      const userExists = existingUser?.users?.find(u => u.email === email);
+      if (userExists) {
+        throw new Error('Já existe um usuário com este email');
+      }
+    }
+
+    // 1. Criar usuário no auth.users usando Admin API
+    console.log('🔨 Criando usuário na auth...');
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Confirmar email automaticamente
+      user_metadata: {
+        full_name
+      }
+    });
+
+    if (authError) {
+      console.error('❌ Erro ao criar usuário na auth:', authError);
+      throw new Error(`Erro ao criar usuário: ${authError.message}`);
+    }
+
+    if (!authUser.user) {
+      throw new Error('Falha ao criar usuário - usuário não retornado');
+    }
+
+    console.log('✅ Usuário criado na auth:', authUser.user.id);
+
+    // Aguardar um pouco para garantir que o trigger criou o perfil
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // 2. Atualizar perfil na tabela profiles (que foi criado automaticamente pelo trigger)
+    console.log('🔨 Atualizando perfil...');
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        access_granted,
+        subscription_status: access_granted ? 'active' : 'inactive',
+        full_name
+      })
+      .eq('id', authUser.user.id);
+
+    if (profileError) {
+      console.error('❌ Erro ao atualizar perfil:', profileError);
+      // Tentar deletar o usuário criado se falhou ao atualizar perfil
+      try {
+        await supabase.auth.admin.deleteUser(authUser.user.id);
+        console.log('🗑️ Usuário deletado após falha no perfil');
+      } catch (deleteError) {
+        console.error('❌ Erro ao deletar usuário após falha:', deleteError);
+      }
+      throw new Error(`Erro ao atualizar perfil: ${profileError.message}`);
+    }
+
+    console.log('✅ Perfil atualizado com sucesso');
+
+    // 3. Adicionar role se não for usuário comum
+    if (role === 'admin') {
+      console.log('🔨 Adicionando role de admin...');
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authUser.user.id,
+          role: 'admin'
+        });
+
+      if (roleError) {
+        console.error('❌ Erro ao adicionar role:', roleError);
+        console.log('⚠️ Usuário criado mas sem role de admin');
+      } else {
+        console.log('✅ Role de admin adicionada');
+      }
+    }
+
+    // 4. Log da atividade
+    try {
+      const { error: logError } = await supabase.rpc('log_activity', {
+        _action: 'user_created_by_admin',
+        _details: {
+          created_user_id: authUser.user.id,
+          email,
+          role,
+          access_granted
+        }
+      });
+
+      if (logError) {
+        console.error('⚠️ Erro ao registrar log:', logError);
+      } else {
+        console.log('✅ Atividade logada');
+      }
+    } catch (logError) {
+      console.error('⚠️ Erro ao registrar log:', logError);
+    }
+
+    console.log('✅ Usuário criado com sucesso:', authUser.user.id);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        user_id: authUser.user.id,
+        message: 'Usuário criado com sucesso'
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      }
+    );
+
+  } catch (error) {
+    console.error('❌ Erro na criação do usuário:', error);
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      }),
+      {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      }
+    );
+  }
+};
+
+serve(handler);
