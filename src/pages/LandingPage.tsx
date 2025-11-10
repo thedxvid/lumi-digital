@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowRight, CheckCircle, Star, TrendingUp, Users, Zap, Shield, Play, Clock, Award, BarChart3, Target, Lightbulb, Rocket, Menu, X, Search, Magnet, RotateCcw, Brain, Book, Calendar } from 'lucide-react';
+import { ArrowRight, CheckCircle, Star, TrendingUp, Users, Zap, Shield, Play, Clock, Award, BarChart3, Target, Lightbulb, Rocket, Menu, X, Search, Magnet, RotateCcw, Brain, Book, Calendar, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +53,10 @@ const LandingPage = () => {
   };
   const handleLoginRedirect = () => {
     navigate('/app');
+    setMobileMenuOpen(false);
+  };
+  const handleInstallApp = () => {
+    navigate('/install');
     setMobileMenuOpen(false);
   };
   const typewriterWords = ["Conhecimento em Renda", "Ideias em Negócios", "Habilidades em Lucro", "Experiência em Dinheiro"];
@@ -176,6 +180,14 @@ const LandingPage = () => {
                   <span className="text-sm text-muted-foreground">Tema</span>
                   <ThemeToggle />
                 </div>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleInstallApp} 
+                  className="justify-start text-left px-4 py-3 rounded-lg hover:bg-lumi-gold/10 hover:text-lumi-gold-dark transition-all duration-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Instalar App
+                </Button>
                 <Button variant="ghost" onClick={handleLoginRedirect} className="justify-start text-left px-4 py-3 rounded-lg hover:bg-lumi-gold/10 hover:text-lumi-gold-dark transition-all duration-300">
                   Já tenho acesso
                 </Button>
