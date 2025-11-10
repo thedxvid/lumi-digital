@@ -7,6 +7,10 @@ interface ProtectedAdminRouteProps {
 }
 
 export function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
+  // 🔧 MODO DE DESENVOLVIMENTO: Autenticação admin TEMPORARIAMENTE DESATIVADA
+  // Para reativar, descomente o código abaixo
+  
+  /*
   const { isAdmin, loading } = useAdminAuth();
 
   if (loading) {
@@ -20,6 +24,8 @@ export function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
   if (!isAdmin) {
     return <Navigate to="/app" replace />;
   }
+  */
 
+  // Acesso liberado temporariamente
   return <>{children}</>;
 }
