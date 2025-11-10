@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, UserCheck, UserX, Mail, Users, Plus } from 'lucide-react';
+import { Search, UserCheck, UserX, Mail, Users, Plus, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AddUserModal from '@/components/admin/AddUserModal';
 import EmailTestModal from '@/components/admin/EmailTestModal';
+import { UserRolesManager } from '@/components/admin/UserRolesManager';
 
 interface User {
   id: string;
@@ -16,6 +17,7 @@ interface User {
   access_granted: boolean;
   subscription_status: string;
   created_at: string;
+  roles?: string[];
 }
 
 const AdminUsers = () => {
@@ -24,6 +26,9 @@ const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEmailTestModal, setShowEmailTestModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
+  const [showRolesModal, setShowRolesModal] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,8 +39,8 @@ const AdminUsers = () => {
     try {
       console.log('🔍 Buscando usuários...');
       
-      // Buscar apenas os dados do perfil, sem tentar acessar auth.users
-      const { data, error } = await supabase
+      // Buscar dados do perfil e roles
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
           id,
@@ -46,21 +51,39 @@ const AdminUsers = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ Erro ao buscar usuários:', error);
-        throw error;
+      if (profilesError) {
+        console.error('❌ Erro ao buscar usuários:', profilesError);
+        throw profilesError;
       }
 
-      console.log('✅ Usuários encontrados:', data?.length || 0);
+      // Buscar roles de todos os usuários
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
 
-      // Usar os dados sem tentar buscar emails da tabela auth.users
-      const usersData: User[] = (data || []).map(user => ({
+      if (rolesError) {
+        console.error('❌ Erro ao buscar roles:', rolesError);
+      }
+
+      console.log('✅ Usuários encontrados:', profilesData?.length || 0);
+
+      // Mapear roles por usuário
+      const rolesMap = new Map<string, string[]>();
+      rolesData?.forEach(role => {
+        const userRoles = rolesMap.get(role.user_id) || [];
+        userRoles.push(role.role);
+        rolesMap.set(role.user_id, userRoles);
+      });
+
+      // Combinar dados
+      const usersData: User[] = (profilesData || []).map(user => ({
         id: user.id,
         full_name: user.full_name || '',
         email: 'Email não disponível',
         access_granted: user.access_granted || false,
         subscription_status: user.subscription_status || 'inactive',
-        created_at: user.created_at
+        created_at: user.created_at,
+        roles: rolesMap.get(user.id) || []
       }));
 
       setUsers(usersData);
@@ -129,6 +152,46 @@ const AdminUsers = () => {
   const handleUserAdded = () => {
     console.log('🔄 Recarregando lista de usuários após adição...');
     fetchUsers();
+  };
+
+  const handleManageRoles = (userId: string, userName: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserName(userName);
+    setShowRolesModal(true);
+  };
+
+  const handleRolesModalClose = () => {
+    setShowRolesModal(false);
+    setSelectedUserId(null);
+    setSelectedUserName('');
+    // Refresh users to show updated roles
+    fetchUsers();
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-red-500 hover:bg-red-600 text-white';
+      case 'moderator':
+        return 'bg-blue-500 hover:bg-blue-600 text-white';
+      case 'user':
+        return 'bg-gray-500 hover:bg-gray-600 text-white';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600 text-white';
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Admin';
+      case 'moderator':
+        return 'Moderador';
+      case 'user':
+        return 'Usuário';
+      default:
+        return role;
+    }
   };
 
   const filteredUsers = users.filter(user =>
@@ -220,11 +283,35 @@ const AdminUsers = () => {
                     <Mail className="h-3 w-3" />
                     <span>{user.email || 'Email não disponível'}</span>
                   </div>
+                  {user.roles && user.roles.length > 0 && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Shield className="h-3 w-3 text-muted-foreground" />
+                      <div className="flex flex-wrap gap-1">
+                        {user.roles.map((role) => (
+                          <Badge
+                            key={role}
+                            className={getRoleBadgeColor(role)}
+                            variant="secondary"
+                          >
+                            {getRoleLabel(role)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">
                     Cadastrado em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleManageRoles(user.id, user.full_name || 'Usuário')}
+                  >
+                    <Shield className="h-4 w-4 mr-1" />
+                    Roles
+                  </Button>
                   <Button
                     variant={user.access_granted ? "destructive" : "default"}
                     size="sm"
@@ -267,6 +354,15 @@ const AdminUsers = () => {
         open={showEmailTestModal}
         onOpenChange={setShowEmailTestModal}
       />
+
+      {selectedUserId && (
+        <UserRolesManager
+          userId={selectedUserId}
+          userName={selectedUserName}
+          open={showRolesModal}
+          onOpenChange={handleRolesModalClose}
+        />
+      )}
     </div>
   );
 };

@@ -717,6 +717,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
       log_activity: {
         Args: { _action: string; _details?: Json }
         Returns: undefined
