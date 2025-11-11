@@ -107,13 +107,16 @@ export function AnimatedDashboardSidebar() {
   };
 
   return (
-    <div className="relative">
+    <>
       {/* Botão discreto para toggle */}
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setOpen(!open)}
-        className="absolute -right-3 top-4 z-50 h-6 w-6 rounded-full bg-card border border-border shadow-md hover:bg-muted"
+        className="hidden md:flex fixed top-4 z-50 h-6 w-6 rounded-full bg-card border border-border shadow-md hover:bg-muted transition-[left] duration-300"
+        style={{
+          left: open ? 'calc(300px - 12px)' : 'calc(72px - 12px)'
+        }}
       >
         {open ? (
           <ChevronLeft className="h-4 w-4" />
@@ -207,7 +210,7 @@ export function AnimatedDashboardSidebar() {
           </div>
         </SidebarBody>
       </Sidebar>
-    </div>
+    </>
   );
 }
 
