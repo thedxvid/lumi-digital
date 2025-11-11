@@ -63,7 +63,7 @@ serve(async (req) => {
     const images: { url: string; description: string }[] = [];
 
     for (let i = 1; i <= imageCount; i++) {
-      const imagePrompt = `${prompt} - Imagem ${i} de ${imageCount}. Crie uma imagem sequencial que faça parte de um carrossel coeso para redes sociais.`;
+      const imagePrompt = `Create image ${i} of ${imageCount} for carousel: ${prompt}`;
 
       console.log(`Requesting image ${i}/${imageCount}...`);
 
@@ -74,14 +74,14 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
+          model: "google/gemini-2.5-flash-image",
           messages: [
             {
               role: "user",
               content: imagePrompt,
             },
           ],
-          modalities: ["image", "text"],
+          modalities: ["image"],
         }),
       });
 
