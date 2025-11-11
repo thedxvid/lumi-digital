@@ -34,8 +34,8 @@ export function ChatArea({ messages, isTyping, onSendMessage }: ChatAreaProps) {
   const selectedAgent = getAgentById(selectedAgentId) || getDefaultAgent();
 
   return (
-    <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-      <ScrollArea className="flex-1 px-2 sm:px-4" ref={scrollAreaRef}>
+    <div className="flex flex-col h-full overflow-hidden">
+      <ScrollArea className="flex-1 px-2 sm:px-4 overflow-y-auto" ref={scrollAreaRef}>
         <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
           {messages.length === 0 && !isTyping && (
             <div className="text-center py-8">
@@ -65,7 +65,9 @@ export function ChatArea({ messages, isTyping, onSendMessage }: ChatAreaProps) {
         </div>
       </ScrollArea>
 
-      <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
+      <div className="flex-shrink-0 border-t border-border bg-background">
+        <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
+      </div>
     </div>
   );
 }

@@ -190,7 +190,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-row min-h-0 flex-1">
+    <div className="flex flex-row h-[calc(100vh-8rem)] md:h-[calc(100vh-3rem)] -mx-4 -my-4 md:-mx-6 md:-my-6 lg:-mx-10 lg:-my-10 md:mt-[-1.5rem] md:mb-[-1.5rem]">
       {/* Chat History Sidebar - Mobile */}
       {showHistory && (
         <div className="fixed inset-0 z-50 bg-background md:hidden">
@@ -215,8 +215,8 @@ export default function Chat() {
 
       {/* Chat History Sidebar - Desktop */}
       <div className="hidden md:flex md:w-80 border-r border-border bg-muted/20 relative z-20 flex-shrink-0">
-        <div className="flex flex-col w-full">
-          <div className="p-4 border-b border-border">
+        <div className="flex flex-col w-full h-full">
+          <div className="p-4 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Conversas</h2>
               <Button
@@ -229,19 +229,21 @@ export default function Chat() {
               </Button>
             </div>
           </div>
-          <ChatHistory
-            conversations={conversations}
-            currentConversationId={currentConversationId}
-            onSelectConversation={handleSelectConversation}
-            onDeleteConversation={handleDeleteConversation}
-          />
+          <div className="flex-1 overflow-y-auto">
+            <ChatHistory
+              conversations={conversations}
+              currentConversationId={currentConversationId}
+              onSelectConversation={handleSelectConversation}
+              onDeleteConversation={handleDeleteConversation}
+            />
+          </div>
         </div>
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative z-0 min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col relative z-0 min-w-0 overflow-hidden h-full">
         {/* Mobile Header with History Button */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-border">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-border flex-shrink-0">
           <h1 className="text-lg font-semibold">Chat LUMI</h1>
           <div className="flex gap-2">
             <Button
@@ -261,11 +263,13 @@ export default function Chat() {
           </div>
         </div>
 
-        <ChatArea
-          messages={messages}
-          isTyping={loading}
-          onSendMessage={handleSendMessage}
-        />
+        <div className="flex-1 overflow-hidden">
+          <ChatArea
+            messages={messages}
+            isTyping={loading}
+            onSendMessage={handleSendMessage}
+          />
+        </div>
       </div>
     </div>
   );
