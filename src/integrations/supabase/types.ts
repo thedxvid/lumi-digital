@@ -629,6 +629,114 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          auto_renew: boolean | null
+          created_at: string | null
+          duration_months: number
+          end_date: string
+          id: string
+          is_active: boolean | null
+          plan_type: string
+          start_date: string
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          duration_months: number
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          plan_type: string
+          start_date?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          duration_months?: number
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          plan_type?: string
+          start_date?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_limits: {
+        Row: {
+          carousels_monthly_limit: number
+          carousels_monthly_used: number
+          created_at: string | null
+          creative_images_daily_limit: number
+          creative_images_daily_used: number
+          creative_images_monthly_limit: number
+          creative_images_monthly_used: number
+          id: string
+          last_daily_reset: string
+          last_monthly_reset: string
+          plan_type: string
+          profile_analysis_daily_limit: number
+          profile_analysis_daily_used: number
+          updated_at: string | null
+          user_id: string
+          video_credits: number
+          video_credits_used: number
+          videos_monthly_limit: number
+          videos_monthly_used: number
+        }
+        Insert: {
+          carousels_monthly_limit?: number
+          carousels_monthly_used?: number
+          created_at?: string | null
+          creative_images_daily_limit?: number
+          creative_images_daily_used?: number
+          creative_images_monthly_limit?: number
+          creative_images_monthly_used?: number
+          id?: string
+          last_daily_reset?: string
+          last_monthly_reset?: string
+          plan_type: string
+          profile_analysis_daily_limit?: number
+          profile_analysis_daily_used?: number
+          updated_at?: string | null
+          user_id: string
+          video_credits?: number
+          video_credits_used?: number
+          videos_monthly_limit?: number
+          videos_monthly_used?: number
+        }
+        Update: {
+          carousels_monthly_limit?: number
+          carousels_monthly_used?: number
+          created_at?: string | null
+          creative_images_daily_limit?: number
+          creative_images_daily_used?: number
+          creative_images_monthly_limit?: number
+          creative_images_monthly_used?: number
+          id?: string
+          last_daily_reset?: string
+          last_monthly_reset?: string
+          plan_type?: string
+          profile_analysis_daily_limit?: number
+          profile_analysis_daily_used?: number
+          updated_at?: string | null
+          user_id?: string
+          video_credits?: number
+          video_credits_used?: number
+          videos_monthly_limit?: number
+          videos_monthly_used?: number
+        }
+        Relationships: []
+      }
       user_activity_log: {
         Row: {
           action: string
@@ -730,6 +838,42 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      video_addons: {
+        Row: {
+          credits_amount: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          package_type: string
+          price_paid: number
+          purchased_at: string | null
+          stripe_payment_id: string | null
+          user_id: string
+        }
+        Insert: {
+          credits_amount: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          package_type: string
+          price_paid: number
+          purchased_at?: string | null
+          stripe_payment_id?: string | null
+          user_id: string
+        }
+        Update: {
+          credits_amount?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          package_type?: string
+          price_paid?: number
+          purchased_at?: string | null
+          stripe_payment_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -925,6 +1069,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_subscription_end_date: {
+        Args: { duration_months: number; start_date: string }
+        Returns: string
+      }
       get_user_streak: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
@@ -938,6 +1086,8 @@ export type Database = {
         Args: { _action: string; _details?: Json }
         Returns: undefined
       }
+      reset_daily_limits: { Args: never; Returns: undefined }
+      reset_monthly_limits: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

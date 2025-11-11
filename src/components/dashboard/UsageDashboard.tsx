@@ -1,0 +1,207 @@
+import { useEffect } from 'react';
+import { Image, UserCircle, Layout, Video, TrendingUp, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { useSubscription } from '@/hooks/useSubscription';
+
+export default function UsageDashboard() {
+  const { limits, loading, getUsagePercentage, refreshLimits } = useUsageLimits();
+  const { subscription } = useSubscription();
+
+  useEffect(() => {
+    refreshLimits();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Carregando uso...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!limits || !subscription) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Você ainda não possui um plano ativo.{' '}
+          <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = '/pricing'}>
+            Ver planos disponíveis
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const features: Array<{
+    icon: any;
+    name: string;
+    type: 'creative_images' | 'profile_analysis' | 'carousels' | 'videos';
+    daily?: { used: number; limit: number };
+    monthly?: { used: number; limit: number };
+    color: string;
+  }> = [
+    {
+      icon: Image,
+      name: 'Imagens Criativas',
+      type: 'creative_images',
+      daily: {
+        used: limits.creative_images_daily_used,
+        limit: limits.creative_images_daily_limit,
+      },
+      monthly: {
+        used: limits.creative_images_monthly_used,
+        limit: limits.creative_images_monthly_limit,
+      },
+      color: 'text-blue-500',
+    },
+    {
+      icon: UserCircle,
+      name: 'Análises de Perfil',
+      type: 'profile_analysis',
+      daily: {
+        used: limits.profile_analysis_daily_used,
+        limit: limits.profile_analysis_daily_limit,
+      },
+      color: 'text-purple-500',
+    },
+    {
+      icon: Layout,
+      name: 'Carrosséis',
+      type: 'carousels',
+      monthly: {
+        used: limits.carousels_monthly_used,
+        limit: limits.carousels_monthly_limit,
+      },
+      color: 'text-green-500',
+    },
+  ];
+
+  if (subscription.plan_type === 'pro') {
+    features.push({
+      icon: Video,
+      name: 'Vídeos',
+      type: 'videos',
+      monthly: {
+        used: limits.videos_monthly_used + limits.video_credits_used,
+        limit: limits.videos_monthly_limit + limits.video_credits,
+      },
+      color: 'text-red-500',
+    });
+  }
+
+  const getStatusColor = (percentage: number) => {
+    if (percentage >= 90) return 'text-destructive';
+    if (percentage >= 70) return 'text-yellow-500';
+    return 'text-primary';
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Uso do Plano</h2>
+          <p className="text-muted-foreground">
+            Plano {subscription.plan_type === 'pro' ? 'PRO' : 'Básico'}
+          </p>
+        </div>
+        <Badge variant="outline" className="text-sm">
+          Válido até {new Date(subscription.end_date).toLocaleDateString('pt-BR')}
+        </Badge>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {features.map((feature) => {
+          const Icon = feature.icon;
+          const percentage = getUsagePercentage(feature.type);
+          const statusColor = getStatusColor(percentage);
+
+          return (
+            <Card key={feature.type}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon className={`w-5 h-5 ${feature.color}`} />
+                    <CardTitle className="text-base">{feature.name}</CardTitle>
+                  </div>
+                  <TrendingUp className={`w-4 h-4 ${statusColor}`} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {feature.daily && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Diário</span>
+                      <span className={statusColor}>
+                        {feature.daily.used}/{feature.daily.limit}
+                      </span>
+                    </div>
+                    <Progress 
+                      value={(feature.daily.used / feature.daily.limit) * 100} 
+                      className="h-2"
+                    />
+                  </div>
+                )}
+                
+                {feature.monthly && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Mensal</span>
+                      <span className={statusColor}>
+                        {feature.monthly.used}/{feature.monthly.limit}
+                      </span>
+                    </div>
+                    <Progress 
+                      value={(feature.monthly.used / feature.monthly.limit) * 100} 
+                      className="h-2"
+                    />
+                  </div>
+                )}
+
+                {feature.type === 'videos' && limits.video_credits > 0 && (
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Créditos Extras</span>
+                      <span className="text-primary font-medium">
+                        {limits.video_credits - limits.video_credits_used}/{limits.video_credits}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {percentage >= 80 && (
+                  <Alert className="mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      {percentage >= 90 ? 'Limite quase atingido!' : 'Você está usando bastante este recurso'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-4 justify-center">
+        <Button variant="outline" onClick={() => window.location.href = '/pricing'}>
+          Fazer Upgrade
+        </Button>
+        {subscription.plan_type === 'pro' && (
+          <Button variant="outline" onClick={() => window.location.href = '/app/video-addons'}>
+            Comprar Mais Vídeos
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}

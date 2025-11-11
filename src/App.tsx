@@ -14,6 +14,9 @@ import CreativeEngine from '@/pages/dashboard/CreativeEngine';
 import CreativeCarousel from '@/pages/dashboard/CreativeCarousel';
 import ProfileAnalysis from '@/pages/dashboard/ProfileAnalysis';
 import VideoGenerator from '@/pages/dashboard/VideoGenerator';
+import Pricing from '@/pages/dashboard/Pricing';
+import VideoAddons from '@/pages/dashboard/VideoAddons';
+import UsageDashboard from '@/components/dashboard/UsageDashboard';
 import Settings from '@/pages/dashboard/Settings';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -44,6 +47,8 @@ function App() {
             <Route path="carousel" element={<CreativeCarousel />} />
             <Route path="profile-analysis" element={<ProfileAnalysis />} />
             <Route path="video-generator" element={<VideoGenerator />} />
+            <Route path="video-addons" element={<VideoAddons />} />
+            <Route path="usage" element={<UsageDashboard />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 
@@ -54,6 +59,9 @@ function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="agents" element={<AdminAgents />} />
           </Route>
+
+          {/* Pricing Route - Public */}
+          <Route path="/pricing" element={<Pricing />} />
 
           {/* Redirect to Home if no route matches */}
           <Route path="*" element={<Navigate to="/" />} />

@@ -6,5 +6,8 @@ verify_jwt = true
 [functions.generate-video]
 verify_jwt = true
 
+[functions.check-limits]
+verify_jwt = true
+
 [functions.profile-analysis]
 verify_jwt = true
