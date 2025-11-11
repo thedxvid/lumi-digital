@@ -19,43 +19,53 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY não configurada');
     }
 
-    const systemPrompt = `Você é um consultor especialista em marketing digital e análise de perfis de redes sociais com 15 anos de experiência.
+    const systemPrompt = `Você é um SOCIAL MEDIA EXPERT de elite com 15 anos de experiência analisando perfis de redes sociais.
 
-EXPERTISE:
-- Análise de branding pessoal e corporativo
-- Estratégias de comunicação visual
-- Otimização de perfis para conversão
-- Identificação de pontos cegos em marketing
-- Psicologia do consumidor aplicada a redes sociais
-- Benchmarking competitivo
+🎯 SEU PAPEL:
+Você é capaz de identificar TUDO sobre um perfil apenas olhando a imagem: nicho, público-alvo, objetivos, pontos fortes, falhas críticas e oportunidades ocultas. Você não precisa de questionários - sua expertise permite análise completa e profunda baseada apenas no visual.
 
-METODOLOGIA DE ANÁLISE:
-1. Elementos Visuais (foto, capa, destaques)
-2. Bio e Descrição (clareza, persuasão, CTA)
-3. Consistência de Marca
-4. Alinhamento com Público-alvo
-5. Oportunidades Não Exploradas
-6. Análise Comparativa com Melhores Práticas
+💡 EXPERTISE AUTOMÁTICA:
+- Identificação instantânea de nicho/segmento pela identidade visual
+- Dedução do público-alvo pelos elementos de comunicação
+- Análise profunda de branding e posicionamento
+- Detecção de pontos cegos invisíveis ao criador
+- Benchmarking automático com melhores práticas do mercado
+- Recomendações priorizadas por ROI e impacto
 
-PRINCÍPIOS:
-- Seja específico e acionável
-- Identifique padrões invisíveis ao dono do perfil
-- Foque em ROI e resultados mensuráveis
-- Use dados e exemplos concretos
-- Priorize ações de alto impacto
-- Seja direto e objetivo nas recomendações`;
+🔍 METODOLOGIA DE ANÁLISE VISUAL:
+1. **Identidade Visual** - Logo, cores, tipografia, coerência estética
+2. **Bio & Posicionamento** - Clareza da proposta de valor, CTA, palavras-chave
+3. **Foto de Perfil** - Profissionalismo, reconhecimento, alinhamento com marca
+4. **Conteúdo Visível** - Qualidade, consistência, variedade, engajamento potencial
+5. **Elementos Estratégicos** - Destaques, links, provas sociais
+6. **Gaps & Oportunidades** - O que está faltando vs. o que deveria ter
 
-    const userPrompt = `SOLICITAÇÃO DE ANÁLISE DE PERFIL
+⚡ PRINCÍPIOS:
+- Análise 360° baseada APENAS no que você vê na imagem
+- Identifique o nicho, público e objetivos automaticamente
+- Seja ultra-específico e acionável
+- Foque em insights que o criador NÃO consegue ver sozinho
+- Priorize ações de alto impacto com baixo esforço
+- Use exemplos concretos do próprio perfil analisado`;
 
-**Contexto do Perfil:**
+    const userPrompt = `🎯 ANÁLISE COMPLETA DE PERFIL
+
+**Informações Básicas:**
 - Plataforma: ${data.platform}
-- Tipo: ${data.profileType}
-- Nicho: ${data.niche}
-- Produto/Serviço: ${data.product}
-- Público-alvo: ${data.targetAudience}
-- Comunicação Atual: ${data.communication}
-- Objetivos: ${data.goals}
-${data.additionalNotes ? `- Observações: ${data.additionalNotes}` : ''}
+- Tipo de Perfil: ${data.profileType}
+
+**SUA MISSÃO:**
+Analise profundamente a imagem do perfil anexada e forneça uma análise COMPLETA e EXPERT, identificando automaticamente:
+
+✓ Nicho/Segmento (deduza pela identidade visual e conteúdo)
+✓ Produto/Serviço oferecido (identifique pelo posicionamento)
+✓ Público-alvo provável (analise pelos elementos de comunicação)
+✓ Tom de comunicação atual (formal, informal, técnico, etc.)
+✓ Objetivos implícitos (autoridade, vendas, comunidade, etc.)
+✓ Pontos fortes que já funcionam
+✓ Pontos cegos críticos que impedem crescimento
+✓ Oportunidades não exploradas
+✓ Plano de ação priorizado
 
 **TAREFA:**
 Analise profundamente este perfil na imagem anexada e forneça insights acionáveis seguindo EXATAMENTE esta estrutura JSON (não adicione explicações fora do JSON):
