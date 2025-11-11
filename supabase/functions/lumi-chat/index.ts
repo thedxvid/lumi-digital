@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,7 @@ interface ChatRequest {
   message: string;
   conversationHistory?: Array<{ role: string; content: string }>;
   images?: string[];
+  agentId?: string;
 }
 
 serve(async (req) => {
@@ -18,14 +20,19 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-    try {
+  try {
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!lovableApiKey) {
       console.error('Lovable API key não configurada');
       throw new Error('Lovable API key not configured');
     }
 
-    const { message, conversationHistory = [], images = [] } = await req.json() as ChatRequest;
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { message, conversationHistory = [], images = [], agentId } = await req.json() as ChatRequest;
 
     if (!message || typeof message !== 'string') {
       throw new Error('Message is required and must be a string');
@@ -35,6 +42,7 @@ serve(async (req) => {
       message: message.substring(0, 100) + '...', 
       historyLength: conversationHistory.length,
       imagesCount: images.length,
+      agentId: agentId || 'default',
       timestamp: new Date().toISOString()
     });
 
@@ -61,11 +69,8 @@ serve(async (req) => {
       ];
     }
 
-    // Prepare messages for OpenAI
-    const messages = [
-      {
-        role: 'system',
-        content: `# 📚 DOCUMENTAÇÃO COMPLETA - AGENTE LUMI
+    // Check if custom agent is being used
+    let systemPrompt = `# 📚 DOCUMENTAÇÃO COMPLETA - AGENTE LUMI
 
 ## 🎯 MISSÃO DA LUMI
 
@@ -406,7 +411,28 @@ DIRETRIZES DE RESPOSTA:
 - Use as expressões características naturalmente
 - Termine sempre com chamada para ação
 
-Lembre-se: você está aqui para iluminar o caminho digital dos seus usuários com o conhecimento prático, motivação genuína e a firmeza necessária para provocar ação real. **"Se não for agora... vai ser quando?"** 🔥`
+Lembre-se: você está aqui para iluminar o caminho digital dos seus usuários com o conhecimento prático, motivação genuína e a firmeza necessária para provocar ação real. **"Se não for agora... vai ser quando?"** 🔥`;
+
+    // If agentId is provided and not a default agent, try to fetch custom agent
+    if (agentId && !['vendas', 'pesquisa', 'marketing', 'copy', 'infoprodutos', 'mindset'].includes(agentId)) {
+      const { data: customAgent, error: agentError } = await supabase
+        .from('custom_agents')
+        .select('system_prompt, name')
+        .eq('id', agentId)
+        .eq('is_active', true)
+        .single();
+
+      if (!agentError && customAgent) {
+        console.log('Usando agente customizado:', customAgent.name);
+        systemPrompt = customAgent.system_prompt;
+      }
+    }
+
+    // Prepare messages for OpenAI
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt
       },
       ...conversationHistory.map(msg => ({
         role: msg.role,

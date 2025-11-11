@@ -15,6 +15,7 @@ import Settings from '@/pages/dashboard/Settings';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminOrders from '@/pages/admin/AdminOrders';
+import AdminAgents from '@/pages/admin/AdminAgents';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProtectedAdminRoute } from '@/components/ProtectedAdminRoute';
 
@@ -45,6 +46,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="agents" element={<AdminAgents />} />
           </Route>
 
           {/* Redirect to Home if no route matches */}

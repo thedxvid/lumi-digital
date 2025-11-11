@@ -1,5 +1,5 @@
 import { Agent } from '@/types/agents';
-import { LUMI_AGENTS } from '@/data/lumiAgents';
+import { useAgents } from '@/hooks/useAgents';
 import {
   Select,
   SelectContent,
@@ -15,7 +15,8 @@ interface AgentSelectorProps {
 }
 
 export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorProps) {
-  const selectedAgent = LUMI_AGENTS.find(a => a.id === selectedAgentId);
+  const { agents, getAgentById } = useAgents();
+  const selectedAgent = getAgentById(selectedAgentId);
 
   return (
     <div className="mb-6">
@@ -29,7 +30,7 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {LUMI_AGENTS.map((agent) => (
+          {agents.map((agent) => (
             <SelectItem key={agent.id} value={agent.id}>
               <div className="flex items-center gap-3 py-2">
                 <div 
