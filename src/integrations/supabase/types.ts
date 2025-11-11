@@ -121,31 +121,76 @@ export type Database = {
       }
       creative_history: {
         Row: {
+          call_to_action: string | null
+          color_palette: string | null
+          config: Json | null
           created_at: string
+          creative_type: string | null
+          format: string | null
           generated_image: string
           id: string
+          is_favorite: boolean | null
+          main_text: string | null
+          market: string | null
+          objective: string | null
           original_images: Json
           prompt: string
+          secondary_text: string | null
+          tags: string[] | null
+          target_audience: string | null
+          tone: string | null
+          typography: string | null
           updated_at: string
           user_id: string
+          visual_style: string | null
         }
         Insert: {
+          call_to_action?: string | null
+          color_palette?: string | null
+          config?: Json | null
           created_at?: string
+          creative_type?: string | null
+          format?: string | null
           generated_image: string
           id?: string
+          is_favorite?: boolean | null
+          main_text?: string | null
+          market?: string | null
+          objective?: string | null
           original_images?: Json
           prompt: string
+          secondary_text?: string | null
+          tags?: string[] | null
+          target_audience?: string | null
+          tone?: string | null
+          typography?: string | null
           updated_at?: string
           user_id: string
+          visual_style?: string | null
         }
         Update: {
+          call_to_action?: string | null
+          color_palette?: string | null
+          config?: Json | null
           created_at?: string
+          creative_type?: string | null
+          format?: string | null
           generated_image?: string
           id?: string
+          is_favorite?: boolean | null
+          main_text?: string | null
+          market?: string | null
+          objective?: string | null
           original_images?: Json
           prompt?: string
+          secondary_text?: string | null
+          tags?: string[] | null
+          target_audience?: string | null
+          tone?: string | null
+          typography?: string | null
           updated_at?: string
           user_id?: string
+          visual_style?: string | null
         }
         Relationships: []
       }

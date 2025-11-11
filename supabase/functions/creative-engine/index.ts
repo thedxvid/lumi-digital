@@ -12,11 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    const { images, prompt } = await req.json()
+    const { images, prompt, config } = await req.json()
 
     console.log('Creative Engine request:', { 
       imageCount: images?.length, 
-      promptLength: prompt?.length 
+      promptLength: prompt?.length,
+      hasConfig: !!config
     })
 
     if (!prompt || typeof prompt !== 'string') {
@@ -37,6 +38,40 @@ serve(async (req) => {
       throw new Error('Lovable API key not configured')
     }
 
+    // Build enhanced prompt with config if provided
+    let enhancedPrompt = prompt;
+    
+    if (config) {
+      enhancedPrompt = `Create a professional ${config.creativeType} creative with the following specifications:
+
+OBJECTIVE: ${config.objective}
+TARGET: ${config.market} - ${config.targetAudience}
+FORMAT: ${config.format}
+
+VISUAL STYLE:
+- Style: ${config.visualStyle}
+- Color Palette: ${config.colorPalette}
+- Typography: ${config.typography}
+- Tone: ${config.tone}
+
+CONTENT:
+${config.mainText ? `- Main Text: "${config.mainText}"` : ''}
+${config.secondaryText ? `- Secondary Text: "${config.secondaryText}"` : ''}
+${config.callToAction ? `- Call-to-Action: "${config.callToAction}"` : ''}
+
+DESIGN REQUIREMENTS:
+- Create a visually striking and professional creative
+- Ensure text is readable and well-positioned
+- Use the specified color palette and visual style
+- Make it suitable for ${config.objective} objective
+- Target the ${config.targetAudience} audience
+- Follow ${config.creativeType} best practices
+- Apply ${config.typography} typography principles
+
+Use the provided images as base and integrate them seamlessly into the design.
+${prompt}`;
+    }
+
     // Prepare the message content with images
     const imageContent = images.map((img: string) => ({
       type: "image_url",
@@ -48,7 +83,7 @@ serve(async (req) => {
     const messageContent = [
       {
         type: "text",
-        text: prompt
+        text: enhancedPrompt
       },
       ...imageContent
     ]

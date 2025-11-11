@@ -9,14 +9,46 @@ export interface CreativeHistoryItem {
   prompt: string;
   generated_image: string;
   created_at: string;
+  creative_type?: string;
+  format?: string;
+  objective?: string;
+  market?: string;
+  target_audience?: string;
+  visual_style?: string;
+  color_palette?: string;
+  typography?: string;
+  main_text?: string;
+  secondary_text?: string;
+  call_to_action?: string;
+  tone?: string;
+  config?: any;
+  is_favorite?: boolean;
+  tags?: string[];
+}
+
+export interface CreativeConfig {
+  creativeType: string;
+  format: string;
+  objective: string;
+  market: string;
+  targetAudience: string;
+  visualStyle: string;
+  colorPalette: string;
+  typography: string;
+  mainText: string;
+  secondaryText: string;
+  callToAction: string;
+  tone: string;
 }
 
 export function useCreativeEngine() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<CreativeHistoryItem[]>([]);
+  const [resultModalOpen, setResultModalOpen] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const { session } = useAuth();
 
-  const generateCreative = async (images: string[], prompt: string): Promise<string | null> => {
+  const generateCreative = async (images: string[], prompt: string, config?: CreativeConfig): Promise<string | null> => {
     if (!session?.access_token) {
       toast.error('Você precisa estar logado para usar a Máquina de Criativos');
       return null;
@@ -43,7 +75,8 @@ export function useCreativeEngine() {
       const { data, error } = await supabase.functions.invoke('creative-engine', {
         body: { 
           images,
-          prompt
+          prompt,
+          config
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -72,7 +105,20 @@ export function useCreativeEngine() {
           user_id: session.user.id,
           original_images: images,
           prompt,
-          generated_image: data.generatedImage
+          generated_image: data.generatedImage,
+          creative_type: config?.creativeType,
+          format: config?.format,
+          objective: config?.objective,
+          market: config?.market,
+          target_audience: config?.targetAudience,
+          visual_style: config?.visualStyle,
+          color_palette: config?.colorPalette,
+          typography: config?.typography,
+          main_text: config?.mainText,
+          secondary_text: config?.secondaryText,
+          call_to_action: config?.callToAction,
+          tone: config?.tone,
+          config: config || {}
         });
 
       if (insertError) {
@@ -81,6 +127,10 @@ export function useCreativeEngine() {
       }
 
       toast.success('Criativo gerado com sucesso! 🎨');
+      
+      // Set result for modal
+      setGeneratedImageUrl(data.generatedImage);
+      setResultModalOpen(true);
       
       // Refresh history
       await loadHistory();
@@ -139,11 +189,35 @@ export function useCreativeEngine() {
     }
   };
 
+  const toggleFavorite = async (id: string, currentValue: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('creative_history')
+        .update({ is_favorite: !currentValue })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setHistory(prev => prev.map(item => 
+        item.id === id ? { ...item, is_favorite: !currentValue } : item
+      ));
+      
+      toast.success(!currentValue ? 'Adicionado aos favoritos' : 'Removido dos favoritos');
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Erro ao atualizar favorito');
+    }
+  };
+
   return {
     loading,
     history,
     generateCreative,
     loadHistory,
     deleteHistoryItem,
+    toggleFavorite,
+    resultModalOpen,
+    setResultModalOpen,
+    generatedImageUrl,
   };
 }
