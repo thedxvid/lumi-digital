@@ -11,7 +11,8 @@ import {
   ChevronRight,
   Images,
   Search,
-  Video
+  Video,
+  TrendingUp
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UsageLimitBarSidebar } from "./UsageLimitBarSidebar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function AnimatedDashboardSidebar() {
   const [open, setOpen] = useState(true);
@@ -126,10 +128,29 @@ export function AnimatedDashboardSidebar() {
           </div>
 
           {/* Limites de uso */}
-          {open && (
+          {open ? (
             <div className="border-t border-border pt-4 pb-2 px-2 flex-shrink-0">
               <UsageLimitBarSidebar />
             </div>
+          ) : (
+            <TooltipProvider>
+              <div className="border-t border-border pt-3 pb-2 flex items-center justify-center flex-shrink-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      onClick={() => setOpen(true)}
+                      className="h-8 w-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p className="font-semibold mb-1">Seus Limites</p>
+                    <p className="text-xs text-muted-foreground">Clique para ver detalhes de uso</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           )}
 
           {/* User section e logout fixo no final */}
