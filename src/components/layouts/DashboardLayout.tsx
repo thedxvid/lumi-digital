@@ -21,7 +21,7 @@ const DashboardLayout = () => {
         
         {/* Main Content */}
         <main className="flex-1 w-full overflow-y-auto overflow-x-hidden">
-          <div className="h-full p-4 md:p-6 lg:p-10 pt-16 pb-16 md:pt-6 md:pb-6">
+          <div className="p-4 md:p-6 lg:p-10 pt-16 pb-16 md:pt-6 md:pb-6">
             <Outlet />
           </div>
         </main>

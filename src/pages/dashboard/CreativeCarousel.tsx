@@ -22,7 +22,7 @@ export default function CreativeCarousel() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto space-y-6 overflow-x-hidden w-full px-4">
+    <div className="w-full max-w-6xl mx-auto space-y-6 px-4">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Sparkles className="w-8 h-8 text-primary" />

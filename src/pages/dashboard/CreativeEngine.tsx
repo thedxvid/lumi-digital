@@ -64,7 +64,7 @@ Format: ${formConfig.format}`;
 
   return (
     <>
-      <div className="container mx-auto py-8 px-4 max-w-7xl overflow-x-hidden w-full">
+      <div className="w-full max-w-7xl mx-auto py-8 px-4">
         <div className="space-y-6">
           <div>
             <h1 className="text-4xl font-bold mb-2">Máquina de Criativos</h1>

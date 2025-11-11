@@ -40,7 +40,7 @@ export default function ProfileAnalysis() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-7xl overflow-x-hidden w-full">
+    <div className="w-full max-w-7xl mx-auto py-6 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Análise de Perfil com IA</h1>
         <p className="text-muted-foreground">
