@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Home, MessageSquare, Mic, History, Settings } from "lucide-react";
+import { Home, MessageSquare, Lightbulb, History, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -16,9 +16,9 @@ export function MobileBottomNav() {
       icon: MessageSquare,
     },
     {
-      label: "Voz",
-      href: "/app/voice-chat",
-      icon: Mic,
+      label: "Criativos",
+      href: "/app/creative-engine",
+      icon: Lightbulb,
     },
     {
       label: "Histórico",

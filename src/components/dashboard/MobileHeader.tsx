@@ -1,17 +1,27 @@
 import * as React from "react";
-import { Lightbulb, Menu } from "lucide-react";
+import { Lightbulb, Menu, Home, MessageSquare, Images, History, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import { toast } from "sonner";
 import { LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { cn } from "@/lib/utils";
 
 export function MobileHeader() {
   const [open, setOpen] = React.useState(false);
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+
+  const navigationLinks = [
+    { label: "Visão Geral", href: "/app", icon: Home },
+    { label: "Chat LUMI", href: "/app/chat", icon: MessageSquare },
+    { label: "Máquina de Criativos", href: "/app/creative-engine", icon: Lightbulb },
+    { label: "Carrosséis", href: "/app/carousel", icon: Images },
+    { label: "Histórico", href: "/app/history", icon: History },
+    { label: "Configurações", href: "/app/settings", icon: Settings },
+  ];
 
   const handleLogout = async () => {
     try {
@@ -52,6 +62,35 @@ export function MobileHeader() {
             </SheetHeader>
 
             <div className="mt-6 space-y-6">
+              {/* Navigation Links */}
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
+                  Navegação
+                </p>
+                {navigationLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <NavLink
+                      key={link.href}
+                      to={link.href}
+                      end={link.href === "/app"}
+                      onClick={() => setOpen(false)}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors",
+                          isActive
+                            ? "bg-lumi-gold/10 text-lumi-gold font-medium"
+                            : "text-foreground hover:bg-muted"
+                        )
+                      }
+                    >
+                      <Icon className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-sm">{link.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+
               {/* User Info */}
               {user && (
                 <div className="border-t border-border pt-4">

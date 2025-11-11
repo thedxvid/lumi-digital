@@ -3,7 +3,6 @@ import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/animated-side
 import { 
   Home, 
   MessageSquare, 
-  Mic, 
   History, 
   Lightbulb,
   Settings,
@@ -38,13 +37,6 @@ export function AnimatedDashboardSidebar() {
       href: "/app/chat",
       icon: (
         <MessageSquare className="text-foreground h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Voz LUMI",
-      href: "/app/voice-chat",
-      icon: (
-        <Mic className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {
