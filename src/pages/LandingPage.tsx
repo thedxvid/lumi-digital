@@ -8,6 +8,7 @@ import { ModernPricingCard } from '@/components/ui/modern-pricing-card';
 import { FAQSection } from '@/components/ui/faq-section';
 import { AnimatedCard } from '@/components/ui/animated-card';
 import { LumiLogo } from '@/components/ui/lumi-logo';
+import { FallingPattern } from '@/components/ui/falling-pattern';
 import { useNavigate } from 'react-router-dom';
 import { useScrollHeader } from '@/hooks/useScrollHeader';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -196,19 +197,20 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* HERO SECTION COM GRID PATTERN */}
-      <section className="relative py-20 md:py-32 px-4 overflow-hidden hero-grid-bg">
-        {/* Background gradiente dinâmico aprimorado */}
-        <div className="absolute inset-0 bg-gradient-to-br from-lumi-blue/8 via-purple-500/5 to-lumi-gold/8"></div>
+      {/* HERO SECTION COM FALLING PATTERN */}
+      <section className="relative py-20 md:py-32 px-4 overflow-hidden">
+        {/* Falling Pattern Background */}
         <div className="absolute inset-0">
-          <div className="absolute top-10 right-10 w-48 h-48 md:w-72 md:h-72 bg-lumi-gold/15 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-10 left-10 w-64 h-64 md:w-96 md:h-96 bg-lumi-blue/15 rounded-full blur-3xl animate-pulse" style={{
-          animationDelay: '1s'
-        }}></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-56 h-56 md:w-80 md:h-80 bg-purple-500/8 rounded-full blur-3xl animate-pulse" style={{
-          animationDelay: '2s'
-        }}></div>
+          <FallingPattern 
+            duration={120}
+            blurIntensity="1.2em"
+            density={1.2}
+            className="opacity-40"
+          />
         </div>
+
+        {/* Gradiente overlay para melhor legibilidade */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background/60"></div>
 
         <div className="container mx-auto text-center relative z-10 mt-16">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-8 leading-tight">
