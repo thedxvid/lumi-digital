@@ -21,7 +21,7 @@ const DashboardLayout = () => {
         
         {/* Main Content */}
         <main 
-          className="flex-1 w-full min-h-screen pt-14 pb-16 md:pt-0 md:pb-0 transition-[padding] duration-300 md:pl-[var(--sidebar-width,72px)]"
+          className="flex-1 w-full h-screen pt-14 pb-16 md:pt-0 md:pb-0 transition-[padding] duration-300 md:pl-[var(--sidebar-width,72px)] overflow-hidden"
         >
           <Outlet />
         </main>

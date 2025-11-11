@@ -193,7 +193,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-row min-h-screen w-full overflow-hidden">
+    <div className="flex flex-row h-screen w-full overflow-hidden">
       {/* Chat History Sidebar - Mobile */}
       {showHistory && (
         <div className="fixed inset-0 z-50 bg-background md:hidden">
@@ -262,7 +262,7 @@ export default function Chat() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative z-0 min-w-0 overflow-hidden h-full">
+      <div className="flex-1 flex flex-col relative z-0 min-w-0 overflow-hidden h-screen">
         {/* Mobile Header with History Button */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border flex-shrink-0">
           <h1 className="text-lg font-semibold">Chat LUMI</h1>
