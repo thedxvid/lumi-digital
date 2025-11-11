@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import * as React from "react";
 import { Lightbulb, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -9,7 +9,7 @@ import { LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function MobileHeader() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = React.useState(false);
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
 

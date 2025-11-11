@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { Home, MessageSquare, Mic, History, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
