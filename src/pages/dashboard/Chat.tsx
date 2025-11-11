@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ChatArea } from '@/components/ChatArea';
 import { ChatHistory } from '@/components/dashboard/ChatHistory';
@@ -16,23 +16,20 @@ export default function Chat() {
   const [showHistory, setShowHistory] = useState(false);
   const { loading, sendMessage } = useLumiChat();
   const { conversations, addConversation, updateConversation, deleteConversation, generateUUID } = useLumiStore();
+  const lastSyncedConversationRef = useRef<string | undefined>();
 
   // Sync messages with store when conversation changes
   useEffect(() => {
-    if (currentConversationId) {
+    // Apenas sincronizar se a conversa mudou
+    if (currentConversationId && lastSyncedConversationRef.current !== currentConversationId) {
       const conversation = conversations.find(conv => conv.id === currentConversationId);
       if (conversation) {
-        // Apenas sincronizar se for realmente diferente
-        const isDifferent = conversation.messages.length !== messages.length ||
-                            conversation.messages.some((msg, idx) => msg.id !== messages[idx]?.id);
-        
-        if (isDifferent) {
-          console.log('🔄 Sincronizando mensagens do store');
-          setMessages(conversation.messages);
-        }
+        console.log('🔄 Sincronizando mensagens do store');
+        setMessages(conversation.messages);
+        lastSyncedConversationRef.current = currentConversationId;
       }
     }
-  }, [currentConversationId]); // APENAS currentConversationId como dependência
+  }, [currentConversationId, conversations]);
 
   // Salvar conversa ao fechar/recarregar a página
   useEffect(() => {
@@ -90,6 +87,7 @@ export default function Chat() {
       conversationId = savedConversation?.id || newConversation.id;
       setCurrentConversationId(conversationId);
       setMessages([userMessage]);
+      lastSyncedConversationRef.current = conversationId; // Atualizar ref para nova conversa
     } else {
       // Add message to existing conversation
       const updatedMessages = [...messages, userMessage];
@@ -164,6 +162,7 @@ export default function Chat() {
       setCurrentConversationId(id);
       setMessages(conversation.messages);
       setShowHistory(false);
+      lastSyncedConversationRef.current = id; // Atualizar ref para nova conversa
     }
   };
 
@@ -187,6 +186,7 @@ export default function Chat() {
     setCurrentConversationId(undefined);
     setMessages([]);
     setShowHistory(false);
+    lastSyncedConversationRef.current = undefined; // Reset ref
   };
 
   return (

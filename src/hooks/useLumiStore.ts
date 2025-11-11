@@ -86,10 +86,12 @@ export function useLumiStore() {
   });
 
   const { session } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  // Carregar conversas do Supabase quando usuário estiver logado
+  // Carregar conversas do Supabase quando usuário estiver logado (apenas uma vez)
   useEffect(() => {
-    if (session?.user?.id) {
+    if (session?.user?.id && !hasLoadedOnce && !isLoading) {
       loadConversationsFromSupabase();
     }
   }, [session?.user?.id]);
@@ -104,8 +106,9 @@ export function useLumiStore() {
   }, [store]);
 
   const loadConversationsFromSupabase = async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || isLoading) return;
 
+    setIsLoading(true);
     try {
       console.log('🔍 Carregando conversas do Supabase para usuário:', session.user.id);
       
@@ -176,6 +179,7 @@ export function useLumiStore() {
           .sort((a, b) => b.updatedAt - a.updatedAt);
 
         console.log(`✅ Merge concluído: ${mergedConversations.length} conversas`);
+        setHasLoadedOnce(true);
 
         return {
           ...prev,
@@ -185,6 +189,8 @@ export function useLumiStore() {
 
     } catch (error) {
       console.error('❌ Erro crítico ao carregar conversas:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -445,12 +451,12 @@ export function useLumiStore() {
     }
   };
 
-  // Auto-sync unsaved conversations when user logs in
+  // Auto-sync unsaved conversations when user logs in (apenas uma vez após carregar)
   useEffect(() => {
-    if (session?.user?.id) {
+    if (session?.user?.id && hasLoadedOnce && !isLoading) {
       syncUnSavedConversations();
     }
-  }, [session?.user?.id]);
+  }, [hasLoadedOnce]);
 
   const updateSettings = (settings: Partial<LumiSettings>) => {
     setStore(prev => ({
