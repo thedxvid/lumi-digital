@@ -193,7 +193,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-row h-full w-full overflow-hidden">
+    <div className="flex flex-row h-screen w-full overflow-hidden">
       {/* Chat History Sidebar - Mobile */}
       {showHistory && (
         <div className="fixed inset-0 z-50 bg-background md:hidden">
@@ -226,7 +226,7 @@ export default function Chat() {
       )}
 
       {/* Chat History Sidebar - Desktop */}
-      <div className="hidden md:flex md:w-80 border-r border-border bg-muted/20 relative z-20 flex-shrink-0">
+      <div className="hidden md:flex md:w-80 border-r border-border bg-muted/20 relative z-20 flex-shrink-0 h-full">
         <div className="flex flex-col w-full h-full">
           <div className="p-4 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
