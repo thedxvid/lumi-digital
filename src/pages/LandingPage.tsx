@@ -12,6 +12,7 @@ import { FallingPattern } from '@/components/ui/falling-pattern';
 import { useNavigate } from 'react-router-dom';
 import { useScrollHeader } from '@/hooks/useScrollHeader';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import mockupLumi from '@/assets/mockup_lumi.png';
 const LandingPage = () => {
   const navigate = useNavigate();
   const isScrolled = useScrollHeader(100);
@@ -240,7 +241,7 @@ const LandingPage = () => {
               <div className="absolute -inset-4 bg-gradient-to-r from-lumi-gold/20 via-transparent to-lumi-blue/20 rounded-3xl blur-2xl opacity-60 animate-pulse"></div>
               
               <div className="relative bg-gradient-to-r from-muted/40 to-muted/20 rounded-3xl p-3 sm:p-6 md:p-8 shadow-2xl border border-lumi-gold/10 backdrop-blur-sm overflow-hidden">
-                <img src="/lovable-uploads/6b34a50f-dd26-4cb2-aac7-e17de61a6471.png" alt="Dashboard LUMI - Interface da plataforma" className="w-full h-auto rounded-2xl shadow-2xl shadow-black/20 hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] animate-fade-in object-contain" style={{
+                <img src={mockupLumi} alt="Dashboard LUMI - Interface da plataforma" className="w-full h-auto rounded-2xl shadow-2xl shadow-black/20 hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] animate-fade-in object-contain" style={{
                 filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15))',
                 transform: 'perspective(1000px) rotateY(-2deg)'
               }} loading="eager" onLoad={e => {
