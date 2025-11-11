@@ -38,7 +38,7 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/app/admin/agents')}
+          onClick={() => navigate('/admin/agents')}
           className="h-7 px-2"
         >
           <Settings className="h-3.5 w-3.5" />
