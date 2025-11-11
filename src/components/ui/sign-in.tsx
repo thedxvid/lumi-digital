@@ -104,7 +104,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline text-foreground transition-colors">Esqueceu a senha?</a>
               </div>
 
-              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-primary py-4 font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-lumi-gold py-4 font-medium text-background hover:bg-lumi-gold-dark transition-colors">
                 Entrar
               </button>
             </form>
