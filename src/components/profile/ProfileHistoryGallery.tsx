@@ -144,6 +144,8 @@ export function ProfileHistoryGallery({
               <ProfileAnalysisResult
                 result={selectedAnalysis.analysis_result}
                 onClose={() => setSelectedAnalysis(null)}
+                platform={selectedAnalysis.platform}
+                profileImage={selectedAnalysis.profile_image}
               />
             )}
           </div>
