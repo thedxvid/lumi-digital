@@ -251,7 +251,7 @@ export function exportProfileAnalysisToPDF(
       pdf.text(line, margin + 5, yPosition);
       yPosition += 5;
     });
-    yPosition += 2;
+    yPosition += 5;
   });
 
   // Pontos Cegos
@@ -285,21 +285,21 @@ export function exportProfileAnalysisToPDF(
     pdf.setFont('helvetica', 'bold');
     pdf.text(ponto.impacto.toUpperCase(), margin + 2, yPosition + 3.5);
     
-    yPosition += 8;
+    yPosition += 6;
 
     pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(11);
     pdf.setFont('helvetica', 'bold');
     addText(ponto.titulo, 11, 'bold', [0, 0, 0]);
-    yPosition += 2;
+    yPosition += 1;
     
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
     addText(ponto.descricao, 9, 'normal', [60, 60, 60]);
-    yPosition += 2;
+    yPosition += 4;
     
     pdf.setFillColor(245, 245, 250);
-    const solutionHeight = pdf.splitTextToSize(ponto.solucao, contentWidth - 10).length * 4.5 + 8;
+    const solutionHeight = pdf.splitTextToSize(ponto.solucao, contentWidth - 10).length * 4.5 + 6;
     checkPageBreak(solutionHeight);
     pdf.roundedRect(margin, yPosition, contentWidth, solutionHeight, 2, 2, 'F');
     
@@ -309,7 +309,7 @@ export function exportProfileAnalysisToPDF(
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Solucao:', margin + 9, yPosition + 5);
-    yPosition += 7;
+    yPosition += 6;
     
     pdf.setTextColor(60, 60, 60);
     pdf.setFontSize(9);
@@ -320,7 +320,7 @@ export function exportProfileAnalysisToPDF(
       yPosition += 4.5;
     });
     
-    yPosition += 5;
+    yPosition += 8;
   });
 
   // Recomendações Prioritárias
@@ -374,7 +374,7 @@ export function exportProfileAnalysisToPDF(
       pdf.setFontSize(8);
       pdf.text(`${rec.impacto_esperado}`, margin + 15, yPosition);
       pdf.text(`${rec.tempo_implementacao}`, margin + 15 + contentWidth/2, yPosition);
-      yPosition += 8;
+      yPosition += 10;
     });
 
   // Plano de Ação 30 Dias
@@ -421,7 +421,7 @@ export function exportProfileAnalysisToPDF(
         yPosition += 4.5;
       });
     });
-    yPosition += 3;
+    yPosition += 6;
   });
 
   // Benchmarks
