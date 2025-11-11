@@ -115,7 +115,7 @@ export function AnimatedDashboardSidebar() {
       </Button>
 
       <Sidebar open={open} setOpen={setOpen} animate={false}>
-        <SidebarBody className="flex flex-col justify-between gap-0 py-4">
+        <SidebarBody className="flex flex-col gap-0 py-4 h-full">
           <div className="flex flex-col overflow-x-hidden overflow-y-auto flex-1 min-h-0">
             {open ? <Logo /> : <LogoIcon />}
             
