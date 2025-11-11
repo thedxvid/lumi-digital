@@ -11,6 +11,7 @@ import Overview from '@/pages/dashboard/Overview';
 import VoiceChat from '@/pages/dashboard/VoiceChat';
 import History from '@/pages/dashboard/History';
 import CreativeEngine from '@/pages/dashboard/CreativeEngine';
+import CreativeCarousel from '@/pages/dashboard/CreativeCarousel';
 import Settings from '@/pages/dashboard/Settings';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -38,6 +39,7 @@ function App() {
             <Route path="voice-chat" element={<VoiceChat />} />
             <Route path="history" element={<History />} />
             <Route path="creative-engine" element={<CreativeEngine />} />
+            <Route path="carousel" element={<CreativeCarousel />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

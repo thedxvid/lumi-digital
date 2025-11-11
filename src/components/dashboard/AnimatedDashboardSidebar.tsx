@@ -54,6 +54,13 @@ export function AnimatedDashboardSidebar() {
       ),
     },
     {
+      label: "Carrosséis",
+      href: "/app/carousel",
+      icon: (
+        <Lightbulb className="text-foreground h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
       label: "Histórico",
       href: "/app/history",
       icon: (

@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      carousel_history: {
+        Row: {
+          created_at: string
+          id: string
+          image_count: number
+          images: Json
+          prompt: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          images: Json
+          prompt: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_count?: number
+          images?: Json
+          prompt?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           agent_id: string | null
@@ -101,6 +128,51 @@ export type Database = {
           prompt?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      custom_agents: {
+        Row: {
+          capabilities: Json
+          color: string
+          created_at: string | null
+          created_by: string | null
+          description: string
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          suggested_topics: Json
+          system_prompt: string
+          updated_at: string | null
+        }
+        Insert: {
+          capabilities?: Json
+          color?: string
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          suggested_topics?: Json
+          system_prompt: string
+          updated_at?: string | null
+        }
+        Update: {
+          capabilities?: Json
+          color?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          suggested_topics?: Json
+          system_prompt?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
