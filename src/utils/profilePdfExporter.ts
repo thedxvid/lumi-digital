@@ -37,6 +37,90 @@ export function exportProfileAnalysisToPDF(
     });
   };
 
+  // Funções helper para desenhar ícones geométricos
+  const drawClipboardIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.8);
+    pdf.roundedRect(x, y + size * 0.15, size * 0.8, size * 0.85, 0.5, 0.5, 'S');
+    pdf.setFillColor(color[0], color[1], color[2]);
+    pdf.rect(x + size * 0.25, y, size * 0.3, size * 0.25, 'F');
+  };
+
+  const drawEyeIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.8);
+    pdf.ellipse(x + size/2, y + size/2, size/2, size/3, 'S');
+    pdf.setFillColor(color[0], color[1], color[2]);
+    pdf.circle(x + size/2, y + size/2, size/4, 'F');
+  };
+
+  const drawCheckIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(1.2);
+    pdf.line(x + size * 0.2, y + size * 0.5, x + size * 0.4, y + size * 0.75);
+    pdf.line(x + size * 0.4, y + size * 0.75, x + size * 0.8, y + size * 0.25);
+  };
+
+  const drawWarningIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.8);
+    pdf.triangle(
+      x + size/2, y + size * 0.1,
+      x + size * 0.1, y + size * 0.9,
+      x + size * 0.9, y + size * 0.9,
+      'S'
+    );
+    pdf.setFillColor(color[0], color[1], color[2]);
+    pdf.circle(x + size/2, y + size * 0.75, size * 0.08, 'F');
+    pdf.setLineWidth(1);
+    pdf.line(x + size/2, y + size * 0.35, x + size/2, y + size * 0.6);
+  };
+
+  const drawLightbulbIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.8);
+    pdf.circle(x + size/2, y + size * 0.4, size * 0.35, 'S');
+    pdf.setLineWidth(1);
+    pdf.line(x + size * 0.35, y + size * 0.7, x + size * 0.65, y + size * 0.7);
+    pdf.line(x + size * 0.4, y + size * 0.8, x + size * 0.6, y + size * 0.8);
+  };
+
+  const drawTargetIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.8);
+    pdf.circle(x + size/2, y + size/2, size * 0.45, 'S');
+    pdf.circle(x + size/2, y + size/2, size * 0.25, 'S');
+    pdf.setFillColor(color[0], color[1], color[2]);
+    pdf.circle(x + size/2, y + size/2, size * 0.1, 'F');
+  };
+
+  const drawChartIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setFillColor(color[0], color[1], color[2]);
+    pdf.rect(x + size * 0.1, y + size * 0.5, size * 0.2, size * 0.4, 'F');
+    pdf.rect(x + size * 0.4, y + size * 0.3, size * 0.2, size * 0.6, 'F');
+    pdf.rect(x + size * 0.7, y + size * 0.1, size * 0.2, size * 0.8, 'F');
+  };
+
+  const drawClockIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.8);
+    pdf.circle(x + size/2, y + size/2, size * 0.45, 'S');
+    pdf.setLineWidth(1);
+    pdf.line(x + size/2, y + size/2, x + size/2, y + size * 0.25);
+    pdf.line(x + size/2, y + size/2, x + size * 0.7, y + size/2);
+  };
+
+  const drawCalendarIcon = (x: number, y: number, size: number, color: [number, number, number]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(0.8);
+    pdf.roundedRect(x + size * 0.1, y + size * 0.2, size * 0.8, size * 0.7, 0.5, 0.5, 'S');
+    pdf.setFillColor(color[0], color[1], color[2]);
+    pdf.rect(x + size * 0.1, y + size * 0.2, size * 0.8, size * 0.2, 'F');
+    pdf.line(x + size * 0.3, y + size * 0.5, x + size * 0.3, y + size * 0.8);
+    pdf.line(x + size * 0.5, y + size * 0.5, x + size * 0.5, y + size * 0.8);
+    pdf.line(x + size * 0.7, y + size * 0.5, x + size * 0.7, y + size * 0.8);
+  };
+
   // Header
   pdf.setFillColor(99, 102, 241); // primary color
   pdf.rect(0, 0, pageWidth, 40, 'F');
@@ -102,10 +186,12 @@ export function exportProfileAnalysisToPDF(
   pdf.setFillColor(99, 102, 241, 0.1);
   pdf.rect(margin, yPosition, contentWidth, 8, 'F');
   
+  drawClipboardIcon(margin + 2, yPosition + 1, 5, [99, 102, 241]);
+  
   pdf.setTextColor(99, 102, 241);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📋 Resumo Executivo', margin + 2, yPosition + 6);
+  pdf.text('RESUMO EXECUTIVO', margin + 10, yPosition + 6);
   yPosition += 12;
 
   addText(result.resumo_executivo, 10, 'normal', [60, 60, 60]);
@@ -116,10 +202,12 @@ export function exportProfileAnalysisToPDF(
   pdf.setFillColor(99, 102, 241, 0.1);
   pdf.rect(margin, yPosition, contentWidth, 8, 'F');
   
+  drawEyeIcon(margin + 2, yPosition + 1, 5, [99, 102, 241]);
+  
   pdf.setTextColor(99, 102, 241);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('👁️ Análise Visual', margin + 2, yPosition + 6);
+  pdf.text('ANALISE VISUAL', margin + 10, yPosition + 6);
   yPosition += 12;
 
   const visualSections = [
@@ -142,10 +230,12 @@ export function exportProfileAnalysisToPDF(
   pdf.setFillColor(34, 197, 94, 0.1);
   pdf.rect(margin, yPosition, contentWidth, 8, 'F');
   
+  drawCheckIcon(margin + 2, yPosition + 1, 5, [34, 197, 94]);
+  
   pdf.setTextColor(34, 197, 94);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('✅ Pontos Fortes', margin + 2, yPosition + 6);
+  pdf.text('PONTOS FORTES', margin + 10, yPosition + 6);
   yPosition += 12;
 
   result.pontos_fortes.forEach((ponto, index) => {
@@ -169,10 +259,12 @@ export function exportProfileAnalysisToPDF(
   pdf.setFillColor(239, 68, 68, 0.1);
   pdf.rect(margin, yPosition, contentWidth, 8, 'F');
   
+  drawWarningIcon(margin + 2, yPosition + 1, 5, [239, 68, 68]);
+  
   pdf.setTextColor(239, 68, 68);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('⚠️ Pontos Cegos', margin + 2, yPosition + 6);
+  pdf.text('PONTOS CEGOS', margin + 10, yPosition + 6);
   yPosition += 12;
 
   result.pontos_cegos.forEach((ponto, index) => {
@@ -211,10 +303,12 @@ export function exportProfileAnalysisToPDF(
     checkPageBreak(solutionHeight);
     pdf.roundedRect(margin, yPosition, contentWidth, solutionHeight, 2, 2, 'F');
     
+    drawLightbulbIcon(margin + 3, yPosition + 1, 4, [99, 102, 241]);
+    
     pdf.setTextColor(99, 102, 241);
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('💡 Solução:', margin + 3, yPosition + 5);
+    pdf.text('Solucao:', margin + 9, yPosition + 5);
     yPosition += 7;
     
     pdf.setTextColor(60, 60, 60);
@@ -234,10 +328,12 @@ export function exportProfileAnalysisToPDF(
   pdf.setFillColor(99, 102, 241, 0.1);
   pdf.rect(margin, yPosition, contentWidth, 8, 'F');
   
+  drawTargetIcon(margin + 2, yPosition + 1, 5, [99, 102, 241]);
+  
   pdf.setTextColor(99, 102, 241);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('🎯 Recomendações Prioritárias', margin + 2, yPosition + 6);
+  pdf.text('RECOMENDACOES PRIORITARIAS', margin + 10, yPosition + 6);
   yPosition += 12;
 
   result.recomendacoes_prioritarias
@@ -271,9 +367,13 @@ export function exportProfileAnalysisToPDF(
       addText(rec.justificativa, 9, 'normal', [60, 60, 60]);
       yPosition += 2;
       
+      drawChartIcon(margin + 10, yPosition - 3, 3, [99, 102, 241]);
+      drawClockIcon(margin + 10 + contentWidth/2, yPosition - 3, 3, [99, 102, 241]);
+      
       pdf.setTextColor(99, 102, 241);
       pdf.setFontSize(8);
-      pdf.text(`📈 ${rec.impacto_esperado} • ⏱️ ${rec.tempo_implementacao}`, margin + 10, yPosition);
+      pdf.text(`${rec.impacto_esperado}`, margin + 15, yPosition);
+      pdf.text(`${rec.tempo_implementacao}`, margin + 15 + contentWidth/2, yPosition);
       yPosition += 8;
     });
 
@@ -282,10 +382,12 @@ export function exportProfileAnalysisToPDF(
   pdf.setFillColor(99, 102, 241, 0.1);
   pdf.rect(margin, yPosition, contentWidth, 8, 'F');
   
+  drawCalendarIcon(margin + 2, yPosition + 1, 5, [99, 102, 241]);
+  
   pdf.setTextColor(99, 102, 241);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📅 Plano de Ação 30 Dias', margin + 2, yPosition + 6);
+  pdf.text('PLANO DE ACAO 30 DIAS', margin + 10, yPosition + 6);
   yPosition += 12;
 
   const weeks = [
@@ -327,10 +429,12 @@ export function exportProfileAnalysisToPDF(
   pdf.setFillColor(99, 102, 241, 0.1);
   pdf.rect(margin, yPosition, contentWidth, 8, 'F');
   
+  drawChartIcon(margin + 2, yPosition + 1, 5, [99, 102, 241]);
+  
   pdf.setTextColor(99, 102, 241);
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📊 Benchmarks e Tendências', margin + 2, yPosition + 6);
+  pdf.text('BENCHMARKS E TENDENCIAS', margin + 10, yPosition + 6);
   yPosition += 12;
 
   pdf.setTextColor(0, 0, 0);
