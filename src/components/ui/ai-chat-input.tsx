@@ -1,17 +1,9 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Lightbulb, Paperclip, Send, X, ImageIcon } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-const PLACEHOLDERS = [
-  "Como posso iluminar seu caminho hoje?",
-  "Me conte sobre seus objetivos de vendas",
-  "Precisa de ajuda com marketing?",
-  "Vamos criar conteúdo incrível juntos",
-  "Como posso te ajudar a crescer?",
-];
 
 interface AIChatInputProps {
   onSendMessage: (message: string, images?: string[]) => void;
@@ -20,8 +12,6 @@ interface AIChatInputProps {
 }
 
 export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputProps) => {
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
   const [isActive, setIsActive] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -29,20 +19,6 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cycle placeholder text when input is inactive
-  useEffect(() => {
-    if (isActive || inputValue) return;
-
-    const interval = setInterval(() => {
-      setShowPlaceholder(false);
-      setTimeout(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
-        setShowPlaceholder(true);
-      }, 400);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isActive, inputValue]);
 
   // Close input when clicking outside
   useEffect(() => {
@@ -145,42 +121,8 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
     },
   };
 
-  const placeholderContainerVariants = {
-    initial: {},
-    animate: { transition: { staggerChildren: 0.025 } },
-    exit: { transition: { staggerChildren: 0.015, staggerDirection: -1 } },
-  };
-
-  const letterVariants = {
-    initial: {
-      opacity: 0,
-      filter: "blur(12px)",
-      y: 10,
-    },
-    animate: {
-      opacity: 1,
-      filter: "blur(0px)",
-      y: 0,
-      transition: {
-        opacity: { duration: 0.25 },
-        filter: { duration: 0.4 },
-        y: { type: "spring" as const, stiffness: 80, damping: 20 },
-      },
-    },
-    exit: {
-      opacity: 0,
-      filter: "blur(12px)",
-      y: -10,
-      transition: {
-        opacity: { duration: 0.2 },
-        filter: { duration: 0.3 },
-        y: { type: "spring" as const, stiffness: 80, damping: 20 },
-      },
-    },
-  };
-
   return (
-    <div className={cn("w-full flex justify-center items-center", className)}>
+    <div className={cn("w-full flex justify-center items-center px-4 sm:px-0", className)}>
       <motion.div
         ref={wrapperRef}
         className="w-full max-w-4xl"
@@ -193,13 +135,13 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
         <form onSubmit={handleSubmit} className="flex flex-col items-stretch w-full h-full">
           {/* Preview das imagens */}
           {selectedImages.length > 0 && (
-            <div className="px-4 pt-4 pb-2 flex gap-2 flex-wrap">
+            <div className="px-3 sm:px-4 pt-4 pb-2 flex gap-2 flex-wrap">
               {selectedImages.map((image, index) => (
                 <div key={index} className="relative group">
                   <img
                     src={image}
                     alt={`Preview ${index + 1}`}
-                    className="w-16 h-16 object-cover rounded-lg border border-border"
+                    className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg border border-border"
                   />
                   <button
                     type="button"
@@ -217,7 +159,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
           )}
 
           {/* Input Row */}
-          <div className="flex items-center gap-2 p-3 w-full">
+          <div className="flex items-center gap-2 p-2 sm:p-3 w-full">
             <input
               ref={fileInputRef}
               type="file"
@@ -228,7 +170,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
             />
 
             <button
-              className="p-3 rounded-full hover:bg-muted transition flex-shrink-0"
+              className="p-2 sm:p-3 rounded-full hover:bg-muted transition flex-shrink-0"
               title="Anexar imagem"
               type="button"
               tabIndex={-1}
@@ -238,57 +180,25 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
               }}
               disabled={disabled || uploading || selectedImages.length >= 5}
             >
-              <ImageIcon size={20} className="text-foreground" />
+              <ImageIcon size={18} className="text-foreground sm:w-5 sm:h-5" />
             </button>
 
             {/* Text Input & Placeholder */}
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-0">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={disabled || uploading}
-                className="flex-1 border-0 outline-0 rounded-md py-2 text-base bg-transparent w-full font-normal text-foreground"
-                style={{ position: "relative", zIndex: 1 }}
+                placeholder="Como posso te ajudar hoje?"
+                className="w-full border-0 outline-0 rounded-md py-2 px-1 text-sm sm:text-base bg-transparent font-normal text-foreground placeholder:text-muted-foreground"
                 onFocus={handleActivate}
               />
-              <div className="absolute left-0 top-0 w-full h-full pointer-events-none flex items-center px-3 py-2">
-                <AnimatePresence mode="wait">
-                  {showPlaceholder && !isActive && !inputValue && (
-                    <motion.span
-                      key={placeholderIndex}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground select-none pointer-events-none"
-                      style={{
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        zIndex: 0,
-                      }}
-                      variants={placeholderContainerVariants}
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
-                    >
-                      {PLACEHOLDERS[placeholderIndex]
-                        .split("")
-                        .map((char, i) => (
-                          <motion.span
-                            key={i}
-                            variants={letterVariants}
-                            style={{ display: "inline-block" }}
-                          >
-                            {char === " " ? "\u00A0" : char}
-                          </motion.span>
-                        ))}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
             </div>
 
             <button
-              className="flex items-center gap-1 bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-full font-medium justify-center transition flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 bg-primary hover:bg-primary/90 text-primary-foreground p-2 sm:p-3 rounded-full font-medium justify-center transition flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Enviar"
               type="submit"
               disabled={(!inputValue.trim() && selectedImages.length === 0) || disabled || uploading}
@@ -296,7 +206,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
               {uploading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent" />
               ) : (
-                <Send size={18} />
+                <Send size={16} className="sm:w-[18px] sm:h-[18px]" />
               )}
             </button>
           </div>
