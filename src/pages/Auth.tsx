@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { SignInPage, Testimonial } from '@/components/ui/sign-in';
 import { FallingPattern } from '@/components/ui/falling-pattern';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Auth = () => {
@@ -101,18 +103,18 @@ const Auth = () => {
 
   // Hero component com FallingPattern
   const HeroComponent = (
-    <div className="relative h-full w-full bg-gradient-to-br from-background via-primary/5 to-primary/10">
+    <div className="relative h-full w-full bg-gradient-to-br from-background via-background to-muted">
       <FallingPattern 
-        color="hsl(var(--lumi-gold))"
+        color="hsl(var(--foreground))"
         backgroundColor="hsl(var(--background))"
         duration={100}
         blurIntensity="0.8em"
         density={1.5}
-        className="h-full w-full"
+        className="h-full w-full opacity-30"
       />
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent via-transparent to-background/40">
         <div className="text-center text-foreground z-10 p-8">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
             Bem-vindo à LUMI
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground">
@@ -132,10 +134,22 @@ const Auth = () => {
   }
 
   return (
-    <SignInPage
+    <div className="relative">
+      {/* Botão de voltar */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 hover:bg-background/80 backdrop-blur-sm"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
+      </Button>
+
+      <SignInPage
       title={
         <span className="font-bold text-foreground">
-          Entrar na <span className="bg-gradient-to-r from-lumi-gold to-lumi-gold-dark bg-clip-text text-transparent">LUMI</span>
+          Entrar na <span className="text-foreground">LUMI</span>
         </span>
       }
       description="Acesse sua conta e continue transformando seu conhecimento em renda"
@@ -145,7 +159,8 @@ const Auth = () => {
       onGoogleSignIn={handleGoogleSignIn}
       onResetPassword={handleResetPassword}
       onCreateAccount={handleCreateAccount}
-    />
+      />
+    </div>
   );
 };
 
