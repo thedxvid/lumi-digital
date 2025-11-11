@@ -1,6 +1,6 @@
+import React, { useState } from "react";
 import { Lightbulb, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
