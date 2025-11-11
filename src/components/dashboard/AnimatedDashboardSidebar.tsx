@@ -9,7 +9,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Images
+  Images,
+  Search
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,6 +52,13 @@ export function AnimatedDashboardSidebar() {
       href: "/app/carousel",
       icon: (
         <Images className="text-foreground h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Análise de Perfil",
+      href: "/app/profile-analysis",
+      icon: (
+        <Search className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {

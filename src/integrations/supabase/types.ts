@@ -516,6 +516,42 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_analyses: {
+        Row: {
+          analysis_result: Json
+          created_at: string | null
+          id: string
+          input_data: Json
+          is_favorite: boolean | null
+          platform: string
+          profile_image: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_result: Json
+          created_at?: string | null
+          id?: string
+          input_data: Json
+          is_favorite?: boolean | null
+          platform: string
+          profile_image: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json
+          created_at?: string | null
+          id?: string
+          input_data?: Json
+          is_favorite?: boolean | null
+          platform?: string
+          profile_image?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           access_granted: boolean | null
