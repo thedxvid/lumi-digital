@@ -200,17 +200,19 @@ const LandingPage = () => {
       {/* HERO SECTION COM FALLING PATTERN */}
       <section className="relative py-20 md:py-32 px-4 overflow-hidden">
         {/* Falling Pattern Background */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-0">
           <FallingPattern 
-            duration={120}
-            blurIntensity="1.2em"
-            density={1.2}
-            className="opacity-40"
+            color="hsl(var(--lumi-gold))"
+            backgroundColor="hsl(var(--background))"
+            duration={100}
+            blurIntensity="0.5em"
+            density={1.5}
+            className="h-full w-full"
           />
         </div>
 
-        {/* Gradiente overlay para melhor legibilidade */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background/60"></div>
+        {/* Gradiente overlay sutil para melhor legibilidade */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-b from-background/30 via-transparent to-background/50"></div>
 
         <div className="container mx-auto text-center relative z-10 mt-16">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-8 leading-tight">
