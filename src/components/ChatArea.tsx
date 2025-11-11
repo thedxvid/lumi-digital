@@ -1,23 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { ChatInput } from './ChatInput';
 import { Message } from '@/types/lumi';
-import { AgentSelector } from './chat/AgentSelector';
 import { SuggestedTopics } from './chat/SuggestedTopics';
-import { getDefaultAgent, getAgentById } from '@/data/lumiAgents';
+import { getAgentById } from '@/data/lumiAgents';
 
 interface ChatAreaProps {
   messages: Message[];
   isTyping: boolean;
   onSendMessage: (message: string, images?: string[], agentId?: string) => void;
+  selectedAgentId: string;
+  onAgentChange: (agentId: string) => void;
 }
 
-export function ChatArea({ messages, isTyping, onSendMessage }: ChatAreaProps) {
+export function ChatArea({ messages, isTyping, onSendMessage, selectedAgentId, onAgentChange }: ChatAreaProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [selectedAgentId, setSelectedAgentId] = useState(getDefaultAgent().id);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,7 +31,7 @@ export function ChatArea({ messages, isTyping, onSendMessage }: ChatAreaProps) {
     onSendMessage(topic, undefined, selectedAgentId);
   };
 
-  const selectedAgent = getAgentById(selectedAgentId) || getDefaultAgent();
+  const selectedAgent = getAgentById(selectedAgentId);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -49,9 +49,7 @@ export function ChatArea({ messages, isTyping, onSendMessage }: ChatAreaProps) {
                 Sua luz no caminho do digital. Como posso iluminar seu caminho hoje?
               </p>
               
-              <AgentSelector selectedAgentId={selectedAgentId} onAgentChange={setSelectedAgentId} />
-              
-              <SuggestedTopics agent={selectedAgent} onTopicClick={handleTopicClick} />
+              <SuggestedTopics agent={selectedAgent!} onTopicClick={handleTopicClick} />
             </div>
           )}
 

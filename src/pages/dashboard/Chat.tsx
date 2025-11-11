@@ -3,17 +3,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ChatArea } from '@/components/ChatArea';
 import { ChatHistory } from '@/components/dashboard/ChatHistory';
+import { AgentSelectorCompact } from '@/components/chat/AgentSelectorCompact';
 import { useLumiChat } from '@/hooks/useLumiChat';
 import { useLumiStore } from '@/hooks/useLumiStore';
 import { Message, Conversation } from '@/types/lumi';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, X } from 'lucide-react';
+import { getDefaultAgent } from '@/data/lumiAgents';
 
 export default function Chat() {
   const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [showHistory, setShowHistory] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState(getDefaultAgent().id);
   const { loading, sendMessage } = useLumiChat();
   const { conversations, addConversation, updateConversation, deleteConversation, generateUUID } = useLumiStore();
   const lastSyncedConversationRef = useRef<string | undefined>();
@@ -204,6 +207,15 @@ export default function Chat() {
               <X className="h-4 w-4" />
             </Button>
           </div>
+          
+          {/* Agent selector mobile */}
+          <div className="p-4 border-b">
+            <AgentSelectorCompact
+              selectedAgentId={selectedAgentId}
+              onAgentChange={setSelectedAgentId}
+            />
+          </div>
+          
           <ChatHistory
             conversations={conversations}
             currentConversationId={currentConversationId}
@@ -229,6 +241,15 @@ export default function Chat() {
               </Button>
             </div>
           </div>
+          
+          {/* Agent selector desktop */}
+          <div className="p-4 border-b border-border flex-shrink-0">
+            <AgentSelectorCompact
+              selectedAgentId={selectedAgentId}
+              onAgentChange={setSelectedAgentId}
+            />
+          </div>
+          
           <div className="flex-1 overflow-y-auto">
             <ChatHistory
               conversations={conversations}
@@ -268,6 +289,8 @@ export default function Chat() {
             messages={messages}
             isTyping={loading}
             onSendMessage={handleSendMessage}
+            selectedAgentId={selectedAgentId}
+            onAgentChange={setSelectedAgentId}
           />
         </div>
       </div>
