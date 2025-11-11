@@ -3,7 +3,7 @@ import { VoiceInterface } from '@/components/voice/VoiceInterface';
 
 export default function VoiceChat() {
   return (
-    <div className="h-full overflow-auto bg-background">
+    <div className="w-full bg-background">
       <VoiceInterface />
     </div>
   );

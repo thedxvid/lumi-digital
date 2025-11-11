@@ -91,7 +91,7 @@ const History = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 w-full overflow-x-hidden">
+    <div className="w-full bg-gradient-to-br from-background via-background to-muted/20">
       <div className="w-full px-4 sm:px-6 lg:max-w-7xl lg:mx-auto">
         <div className="mb-6">
           <Button 
