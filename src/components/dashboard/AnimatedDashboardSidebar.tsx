@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { UsageLimitBarSidebar } from "./UsageLimitBarSidebar";
 
 export function AnimatedDashboardSidebar() {
   const [open, setOpen] = useState(true);
@@ -123,6 +124,13 @@ export function AnimatedDashboardSidebar() {
               ))}
             </div>
           </div>
+
+          {/* Limites de uso */}
+          {open && (
+            <div className="border-t border-border pt-4 pb-2 px-2 flex-shrink-0">
+              <UsageLimitBarSidebar />
+            </div>
+          )}
 
           {/* User section e logout fixo no final */}
           <div className="space-y-2 border-t border-border pt-4 pb-4 flex-shrink-0">
