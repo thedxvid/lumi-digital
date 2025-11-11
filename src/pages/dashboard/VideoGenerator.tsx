@@ -37,9 +37,9 @@ const VideoGenerator = () => {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Gerador de Vídeos</h1>
+    <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6 min-h-screen overflow-y-auto">
+      <div className="min-w-0">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words overflow-wrap-anywhere">Gerador de Vídeos</h1>
         <p className="text-muted-foreground">
           Crie vídeos profissionais com IA usando o Veo 3.1 da Google
         </p>

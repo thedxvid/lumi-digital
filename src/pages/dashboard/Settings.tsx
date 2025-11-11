@@ -52,7 +52,7 @@ const DashboardSettings = () => {
   };
 
   return (
-    <div className="w-full px-4 sm:px-6 space-y-6 max-w-4xl mx-auto">
+    <div className="w-full min-h-screen overflow-y-auto px-4 sm:px-6 space-y-6 max-w-4xl mx-auto py-6 sm:py-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">

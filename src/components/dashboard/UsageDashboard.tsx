@@ -107,9 +107,9 @@ export default function UsageDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Uso do Plano</h2>
+          <h2 className="text-xl sm:text-2xl font-bold">Uso do Plano</h2>
           <p className="text-muted-foreground">
             Plano {subscription.plan_type === 'pro' ? 'PRO' : 'Básico'}
           </p>
@@ -119,7 +119,7 @@ export default function UsageDashboard() {
         </Badge>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         {features.map((feature) => {
           const Icon = feature.icon;
           const percentage = getUsagePercentage(feature.type);
@@ -128,12 +128,12 @@ export default function UsageDashboard() {
           return (
             <Card key={feature.type}>
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon className={`w-5 h-5 ${feature.color}`} />
-                    <CardTitle className="text-base">{feature.name}</CardTitle>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${feature.color}`} />
+                    <CardTitle className="text-sm sm:text-base truncate">{feature.name}</CardTitle>
                   </div>
-                  <TrendingUp className={`w-4 h-4 ${statusColor}`} />
+                  <TrendingUp className={`w-4 h-4 flex-shrink-0 ${statusColor}`} />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">

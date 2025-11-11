@@ -83,11 +83,11 @@ export function SmartDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {/* Continue de onde parou */}
-      <Card className="lg:col-span-2">
+      <Card className="">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <Clock className="w-5 h-5 text-primary" />
             Continue de onde parou
           </CardTitle>
@@ -135,10 +135,10 @@ export function SmartDashboard() {
       </Card>
 
       {/* Stats rápidas */}
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 sm:gap-6">
         {/* Streak */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500/10 to-red-500/10">
                 <Flame className="w-6 h-6 text-orange-500" />
@@ -162,10 +162,10 @@ export function SmartDashboard() {
 
         {/* Quick Actions */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Ações Rápidas</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm sm:text-base">Ações Rápidas</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 px-4 sm:px-6 pb-4 sm:pb-6">
             <Button
               variant="outline"
               className="w-full justify-start"

@@ -31,8 +31,8 @@ const Overview = () => {
   ];
 
   return (
-    <div className="w-full bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="w-full min-h-screen overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Bem-vindo de volta! 👋
@@ -45,10 +45,10 @@ const Overview = () => {
         {/* Smart Dashboard com atividade recente */}
         <SmartDashboard />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {quickStats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg bg-muted ${stat.color}`}>
                     <stat.icon className="w-5 h-5" />
@@ -64,7 +64,7 @@ const Overview = () => {
           ))}
           
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/app/chat')}>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-muted text-purple-600">
                   <MessageSquare className="w-5 h-5" />
@@ -79,7 +79,7 @@ const Overview = () => {
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/app/history')}>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-muted text-orange-600">
                   <History className="w-5 h-5" />
@@ -110,7 +110,7 @@ const Overview = () => {
 
           <div className="space-y-6">
             <Card>
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-4 sm:p-6 space-y-4">
                 <div>
                   <h3 className="font-semibold mb-2">💼 Agente de Vendas</h3>
                   <p className="text-sm text-muted-foreground">

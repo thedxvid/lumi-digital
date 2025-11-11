@@ -38,8 +38,8 @@ export default function Pricing() {
   }
 
   return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="text-center mb-12">
+    <div className="container mx-auto py-8 sm:py-12 px-4 min-h-screen overflow-y-auto">
+      <div className="text-center mb-8 sm:mb-12">
         <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Escolha Seu Plano
         </h1>
@@ -62,7 +62,7 @@ export default function Pricing() {
         </Tabs>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
         {pricingPlans.map((plan) => {
           const price = plan.prices[duration];
           const pricePerMonth = getPricePerMonth(price, duration);
@@ -88,8 +88,8 @@ export default function Pricing() {
               )}
 
               <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
                   {isProPlan && <Zap className="w-6 h-6 text-primary" />}
                 </div>
                 <CardDescription>{plan.description}</CardDescription>
