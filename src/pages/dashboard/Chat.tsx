@@ -22,31 +22,32 @@ export default function Chat() {
     if (currentConversationId) {
       const conversation = conversations.find(conv => conv.id === currentConversationId);
       if (conversation) {
-        // Só sincronizar se o número de mensagens no store for MAIOR
-        // Isso evita sobrescrever mensagens recém-adicionadas
-        if (conversation.messages.length > messages.length) {
-          console.log('🔄 Sincronizando mensagens do store (mais recentes)');
+        // Apenas sincronizar se for realmente diferente
+        const isDifferent = conversation.messages.length !== messages.length ||
+                            conversation.messages.some((msg, idx) => msg.id !== messages[idx]?.id);
+        
+        if (isDifferent) {
+          console.log('🔄 Sincronizando mensagens do store');
           setMessages(conversation.messages);
         }
       }
     }
-  }, [conversations, currentConversationId]);
+  }, [currentConversationId]); // APENAS currentConversationId como dependência
 
-  // Garantir salvamento ao sair da página
+  // Salvar conversa ao fechar/recarregar a página
   useEffect(() => {
-    return () => {
+    const handleBeforeUnload = () => {
       if (currentConversationId && messages.length > 0) {
-        const conversation = conversations.find(conv => conv.id === currentConversationId);
-        if (conversation) {
-          console.log('💾 Salvando conversa ao sair da página');
-          updateConversation(currentConversationId, {
-            messages: messages,
-            updatedAt: Date.now()
-          });
-        }
+        updateConversation(currentConversationId, {
+          messages: messages,
+          updatedAt: Date.now()
+        });
       }
     };
-  }, [currentConversationId, messages, conversations, updateConversation]);
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []); // SEM dependências - só roda na montagem/desmontagem
 
   // Handle incoming prompt from other pages (like ModuleRunner)
   useEffect(() => {
@@ -149,16 +150,20 @@ export default function Chat() {
   };
 
   const handleSelectConversation = (id: string) => {
-    console.log('🔍 Tentando selecionar conversa:', id);
-    console.log('📋 Conversa atual:', currentConversationId);
+    // Salvar conversa atual ANTES de trocar
+    if (currentConversationId && messages.length > 0) {
+      updateConversation(currentConversationId, {
+        messages: messages,
+        updatedAt: Date.now()
+      });
+    }
+    
+    // Agora carregar a nova conversa
     const conversation = conversations.find(conv => conv.id === id);
     if (conversation) {
-      console.log('✅ Conversa encontrada, carregando mensagens');
       setCurrentConversationId(id);
       setMessages(conversation.messages);
       setShowHistory(false);
-    } else {
-      console.log('❌ Conversa não encontrada');
     }
   };
 
@@ -171,6 +176,14 @@ export default function Chat() {
   };
 
   const handleNewChat = () => {
+    // Salvar conversa atual antes de criar nova
+    if (currentConversationId && messages.length > 0) {
+      updateConversation(currentConversationId, {
+        messages: messages,
+        updatedAt: Date.now()
+      });
+    }
+    
     setCurrentConversationId(undefined);
     setMessages([]);
     setShowHistory(false);
