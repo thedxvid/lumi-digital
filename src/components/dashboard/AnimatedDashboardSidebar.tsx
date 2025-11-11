@@ -9,7 +9,8 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Images
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,7 +58,7 @@ export function AnimatedDashboardSidebar() {
       label: "Carrosséis",
       href: "/app/carousel",
       icon: (
-        <Lightbulb className="text-foreground h-5 w-5 flex-shrink-0" />
+        <Images className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {
