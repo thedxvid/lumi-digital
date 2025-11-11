@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/animated-sidebar";
 import { 
   Home, 
@@ -28,6 +28,14 @@ export function AnimatedDashboardSidebar() {
   const [open, setOpen] = useState(true);
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+
+  // Inicializar CSS variable para padding do conteúdo
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sidebar-width',
+      open ? '300px' : '72px'
+    );
+  }, [open]);
 
   const links = [
     {
