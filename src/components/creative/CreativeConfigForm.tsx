@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreativeTypeSelector } from "./CreativeTypeSelector";
 import { FormatSelector } from "./FormatSelector";
 import { StyleVisualSelector } from "./StyleVisualSelector";
 import { ColorPaletteSelector } from "./ColorPaletteSelector";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, Eye, Sparkles } from "lucide-react";
 
 export interface CreativeConfig {
   // Tipo e Formato
@@ -115,6 +116,11 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
   };
 
   const canGenerate = config.market && config.mainText;
+
+  const hasSpecialChars = (text: string) => /[çãõáéíóúâêôàñ]/i.test(text);
+  const hasAnySpecialChars = hasSpecialChars(config.mainText) || 
+                             hasSpecialChars(config.secondaryText) || 
+                             hasSpecialChars(config.callToAction);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -246,6 +252,17 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
           <CardDescription>Adicione os textos do seu criativo</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {hasAnySpecialChars && (
+            <Alert className="border-orange-500/50 bg-orange-500/10">
+              <AlertCircle className="h-4 w-4 text-orange-500" />
+              <AlertDescription className="text-sm">
+                <strong>⚠️ Caracteres especiais detectados</strong> (ç, ã, etc.)
+                <br />
+                O modelo de IA pode ter dificuldade em renderizá-los perfeitamente. 
+                Revise cuidadosamente o resultado após a geração e regenere se necessário.
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-2">
             <Label>Texto Principal *</Label>
             <Input
@@ -284,6 +301,46 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
           </div>
         </CardContent>
       </Card>
+
+      {/* Preview dos Textos */}
+      {config.mainText && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Eye className="w-4 h-4" />
+              Prévia dos Textos que Serão Renderizados
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">Texto Principal:</div>
+              <div className="text-sm font-medium bg-background/50 p-2 rounded border">
+                "{config.mainText}"
+              </div>
+            </div>
+            {config.secondaryText && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">Texto Secundário:</div>
+                <div className="text-sm bg-background/50 p-2 rounded border">
+                  "{config.secondaryText}"
+                </div>
+              </div>
+            )}
+            {config.callToAction && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">Call-to-Action:</div>
+                <div className="text-sm font-medium bg-background/50 p-2 rounded border">
+                  "{config.callToAction}"
+                </div>
+              </div>
+            )}
+            <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t">
+              <Sparkles className="w-3 h-3 mt-0.5 shrink-0" />
+              <p>Estes textos serão renderizados exatamente como aparecem acima. Revise antes de gerar.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Seção 5: Configurações Avançadas */}
       <Card>

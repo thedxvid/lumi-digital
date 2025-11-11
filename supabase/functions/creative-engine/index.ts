@@ -54,10 +54,21 @@ VISUAL STYLE:
 - Typography: ${config.typography}
 - Tone: ${config.tone}
 
-CONTENT:
-${config.mainText ? `- Main Text: "${config.mainText}"` : ''}
-${config.secondaryText ? `- Secondary Text: "${config.secondaryText}"` : ''}
-${config.callToAction ? `- Call-to-Action: "${config.callToAction}"` : ''}
+⚠️ CRITICAL TEXT RENDERING INSTRUCTIONS - HIGHEST PRIORITY ⚠️
+YOU MUST FOLLOW THESE RULES EXACTLY:
+- Reproduce ALL text EXACTLY as written below, character by character
+- Pay SPECIAL ATTENTION to Portuguese special characters: ç ã õ á é í ó ú â ê ô à ñ
+- DO NOT change, rephrase, correct, or "fix" any words under ANY circumstance
+- DO NOT apply spell checking or autocorrection
+- Maintain EXACT spelling, including ALL accents, cedillas, and tildes
+- If uncertain about any character, use the EXACT Unicode character provided
+- Text accuracy is MORE IMPORTANT than visual perfection
+- Even if a word looks wrong to you, render it EXACTLY as provided
+
+CONTENT TO RENDER EXACTLY (CHARACTER-BY-CHARACTER):
+${config.mainText ? `- Main Text: "${config.mainText}" ← RENDER EXACTLY AS WRITTEN, DO NOT ALTER ANY CHARACTER` : ''}
+${config.secondaryText ? `- Secondary Text: "${config.secondaryText}" ← RENDER EXACTLY AS WRITTEN, DO NOT ALTER ANY CHARACTER` : ''}
+${config.callToAction ? `- Call-to-Action: "${config.callToAction}" ← RENDER EXACTLY AS WRITTEN, DO NOT ALTER ANY CHARACTER` : ''}
 
 DESIGN REQUIREMENTS:
 - Create a visually striking and professional creative
@@ -67,6 +78,8 @@ DESIGN REQUIREMENTS:
 - Target the ${config.targetAudience} audience
 - Follow ${config.creativeType} best practices
 - Apply ${config.typography} typography principles
+
+REMEMBER: TEXT ACCURACY IS THE TOP PRIORITY. Render every character exactly as provided above.
 
 Use the provided images as base and integrate them seamlessly into the design.
 ${prompt}`;
@@ -94,7 +107,7 @@ ${prompt}`;
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-image-preview',
