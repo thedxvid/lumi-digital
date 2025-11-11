@@ -80,9 +80,9 @@ export function CarouselConfigForm({ onGenerate, loading }: CarouselConfigFormPr
   const canGenerate = title.trim().length > 0 && slides.some(s => s.content.trim().length > 0) && !loading;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 w-full overflow-x-hidden">
       {/* General Settings */}
-      <div className="space-y-6 rounded-lg border border-border bg-card p-6">
+      <div className="space-y-6 rounded-lg border border-border bg-card p-6 overflow-x-hidden">
         <h3 className="text-lg font-semibold">Configurações Gerais</h3>
         
         <div className="space-y-2">
@@ -112,7 +112,7 @@ export function CarouselConfigForm({ onGenerate, loading }: CarouselConfigFormPr
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
           <div className="space-y-2">
             <Label htmlFor="theme">Tema/Estilo Visual</Label>
             <Select value={theme} onValueChange={setTheme} disabled={loading}>

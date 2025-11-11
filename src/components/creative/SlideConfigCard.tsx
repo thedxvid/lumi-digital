@@ -74,7 +74,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled }: Slid
 
             <div className="space-y-2">
               <Label>Elementos Visuais</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 min-w-0">
                 {visualElementOptions.map((option) => (
                   <div key={option.id} className="flex items-center space-x-2">
                     <Checkbox
