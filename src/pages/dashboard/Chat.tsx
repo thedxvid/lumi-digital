@@ -172,7 +172,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="h-full flex flex-row">
       {/* Chat History Sidebar - Mobile */}
       {showHistory && (
         <div className="fixed inset-0 z-50 bg-background md:hidden">
