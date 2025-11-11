@@ -65,6 +65,8 @@ serve(async (req) => {
     for (let i = 1; i <= imageCount; i++) {
       const imagePrompt = `${prompt} - Imagem ${i} de ${imageCount}. Crie uma imagem sequencial que faça parte de um carrossel coeso para redes sociais.`;
 
+      console.log(`Requesting image ${i}/${imageCount}...`);
+
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -103,15 +105,31 @@ serve(async (req) => {
       }
 
       const data = await response.json();
+      console.log(`Response structure for image ${i}:`, JSON.stringify({
+        hasChoices: !!data.choices,
+        choicesLength: data.choices?.length,
+        hasMessage: !!data.choices?.[0]?.message,
+        hasImages: !!data.choices?.[0]?.message?.images,
+        imagesLength: data.choices?.[0]?.message?.images?.length,
+        hasImageUrl: !!data.choices?.[0]?.message?.images?.[0]?.image_url,
+        hasUrl: !!data.choices?.[0]?.message?.images?.[0]?.image_url?.url
+      }));
+
       const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       const description = data.choices?.[0]?.message?.content || `Imagem ${i}`;
 
       if (!imageUrl) {
-        throw new Error(`No image URL returned for image ${i}`);
+        console.error(`Full response data for image ${i}:`, JSON.stringify(data, null, 2));
+        throw new Error(`No image URL returned for image ${i}. Response structure was unexpected.`);
       }
 
       images.push({ url: imageUrl, description });
-      console.log(`Generated image ${i}/${imageCount}`);
+      console.log(`✅ Generated image ${i}/${imageCount} successfully`);
+      
+      // Add small delay between requests to avoid rate limiting
+      if (i < imageCount) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
     // Save to database
