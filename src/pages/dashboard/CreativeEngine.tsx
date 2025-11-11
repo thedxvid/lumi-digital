@@ -6,7 +6,6 @@ import { ImageUploader } from "@/components/creative/ImageUploader";
 import { CreativeHistoryGallery } from "@/components/creative/CreativeHistoryGallery";
 import { CreativeConfigForm, type CreativeConfig } from "@/components/creative/CreativeConfigForm";
 import { CreativeResultModal } from "@/components/creative/CreativeResultModal";
-import { CreativePresetSelector } from "@/components/creative/CreativePresetSelector";
 
 export default function CreativeEngine() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -52,10 +51,6 @@ Format: ${formConfig.format}`;
     await generateCreative(uploadedImages, fullPrompt, formConfig);
   };
 
-  const handleSelectPreset = (presetConfig: Partial<CreativeConfig>) => {
-    setConfig(presetConfig as CreativeConfig);
-  };
-
   const handleRegenerate = () => {
     if (config) {
       handleGenerate(config);
@@ -80,9 +75,6 @@ Format: ${formConfig.format}`;
             </TabsList>
 
             <TabsContent value="create" className="space-y-6 mt-6">
-              {/* Templates Prontos */}
-              <CreativePresetSelector onSelectPreset={handleSelectPreset} />
-
               {/* Upload de Imagens */}
               <Card>
                 <CardHeader>
