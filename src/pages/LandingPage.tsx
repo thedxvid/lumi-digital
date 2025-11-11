@@ -146,9 +146,9 @@ const LandingPage = () => {
     answer: "Sim! Já ajudamos pessoas de mais de 50 nichos diferentes: saúde, fitness, culinária, negócios, relacionamentos, finanças e muito mais."
   }];
   return <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* HEADER GLASSMORPHISM ARREDONDADO E STICKY */}
-      <header className={`fixed top-4 left-4 right-4 z-50 transition-all duration-500 ease-out ${isScrolled ? 'header-glass-scrolled' : 'header-glass'} rounded-3xl mx-auto max-w-7xl`}>
-        <div className="px-6 py-4">
+      {/* HEADER COMPLETO */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-background/95 backdrop-blur-sm border-b border-border/50' : 'bg-background/80'}`}>
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo apenas "Lumi" sem subtítulo */}
             <LumiLogo size="medium" variant="compact" animated className="hover:scale-105 transition-transform duration-300" />
@@ -198,7 +198,7 @@ const LandingPage = () => {
       </header>
 
       {/* HERO SECTION COM FALLING PATTERN */}
-      <section className="relative py-20 md:py-32 px-4 overflow-hidden">
+      <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 px-4 overflow-hidden">
         {/* Falling Pattern Background */}
         <div className="absolute inset-0 z-0">
           <FallingPattern 
@@ -214,7 +214,7 @@ const LandingPage = () => {
         {/* Gradiente overlay sutil para melhor legibilidade */}
         <div className="absolute inset-0 z-[1] bg-gradient-to-b from-background/30 via-transparent to-background/50"></div>
 
-        <div className="container mx-auto text-center relative z-10 mt-16">
+        <div className="container mx-auto text-center relative z-10">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-8 leading-tight">
             Transforme
             <span className="block bg-gradient-to-r from-lumi-gold via-amber-500 to-lumi-gold-dark bg-clip-text text-transparent">
