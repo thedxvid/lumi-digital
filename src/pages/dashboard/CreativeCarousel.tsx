@@ -1,31 +1,25 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useCarousel } from '@/hooks/useCarousel';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CarouselGallery } from '@/components/creative/CarouselGallery';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { CarouselConfigForm, type CarouselConfig } from '@/components/creative/CarouselConfigForm';
+import { CarouselResultModal } from '@/components/creative/CarouselResultModal';
+import { useCarousel } from '@/hooks/useCarousel';
 
 export default function CreativeCarousel() {
-  const [prompt, setPrompt] = useState('');
-  const [imageCount, setImageCount] = useState(3);
   const { generateCarousel, loading } = useCarousel();
+  const [resultModalOpen, setResultModalOpen] = useState(false);
+  const [lastGeneratedCarousel, setLastGeneratedCarousel] = useState<any>(null);
 
-  const handleGenerate = async () => {
-    console.log('🎨 handleGenerate called', { prompt, imageCount });
-    if (!prompt.trim()) {
-      console.log('❌ No prompt provided');
-      return;
-    }
+  const handleGenerate = async (config: CarouselConfig) => {
+    console.log('🎨 handleGenerate called', config);
+    const result = await generateCarousel(config);
     
-    console.log('✅ Calling generateCarousel...');
-    await generateCarousel(prompt, imageCount);
-    setPrompt('');
+    if (result) {
+      setLastGeneratedCarousel(result);
+      setResultModalOpen(true);
+    }
   };
-
-  const canGenerate = prompt.trim().length > 0 && !loading;
 
   return (
     <div className="container max-w-6xl mx-auto space-y-6">
@@ -42,68 +36,27 @@ export default function CreativeCarousel() {
       <Tabs defaultValue="create" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="create">Criar Carrossel</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
+          <TabsTrigger value="results">Resultados</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="create" className="space-y-6 mt-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="prompt">
-                Descreva seu carrossel
-              </Label>
-              <Textarea
-                id="prompt"
-                placeholder="Ex: Carrossel sobre os benefícios do exercício físico, com estilo moderno e cores vibrantes..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="min-h-[120px] resize-none"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label>
-                Número de imagens: {imageCount}
-              </Label>
-              <Slider
-                value={[imageCount]}
-                onValueChange={([value]) => setImageCount(value)}
-                min={2}
-                max={10}
-                step={1}
-                disabled={loading}
-                className="w-full"
-              />
-              <p className="text-sm text-muted-foreground">
-                Escolha entre 2 e 10 imagens para seu carrossel
-              </p>
-            </div>
-
-            <Button 
-              onClick={handleGenerate}
-              disabled={!canGenerate}
-              className="w-full"
-              size="lg"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Gerando {imageCount} imagens...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Gerar Carrossel
-                </>
-              )}
-            </Button>
-          </div>
+        <TabsContent value="create" className="mt-6">
+          <CarouselConfigForm onGenerate={handleGenerate} loading={loading} />
         </TabsContent>
 
-        <TabsContent value="history" className="mt-6">
+        <TabsContent value="results" className="mt-6">
           <CarouselGallery />
         </TabsContent>
       </Tabs>
+
+      <CarouselResultModal
+        open={resultModalOpen}
+        onOpenChange={setResultModalOpen}
+        carousel={lastGeneratedCarousel}
+        onRegenerate={() => {
+          setResultModalOpen(false);
+          // Could implement regeneration logic here
+        }}
+      />
     </div>
   );
 }

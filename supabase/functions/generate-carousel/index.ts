@@ -6,9 +6,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface SlideConfig {
+  title: string;
+  content: string;
+  visualElements: string[];
+  highlight?: string;
+}
+
 interface GenerateCarouselRequest {
-  prompt: string;
-  imageCount: number; // Number of images in carousel (2-10)
+  title: string;
+  imageCount: number;
+  theme: string;
+  colorPalette: string;
+  tone: string;
+  callToAction?: string;
+  slides: SlideConfig[];
 }
 
 serve(async (req) => {
@@ -40,11 +52,19 @@ serve(async (req) => {
       });
     }
 
-    const { prompt, imageCount = 3 }: GenerateCarouselRequest = await req.json();
+    const { 
+      title,
+      imageCount = 3,
+      theme,
+      colorPalette,
+      tone,
+      callToAction,
+      slides
+    }: GenerateCarouselRequest = await req.json();
 
-    if (!prompt || imageCount < 2 || imageCount > 10) {
+    if (!title || imageCount < 2 || imageCount > 10 || !slides || slides.length !== imageCount) {
       return new Response(
-        JSON.stringify({ error: "Invalid request. Prompt required and imageCount must be 2-10" }),
+        JSON.stringify({ error: "Invalid request. Title required, imageCount must be 2-10, and slides must match imageCount" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -57,15 +77,68 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Generating carousel with ${imageCount} images for prompt: ${prompt}`);
+    console.log(`Generating carousel "${title}" with ${imageCount} images`);
+
+    // Theme descriptions for better prompts
+    const themeDescriptions: Record<string, string> = {
+      minimalist: "clean, simple, lots of whitespace, minimalist design",
+      vibrant: "colorful, energetic, dynamic, bold colors",
+      professional: "corporate, clean, business-like, professional aesthetic",
+      modern: "contemporary, sleek, modern design trends",
+      creative: "artistic, unique, creative composition",
+      elegant: "sophisticated, refined, elegant styling"
+    };
+
+    const paletteDescriptions: Record<string, string> = {
+      warm: "warm color palette (reds, oranges, yellows)",
+      cool: "cool color palette (blues, greens, purples)",
+      pastel: "soft pastel colors",
+      "high-contrast": "high contrast colors",
+      monochrome: "monochromatic color scheme",
+      vibrant: "vibrant gradient colors"
+    };
+
+    const toneDescriptions: Record<string, string> = {
+      professional: "professional and formal tone",
+      casual: "casual and friendly tone",
+      motivational: "motivational and inspiring tone",
+      educational: "educational and informative tone",
+      sales: "persuasive sales-focused tone",
+      inspirational: "inspirational and uplifting tone"
+    };
 
     // Generate multiple images sequentially
     const images: { url: string; description: string }[] = [];
 
-    for (let i = 1; i <= imageCount; i++) {
-      const imagePrompt = `Create image ${i} of ${imageCount} for carousel: ${prompt}`;
+    for (let i = 0; i < imageCount; i++) {
+      const slide = slides[i];
+      
+      // Build comprehensive prompt for each slide
+      const visualElementsText = slide.visualElements.length > 0 
+        ? `Include visual elements: ${slide.visualElements.join(", ")}.`
+        : "";
+      
+      const highlightText = slide.highlight 
+        ? `Highlight this text prominently: "${slide.highlight}".`
+        : "";
+      
+      const ctaText = callToAction 
+        ? `Include call-to-action button: "${callToAction}".`
+        : "";
 
-      console.log(`Requesting image ${i}/${imageCount}...`);
+      const imagePrompt = `Create a ${themeDescriptions[theme] || "modern"} carousel slide image (slide ${i + 1} of ${imageCount}) with ${paletteDescriptions[colorPalette] || "vibrant colors"}.
+
+Title: "${slide.title}"
+Content: ${slide.content}
+${visualElementsText}
+${highlightText}
+${ctaText}
+
+Style: ${themeDescriptions[theme] || "modern"}
+Tone: ${toneDescriptions[tone] || "professional"}
+Make it visually appealing for Instagram carousel format, square aspect ratio (1:1), ${theme} aesthetic.`;
+
+      console.log(`Requesting image ${i + 1}/${imageCount}...`);
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -124,10 +197,10 @@ serve(async (req) => {
       }
 
       images.push({ url: imageUrl, description });
-      console.log(`✅ Generated image ${i}/${imageCount} successfully`);
+      console.log(`✅ Generated image ${i + 1}/${imageCount} successfully`);
       
       // Add small delay between requests to avoid rate limiting
-      if (i < imageCount) {
+      if (i < imageCount - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
@@ -137,9 +210,15 @@ serve(async (req) => {
       .from("carousel_history")
       .insert({
         user_id: user.id,
-        prompt,
+        title,
+        prompt: slides.map(s => s.content).join(' | '),
         image_count: imageCount,
         images,
+        theme,
+        color_palette: colorPalette,
+        tone,
+        call_to_action: callToAction,
+        slides_config: slides,
       })
       .select()
       .single();

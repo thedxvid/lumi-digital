@@ -46,27 +46,45 @@ export type Database = {
       }
       carousel_history: {
         Row: {
+          call_to_action: string | null
+          color_palette: string | null
           created_at: string
           id: string
           image_count: number
           images: Json
           prompt: string
+          slides_config: Json | null
+          theme: string | null
+          title: string | null
+          tone: string | null
           user_id: string
         }
         Insert: {
+          call_to_action?: string | null
+          color_palette?: string | null
           created_at?: string
           id?: string
           image_count?: number
           images: Json
           prompt: string
+          slides_config?: Json | null
+          theme?: string | null
+          title?: string | null
+          tone?: string | null
           user_id: string
         }
         Update: {
+          call_to_action?: string | null
+          color_palette?: string | null
           created_at?: string
           id?: string
           image_count?: number
           images?: Json
           prompt?: string
+          slides_config?: Json | null
+          theme?: string | null
+          title?: string | null
+          tone?: string | null
           user_id?: string
         }
         Relationships: []

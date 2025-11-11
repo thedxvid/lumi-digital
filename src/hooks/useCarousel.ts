@@ -14,15 +14,34 @@ export interface CarouselHistoryItem {
   image_count: number;
   images: CarouselImage[];
   created_at: string;
+  title?: string;
+  theme?: string;
+  color_palette?: string;
+  tone?: string;
+  call_to_action?: string;
+  slides_config?: any;
 }
 
 export function useCarousel() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<CarouselHistoryItem[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [totalSlides, setTotalSlides] = useState(0);
 
-  const generateCarousel = async (prompt: string, imageCount: number): Promise<CarouselHistoryItem | null> => {
-    console.log('🚀 generateCarousel started', { prompt, imageCount });
+  const generateCarousel = async (config: {
+    title: string;
+    imageCount: number;
+    theme: string;
+    colorPalette: string;
+    tone: string;
+    callToAction?: string;
+    slides: any[];
+  }): Promise<CarouselHistoryItem | null> => {
+    console.log('🚀 generateCarousel started', config);
     setLoading(true);
+    setCurrentSlide(0);
+    setTotalSlides(config.imageCount);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       console.log('🔐 Session check:', session ? 'authenticated' : 'not authenticated');
@@ -32,21 +51,23 @@ export function useCarousel() {
         return null;
       }
 
-      if (!prompt.trim()) {
-        toast.error('Por favor, descreva o que deseja no carrossel');
+      if (!config.title.trim()) {
+        toast.error('Por favor, dê um título ao carrossel');
         return null;
       }
 
-      if (imageCount < 2 || imageCount > 10) {
+      if (config.imageCount < 2 || config.imageCount > 10) {
         toast.error('O carrossel deve ter entre 2 e 10 imagens');
         return null;
       }
 
-      toast.info(`Gerando ${imageCount} imagens para seu carrossel...`);
+      toast.info(`Gerando ${config.imageCount} slides para seu carrossel...`, {
+        duration: 5000,
+      });
       console.log('📡 Calling edge function...');
 
       const { data, error } = await supabase.functions.invoke('generate-carousel', {
-        body: { prompt, imageCount }
+        body: config
       });
 
       console.log('📥 Edge function response:', { data, error });
@@ -120,5 +141,7 @@ export function useCarousel() {
     deleteCarousel,
     loading,
     history,
+    currentSlide,
+    totalSlides,
   };
 }
