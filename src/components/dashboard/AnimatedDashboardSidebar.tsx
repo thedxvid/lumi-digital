@@ -88,7 +88,7 @@ export function AnimatedDashboardSidebar() {
   };
 
   return (
-    <div className="relative h-full">
+    <div className="relative">
       {/* Botão discreto para toggle */}
       <Button
         variant="ghost"
@@ -104,7 +104,7 @@ export function AnimatedDashboardSidebar() {
       </Button>
 
       <Sidebar open={open} setOpen={setOpen} animate={false}>
-        <SidebarBody className="flex flex-col h-full justify-between gap-0 py-4">
+        <SidebarBody className="flex flex-col justify-between gap-0 py-4">
           <div className="flex flex-col overflow-x-hidden overflow-y-auto flex-1 min-h-0">
             {open ? <Logo /> : <LogoIcon />}
             
