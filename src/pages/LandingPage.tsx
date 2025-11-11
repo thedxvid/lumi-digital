@@ -234,22 +234,16 @@ const LandingPage = () => {
 
       {/* DASHBOARD PREVIEW SECTION - MOBILE OTIMIZADO */}
       <section className="relative -mt-8 md:-mt-16 px-4 mb-16">
-        <div className="container mx-auto">
-          <div className="relative max-w-7xl mx-auto">
-            <div className="relative">
-              {/* Glow effect background */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-lumi-gold/20 via-transparent to-lumi-blue/20 rounded-3xl blur-2xl opacity-60 animate-pulse"></div>
-              
-              <div className="relative bg-gradient-to-r from-muted/40 to-muted/20 rounded-3xl p-3 sm:p-6 md:p-8 shadow-2xl border border-lumi-gold/10 backdrop-blur-sm overflow-hidden">
-                <img src={mockupLumi} alt="Dashboard LUMI - Interface da plataforma" className="w-full h-auto rounded-2xl shadow-2xl shadow-black/20 hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] animate-fade-in object-contain" style={{
-                filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15))',
-                transform: 'perspective(1000px) rotateY(-2deg)'
-              }} loading="eager" onLoad={e => {
-                e.currentTarget.style.transform = 'perspective(1000px) rotateY(0deg)';
-              }} />
-              </div>
-            </div>
-          </div>
+        <div className="container mx-auto max-w-7xl">
+          <img 
+            src={mockupLumi} 
+            alt="Dashboard LUMI - Interface da plataforma" 
+            className="w-full h-auto rounded-2xl shadow-2xl shadow-black/20 hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] animate-fade-in object-contain" 
+            style={{
+              filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15))',
+            }} 
+            loading="eager"
+          />
         </div>
       </section>
 
