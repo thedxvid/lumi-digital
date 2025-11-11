@@ -12,7 +12,7 @@ const DashboardLayout = () => {
       <MobileHeader />
       
       <div className={cn(
-        "flex flex-col md:flex-row bg-background w-full flex-1 min-h-screen"
+        "flex flex-col md:flex-row bg-background w-full h-screen overflow-hidden"
       )}>
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
@@ -20,8 +20,8 @@ const DashboardLayout = () => {
         </div>
         
         {/* Main Content */}
-        <main className="flex-1 w-full">
-          <div className="p-4 md:p-6 lg:p-10 pt-16 pb-20 md:pt-6 md:pb-6">
+        <main className="flex-1 w-full overflow-y-auto">
+          <div className="h-full p-4 md:p-6 lg:p-10 pt-16 pb-16 md:pt-6 md:pb-6">
             <Outlet />
           </div>
         </main>
