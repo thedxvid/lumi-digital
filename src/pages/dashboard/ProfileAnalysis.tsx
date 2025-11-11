@@ -12,6 +12,7 @@ import type { ProfileAnalysisInput } from '@/types/profile';
 
 export default function ProfileAnalysis() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [currentPlatform, setCurrentPlatform] = useState<string>('');
   const {
     loading,
     analyzeProfile,
@@ -34,6 +35,7 @@ export default function ProfileAnalysis() {
       image: profileImage,
     };
 
+    setCurrentPlatform(formData.platform);
     await analyzeProfile(input);
   };
 
@@ -143,6 +145,8 @@ export default function ProfileAnalysis() {
               <ProfileAnalysisResult
                 result={currentResult}
                 onClose={() => setResultModalOpen(false)}
+                platform={currentPlatform}
+                profileImage={profileImage || undefined}
               />
             )}
           </div>

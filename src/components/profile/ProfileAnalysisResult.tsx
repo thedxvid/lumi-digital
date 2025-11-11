@@ -13,14 +13,18 @@ import {
   Download,
   Sparkles
 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { ProfileAnalysisOutput } from '@/types/profile';
+import { exportProfileAnalysisToPDF } from '@/utils/profilePdfExporter';
 
 interface ProfileAnalysisResultProps {
   result: ProfileAnalysisOutput;
   onClose?: () => void;
+  platform?: string;
+  profileImage?: string;
 }
 
-export function ProfileAnalysisResult({ result, onClose }: ProfileAnalysisResultProps) {
+export function ProfileAnalysisResult({ result, onClose, platform, profileImage }: ProfileAnalysisResultProps) {
   const getImpactColor = (impacto: string) => {
     switch (impacto) {
       case 'alto': return 'destructive';
@@ -36,6 +40,16 @@ export function ProfileAnalysisResult({ result, onClose }: ProfileAnalysisResult
       case 'medio': return 'Médio Impacto';
       case 'baixo': return 'Baixo Impacto';
       default: return impacto;
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      exportProfileAnalysisToPDF(result, platform, profileImage);
+      toast.success('PDF exportado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast.error('Erro ao exportar PDF. Tente novamente.');
     }
   };
 
@@ -254,7 +268,7 @@ export function ProfileAnalysisResult({ result, onClose }: ProfileAnalysisResult
           <Button variant="outline" className="flex-1" onClick={onClose}>
             Fechar
           </Button>
-          <Button variant="default" className="flex-1">
+          <Button variant="default" className="flex-1" onClick={handleExportPDF}>
             <Download className="h-4 w-4 mr-2" />
             Exportar PDF
           </Button>
