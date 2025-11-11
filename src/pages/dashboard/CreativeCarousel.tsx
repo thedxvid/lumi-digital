@@ -14,8 +14,13 @@ export default function CreativeCarousel() {
   const { generateCarousel, loading } = useCarousel();
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+    console.log('🎨 handleGenerate called', { prompt, imageCount });
+    if (!prompt.trim()) {
+      console.log('❌ No prompt provided');
+      return;
+    }
     
+    console.log('✅ Calling generateCarousel...');
     await generateCarousel(prompt, imageCount);
     setPrompt('');
   };

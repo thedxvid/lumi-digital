@@ -21,9 +21,11 @@ export function useCarousel() {
   const [history, setHistory] = useState<CarouselHistoryItem[]>([]);
 
   const generateCarousel = async (prompt: string, imageCount: number): Promise<CarouselHistoryItem | null> => {
+    console.log('🚀 generateCarousel started', { prompt, imageCount });
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 Session check:', session ? 'authenticated' : 'not authenticated');
       
       if (!session) {
         toast.error('Você precisa estar autenticado');
@@ -41,10 +43,13 @@ export function useCarousel() {
       }
 
       toast.info(`Gerando ${imageCount} imagens para seu carrossel...`);
+      console.log('📡 Calling edge function...');
 
       const { data, error } = await supabase.functions.invoke('generate-carousel', {
         body: { prompt, imageCount }
       });
+
+      console.log('📥 Edge function response:', { data, error });
 
       if (error) throw error;
 
@@ -57,7 +62,7 @@ export function useCarousel() {
       
       return data.carousel;
     } catch (error: any) {
-      console.error('Error generating carousel:', error);
+      console.error('❌ Error generating carousel:', error);
       
       if (error.message?.includes('429')) {
         toast.error('Limite de requisições atingido. Tente novamente em alguns instantes.');

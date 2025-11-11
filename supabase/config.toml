@@ -1,1 +1,4 @@
 project_id = "mvlhtcdurcfiammzcvfv"
+
+[functions.generate-carousel]
+verify_jwt = true
