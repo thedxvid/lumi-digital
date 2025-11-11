@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { SettingsDialog } from './SettingsDialog';
 import { useNavigate } from 'react-router-dom';
+import { UsageLimitBar } from './UsageLimitBar';
 
 interface DashboardHeaderProps {
   onToggleSidebar: () => void;
@@ -45,6 +46,9 @@ export function DashboardHeader({ onToggleSidebar, sidebarOpen }: DashboardHeade
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            {/* Usage Limit Bar */}
+            <UsageLimitBar />
+
             {/* Admin Panel Button - só aparece para admins */}
             {isAdmin && (
               <Button 

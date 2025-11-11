@@ -8,6 +8,7 @@ import {
 import { RecentResultsWidget } from '@/components/sales/RecentResultsWidget';
 import { SmartDashboard } from '@/components/dashboard/SmartDashboard';
 import { GoalsTracker } from '@/components/dashboard/GoalsTracker';
+import UsageDashboard from '@/components/dashboard/UsageDashboard';
 
 const Overview = () => {
   const navigate = useNavigate();
@@ -95,6 +96,12 @@ const Overview = () => {
 
         {/* Metas do Usuário */}
         <GoalsTracker />
+
+        {/* Seu Uso do Plano */}
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-6">Seu Uso do Plano</h2>
+          <UsageDashboard />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

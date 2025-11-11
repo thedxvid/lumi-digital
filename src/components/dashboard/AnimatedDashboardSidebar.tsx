@@ -11,9 +11,7 @@ import {
   ChevronRight,
   Images,
   Search,
-  Video,
-  CreditCard,
-  TrendingUp
+  Video
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,20 +74,6 @@ export function AnimatedDashboardSidebar() {
       href: "/app/history",
       icon: (
         <History className="text-foreground h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Planos",
-      href: "/pricing",
-      icon: (
-        <CreditCard className="text-foreground h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Meu Uso",
-      href: "/app/usage",
-      icon: (
-        <TrendingUp className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {

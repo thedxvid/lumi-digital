@@ -340,98 +340,183 @@ const LandingPage = () => {
       </section>
 
       {/* PRICING */}
-      <section className="py-12 sm:py-16 md:py-24 px-4 bg-gradient-to-br from-muted/50 to-background">
+      <section id="pricing" className="py-12 sm:py-16 md:py-24 px-4 bg-gradient-to-br from-muted/50 to-background">
         <div className="container mx-auto">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Economize 89% vs. Contratar Especialistas
+              Escolha Seu Plano
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 max-w-4xl mx-auto mb-8 sm:mb-12">
-              <Card className="p-4 sm:p-6 text-center">
-                <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Consultor de Marketing</h3>
-                <p className="text-lg sm:text-2xl font-bold text-muted-foreground line-through">R$ 2.500/mês</p>
-              </Card>
-              <Card className="p-4 sm:p-6 text-center">
-                <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Designer + Dev</h3>
-                <p className="text-lg sm:text-2xl font-bold text-muted-foreground line-through">R$ 5.000/projeto</p>
-              </Card>
-              <Card className="p-4 sm:p-6 text-center">
-                <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">Curso Online</h3>
-                <p className="text-lg sm:text-2xl font-bold text-muted-foreground line-through">R$ 1.997</p>
-              </Card>
-            </div>
-            <p className="text-lg sm:text-xl text-muted-foreground px-4">
-              LUMI inclui <span className="text-lumi-gold-dark font-semibold">tudo isso e muito mais</span> por uma fração do preço
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8">
+              Transforme seu conhecimento em renda digital com a LUMI
             </p>
           </div>
           
-          {/* Mobile-first pricing card */}
-          <div className="max-w-md mx-auto">
-            <div className="relative">
-              {/* Glow effect background */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-lumi-gold via-lumi-gold-light to-lumi-gold rounded-3xl blur opacity-20 animate-pulse"></div>
-              
-              <Card className="relative bg-background border-2 border-lumi-gold/20 rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl hover:shadow-[0_0_40px_rgba(249,168,37,0.3)] transition-all duration-500">
-                {/* Limited offer badge */}
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full animate-pulse shadow-lg text-xs">
-                    🔥 OFERTA LIMITADA
-                  </Badge>
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Plano Básico */}
+            <Card className="relative border-2 border-border hover:border-lumi-gold/50 transition-all duration-300 p-6 sm:p-8">
+              <div className="text-center space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground mb-2">Plano Básico</h3>
+                  <p className="text-sm text-muted-foreground">Perfeito para começar sua jornada</p>
                 </div>
 
-                <div className="text-center space-y-4 sm:space-y-6 mt-2">
-                  {/* Pricing */}
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-3xl font-bold text-lumi-gold">R$ 97</span>
+                      <span className="text-muted-foreground">/mês</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Plano mensal</p>
+                  </div>
+
                   <div className="space-y-2">
-                    <div className="flex items-center justify-center gap-2 sm:gap-3">
-                      <span className="text-lg sm:text-2xl text-muted-foreground line-through">
-                        R$ 497
-                      </span>
-                      <span className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-lumi-gold to-lumi-gold-dark bg-clip-text text-transparent">
-                        R$ 297
-                      </span>
+                    <div className="p-3 bg-muted/30 rounded-lg text-left">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-semibold">3 meses</span>
+                        <Badge variant="secondary" className="text-xs">Economize 21%</Badge>
+                      </div>
+                      <p className="text-xl font-bold text-lumi-gold">R$ 77/mês</p>
+                      <p className="text-xs text-muted-foreground">Total: R$ 231</p>
                     </div>
-                    <p className="text-base sm:text-lg md:text-xl text-lumi-gold-dark font-semibold">
-                      ou 12x de R$ 30,72
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      sem juros no cartão
-                    </p>
-                  </div>
 
-                  {/* CTA Button */}
-                  <Button onClick={handleGetStarted} size="lg" className="w-full bg-gradient-to-r from-lumi-gold to-lumi-gold-dark hover:from-lumi-gold-dark hover:to-lumi-gold text-black text-sm sm:text-base md:text-lg px-4 sm:px-6 md:px-8 py-3 sm:py-4 rounded-full shadow-lg hover:shadow-[0_0_20px_rgba(249,168,37,0.5)] transition-all duration-300 hover:scale-105 min-h-[48px]">
-                    Garantir Meu Acesso Agora
-                  </Button>
-
-                  {/* Benefits */}
-                  <div className="space-y-3 text-left">
-                    <h4 className="text-sm sm:text-base md:text-lg font-semibold text-center text-foreground mb-4">
-                      ✨ O que você vai receber:
-                    </h4>
-                    {["Acesso vitalício à LUMI", "Mais de 50 módulos especializados", "Suporte personalizado", "Atualizações gratuitas", "Comunidade exclusiva", "Templates prontos"].map((benefit, index) => <div key={index} className="flex items-center gap-3">
-                        <div className="w-4 h-4 sm:w-5 sm:h-5 bg-lumi-success rounded-full flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
-                        </div>
-                        <span className="text-xs sm:text-sm md:text-base text-foreground">{benefit}</span>
-                      </div>)}
-                  </div>
-
-                  {/* Trust indicators */}
-                  <div className="pt-4 border-t border-border">
-                    <div className="grid grid-cols-2 gap-2 sm:gap-4 text-center">
-                      <div className="space-y-1">
-                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-lumi-gold mx-auto" />
-                        <p className="text-xs text-muted-foreground">Acesso imediato</p>
+                    <div className="p-3 bg-lumi-gold/5 rounded-lg border border-lumi-gold/20 text-left">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-semibold">6 meses</span>
+                        <Badge className="bg-lumi-gold text-black text-xs">Economize 31%</Badge>
                       </div>
-                      <div className="space-y-1">
-                        <Users className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-lumi-gold mx-auto" />
-                        <p className="text-xs text-muted-foreground">Suporte vitalício</p>
-                      </div>
+                      <p className="text-xl font-bold text-lumi-gold">R$ 67/mês</p>
+                      <p className="text-xs text-muted-foreground">Total: R$ 402</p>
                     </div>
                   </div>
                 </div>
-              </Card>
-            </div>
+
+                <div className="space-y-3 text-left pt-4 border-t border-border">
+                  {[
+                    'Chat ilimitado com IA',
+                    '10 imagens criativas/dia',
+                    '300 imagens/mês',
+                    '5 análises de perfil/dia',
+                    '150 análises/mês',
+                    '3 carrosséis/mês',
+                    'Suporte prioritário',
+                  ].map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-lumi-gold flex-shrink-0" />
+                      <span className="text-sm text-foreground">{feature}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2 opacity-50">
+                    <span className="text-sm text-muted-foreground line-through">Geração de vídeos</span>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleGetStarted}
+                  className="w-full bg-gradient-to-r from-muted to-muted/80 hover:from-lumi-gold/20 hover:to-lumi-gold/10 text-foreground"
+                >
+                  Começar Agora
+                </Button>
+              </div>
+            </Card>
+
+            {/* Plano PRO */}
+            <Card className="relative border-2 border-lumi-gold/50 hover:border-lumi-gold transition-all duration-300 p-6 sm:p-8 shadow-lg shadow-lumi-gold/10">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-gradient-to-r from-lumi-gold to-amber-500 text-black px-4 py-1 text-sm font-semibold">
+                  ⭐ MAIS POPULAR
+                </Badge>
+              </div>
+
+              <div className="text-center space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-lumi-gold mb-2">Plano PRO</h3>
+                  <p className="text-sm text-muted-foreground">Para profissionais que precisam de mais poder</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-lumi-gold/10 rounded-lg border border-lumi-gold/30">
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-3xl font-bold text-lumi-gold">R$ 197</span>
+                      <span className="text-muted-foreground">/mês</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Plano mensal</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="p-3 bg-lumi-gold/5 rounded-lg text-left border border-lumi-gold/20">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-semibold">3 meses</span>
+                        <Badge className="bg-lumi-gold/20 text-lumi-gold-dark text-xs">Economize 20%</Badge>
+                      </div>
+                      <p className="text-xl font-bold text-lumi-gold">R$ 157/mês</p>
+                      <p className="text-xs text-muted-foreground">Total: R$ 471</p>
+                    </div>
+
+                    <div className="p-3 bg-lumi-gold/10 rounded-lg border-2 border-lumi-gold/40 text-left">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-semibold">6 meses</span>
+                        <Badge className="bg-gradient-to-r from-lumi-gold to-amber-500 text-black text-xs">Economize 30%</Badge>
+                      </div>
+                      <p className="text-xl font-bold text-lumi-gold">R$ 137/mês</p>
+                      <p className="text-xs text-muted-foreground">Total: R$ 822</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 text-left pt-4 border-t border-lumi-gold/20">
+                  {[
+                    'Tudo do Plano Básico',
+                    '30 imagens criativas/dia',
+                    '900 imagens/mês',
+                    '10 análises de perfil/dia',
+                    '300 análises/mês',
+                    '10 carrosséis/mês',
+                    '15 vídeos/mês (até 8s, 1080p)',
+                    'Suporte VIP',
+                    'Acesso antecipado',
+                  ].map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-lumi-gold flex-shrink-0" />
+                      <span className="text-sm text-foreground">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button 
+                  onClick={handleGetStarted}
+                  className="w-full bg-gradient-to-r from-lumi-gold to-amber-500 hover:from-amber-500 hover:to-lumi-gold text-black font-semibold shadow-lg shadow-lumi-gold/30"
+                >
+                  Começar com PRO
+                </Button>
+              </div>
+            </Card>
+          </div>
+
+          {/* Add-ons Info */}
+          <div className="mt-12 text-center">
+            <Card className="max-w-2xl mx-auto p-6 bg-muted/30">
+              <h4 className="font-semibold text-lg mb-4 text-foreground">
+                🎬 Precisa de mais vídeos?
+              </h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Usuários PRO podem comprar pacotes extras de vídeos:
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <div className="text-center">
+                  <p className="font-bold text-lumi-gold">+10 vídeos</p>
+                  <p className="text-xs text-muted-foreground">R$ 59,90</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-lumi-gold">+20 vídeos</p>
+                  <p className="text-xs text-muted-foreground">R$ 99,90</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-lumi-gold">+30 vídeos</p>
+                  <p className="text-xs text-muted-foreground">R$ 129,90</p>
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
       </section>

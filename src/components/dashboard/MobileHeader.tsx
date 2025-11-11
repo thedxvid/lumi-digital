@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
+import { MobileUsageLimitBar } from "./UsageLimitBar";
 
 export function MobileHeader() {
   const [open, setOpen] = React.useState(false);
@@ -44,6 +45,7 @@ export function MobileHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          <MobileUsageLimitBar />
           <ThemeToggle />
           <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
