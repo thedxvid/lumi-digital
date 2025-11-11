@@ -20,7 +20,7 @@ const DashboardLayout = () => {
         </div>
         
         {/* Main Content */}
-        <main className="flex-1 w-full pt-14 pb-14 md:pt-0 md:pb-0">
+        <main className="flex-1 w-full pt-14 pb-14 md:pt-0 md:pb-0 md:pl-[72px]">
           <Outlet />
         </main>
       </div>
