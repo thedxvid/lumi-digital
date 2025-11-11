@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Images,
-  Search
+  Search,
+  Video
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -59,6 +60,13 @@ export function AnimatedDashboardSidebar() {
       href: "/app/profile-analysis",
       icon: (
         <Search className="text-foreground h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Gerador de Vídeos",
+      href: "/app/video-generator",
+      icon: (
+        <Video className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {

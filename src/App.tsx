@@ -13,6 +13,7 @@ import History from '@/pages/dashboard/History';
 import CreativeEngine from '@/pages/dashboard/CreativeEngine';
 import CreativeCarousel from '@/pages/dashboard/CreativeCarousel';
 import ProfileAnalysis from '@/pages/dashboard/ProfileAnalysis';
+import VideoGenerator from '@/pages/dashboard/VideoGenerator';
 import Settings from '@/pages/dashboard/Settings';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -42,6 +43,7 @@ function App() {
             <Route path="creative-engine" element={<CreativeEngine />} />
             <Route path="carousel" element={<CreativeCarousel />} />
             <Route path="profile-analysis" element={<ProfileAnalysis />} />
+            <Route path="video-generator" element={<VideoGenerator />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

@@ -734,6 +734,51 @@ export type Database = {
         }
         Relationships: []
       }
+      video_history: {
+        Row: {
+          aspect_ratio: string | null
+          created_at: string
+          duration: string | null
+          has_audio: boolean | null
+          id: string
+          is_favorite: boolean | null
+          prompt: string
+          resolution: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          created_at?: string
+          duration?: string | null
+          has_audio?: boolean | null
+          id?: string
+          is_favorite?: boolean | null
+          prompt: string
+          resolution?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          aspect_ratio?: string | null
+          created_at?: string
+          duration?: string | null
+          has_audio?: boolean | null
+          id?: string
+          is_favorite?: boolean | null
+          prompt?: string
+          resolution?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       whatsapp_campaigns: {
         Row: {
           created_at: string | null

@@ -3,5 +3,8 @@ project_id = "mvlhtcdurcfiammzcvfv"
 [functions.generate-carousel]
 verify_jwt = true
 
+[functions.generate-video]
+verify_jwt = true
+
 [functions.profile-analysis]
 verify_jwt = true
