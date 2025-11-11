@@ -149,11 +149,16 @@ export default function Chat() {
   };
 
   const handleSelectConversation = (id: string) => {
+    console.log('🔍 Tentando selecionar conversa:', id);
+    console.log('📋 Conversa atual:', currentConversationId);
     const conversation = conversations.find(conv => conv.id === id);
     if (conversation) {
+      console.log('✅ Conversa encontrada, carregando mensagens');
       setCurrentConversationId(id);
       setMessages(conversation.messages);
       setShowHistory(false);
+    } else {
+      console.log('❌ Conversa não encontrada');
     }
   };
 
@@ -196,7 +201,7 @@ export default function Chat() {
       )}
 
       {/* Chat History Sidebar - Desktop */}
-      <div className="hidden md:flex md:w-80 border-r border-border bg-muted/20 relative z-10">
+      <div className="hidden md:flex md:w-80 border-r border-border bg-muted/20 relative z-20 flex-shrink-0">
         <div className="flex flex-col w-full">
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
@@ -221,7 +226,7 @@ export default function Chat() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative z-0">
+      <div className="flex-1 flex flex-col relative z-0 min-w-0 overflow-hidden">
         {/* Mobile Header with History Button */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border">
           <h1 className="text-lg font-semibold">Chat LUMI</h1>
