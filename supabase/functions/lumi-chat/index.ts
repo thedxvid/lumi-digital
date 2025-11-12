@@ -441,77 +441,87 @@ Lembre-se: você está aqui para iluminar o caminho digital dos seus usuários c
       userMessage
     ];
 
-    // Call Lovable AI Gateway com timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    // Call Lovable AI Gateway com streaming
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: messages,
+        max_tokens: 1500,
+        temperature: 0.7,
+        stream: true, // Ativar streaming
+      }),
+    });
 
-    try {
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: messages,
-          max_tokens: 1500,
-          temperature: 0.7,
-        }),
-        signal: controller.signal,
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Erro Lovable AI:', {
+        status: response.status,
+        error: errorText,
       });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erro Lovable AI:', {
-          status: response.status,
-          error: errorText,
-        });
-        
-        if (response.status === 503 || response.status === 502) {
-          throw new Error('AI temporarily unavailable');
-        } else if (response.status === 429) {
-          throw new Error('Rate limit exceeded');
-        } else if (response.status === 402) {
-          throw new Error('Credits required');
-        } else {
-          throw new Error(`AI error: ${response.status}`);
-        }
-      }
-
-      const aiResponse = await response.json();
       
-      if (!aiResponse.choices || !aiResponse.choices[0]) {
-        throw new Error('Invalid AI response');
+      if (response.status === 503 || response.status === 502) {
+        return new Response(
+          JSON.stringify({ 
+            message: 'Estou passando por uma manutenção rápida. Tente novamente em alguns minutinhos! 💙',
+            error: true 
+          }),
+          { 
+            status: 503, 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
+      } else if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            message: 'Muitas requisições ao mesmo tempo. Aguarde um pouquinho e tente novamente! 💙',
+            error: true 
+          }),
+          { 
+            status: 429, 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
+      } else if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            message: 'Desculpe, estou com créditos insuficientes. Por favor, entre em contato com o suporte! 💙',
+            error: true 
+          }),
+          { 
+            status: 402, 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
       }
-
-      const assistantMessage = aiResponse.choices[0].message.content;
-
-      console.log('Resposta gerada com sucesso:', { 
-        tokens: aiResponse.usage,
-        responseLength: assistantMessage.length,
-        timestamp: new Date().toISOString()
-      });
-
-      return new Response(
-        JSON.stringify({ 
-          message: assistantMessage,
-          usage: aiResponse.usage 
-        }),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
-        }
-      );
-
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      throw fetchError;
+      
+      throw new Error(`AI error: ${response.status}`);
     }
+
+    console.log('Iniciando streaming da resposta LUMI');
+
+    // Retornar stream diretamente ao cliente
+    return new Response(response.body, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
 
   } catch (error: any) {
     console.error('Erro na função lumi-chat:', {

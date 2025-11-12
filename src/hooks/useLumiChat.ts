@@ -13,7 +13,8 @@ export function useLumiChat() {
     message: string, 
     conversationHistory: Message[] = [], 
     images?: string[], 
-    agentId?: string
+    agentId?: string,
+    onStreamDelta?: (delta: string) => void
   ): Promise<{ message: string; generatedImages?: string[] } | null> => {
     if (!session?.access_token) {
       toast.error('Você precisa estar logado para usar o chat');
@@ -23,109 +24,142 @@ export function useLumiChat() {
     setLoading(true);
     
     try {
-      // Implementar retry com backoff exponencial
-      const maxRetries = 3;
-      let lastError: any = null;
+      console.log('Enviando mensagem para LUMI com streaming:', { 
+        message, 
+        historyLength: conversationHistory.length,
+        hasImages: !!images?.length
+      });
 
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          console.log(`Tentativa ${attempt}/${maxRetries} - Enviando mensagem para LUMI:`, { 
-            message, 
-            historyLength: conversationHistory.length,
-            hasImages: !!images?.length
-          });
+      // Convert conversation history to OpenAI format
+      const formattedHistory = conversationHistory.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
 
-          // Convert conversation history to OpenAI format
-          const formattedHistory = conversationHistory.map(msg => ({
-            role: msg.role === 'user' ? 'user' : 'assistant',
-            content: msg.content
-          }));
+      // Usar fetch direto para streaming
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/lumi-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message,
+            conversationHistory: formattedHistory,
+            images,
+            agentId
+          })
+        }
+      );
 
-          const { data, error } = await supabase.functions.invoke('lumi-chat', {
-            body: { 
-              message,
-              conversationHistory: formattedHistory,
-              images,
-              agentId
-            },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-          });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Erro na resposta:', response.status, errorText);
+        
+        if (response.status === 429) {
+          toast.error('Limite de requisições atingido. Aguarde alguns instantes.');
+          return { message: 'Ops! Muitas requisições ao mesmo tempo. Aguarde alguns segundos e tente novamente! 💙' };
+        } else if (response.status === 402) {
+          toast.error('Créditos insuficientes. Adicione créditos ao workspace.');
+          return { message: 'Desculpe, estou com créditos insuficientes. Por favor, entre em contato com o suporte! 💙' };
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-          if (error) {
-            console.error(`Erro na tentativa ${attempt}:`, error);
-            lastError = error;
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
+      // Processar stream SSE
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Processar linhas SSE
+        let newlineIndex;
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+          
+          // Remover \r se existir
+          if (line.endsWith('\r')) {
+            line = line.slice(0, -1);
+          }
+          
+          // Ignorar linhas vazias e comentários
+          if (!line.trim() || line.startsWith(':')) {
+            continue;
+          }
+          
+          // Processar data: prefix
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
             
-            // Se for um erro de rede ou temporário, tentar novamente
-            if (attempt < maxRetries && (
-              error.message?.includes('503') || 
-              error.message?.includes('502') || 
-              error.message?.includes('timeout') ||
-              error.message?.includes('network')
-            )) {
-              const backoffDelay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
-              console.log(`Aguardando ${backoffDelay}ms antes da próxima tentativa...`);
-              await new Promise(resolve => setTimeout(resolve, backoffDelay));
+            if (data === '[DONE]') {
+              console.log('Stream concluído');
               continue;
             }
             
-            // Para outros erros, não tentar novamente
-            throw error;
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              
+              if (content) {
+                fullResponse += content;
+                onStreamDelta?.(content);
+              }
+            } catch (e) {
+              console.error('Erro ao parsear SSE:', e, 'Line:', data);
+              // Re-adicionar ao buffer se JSON incompleto
+              buffer = line + '\n' + buffer;
+              break;
+            }
           }
-
-          if (data?.error) {
-            console.error('Erro retornado pela LUMI:', data);
-            return { 
-              message: data.message || 'Desculpe, não consegui processar sua mensagem neste momento. 💙'
-            };
-          }
-
-          if (!data?.message) {
-            throw new Error('Resposta inválida da LUMI');
-          }
-
-          console.log('Resposta da LUMI recebida com sucesso:', { 
-            responseLength: data.message.length,
-            hasImages: !!data.generatedImages,
-            usage: data.usage,
-            attempt
-          });
-
-          return {
-            message: data.message,
-            generatedImages: data.generatedImages
-          };
-
-        } catch (error) {
-          console.error(`Erro na tentativa ${attempt}:`, error);
-          lastError = error;
-          
-          // Se for a última tentativa, quebrar o loop
-          if (attempt === maxRetries) {
-            break;
-          }
-          
-          // Aguardar antes da próxima tentativa
-          const backoffDelay = Math.pow(2, attempt) * 1000;
-          console.log(`Aguardando ${backoffDelay}ms antes da próxima tentativa...`);
-          await new Promise(resolve => setTimeout(resolve, backoffDelay));
         }
       }
 
-      // Se chegou aqui, todas as tentativas falharam
-      console.error('Todas as tentativas falharam. Último erro:', lastError);
-      
-      // Mensagem de erro personalizada baseada no tipo de erro
-      if (lastError?.message?.includes('503') || lastError?.message?.includes('502')) {
-        toast.error('A LUMI está temporariamente indisponível. Tente novamente em alguns minutos.');
-        return { message: 'Ops! Estou passando por uma manutenção rápida. Tente novamente em alguns minutinhos! 💙' };
-      } else if (lastError?.message?.includes('timeout')) {
-        toast.error('Timeout na comunicação. Tente novamente.');
-        return { message: 'Desculpe, demorei mais que o esperado para responder. Pode tentar novamente? 💙' };
-      } else {
-        toast.error('Erro inesperado no chat com a LUMI');
-        return { message: 'Desculpe, encontrei um problema técnico. Estou trabalhando para resolver! 💙' };
+      // Processar buffer final se houver conteúdo restante
+      if (buffer.trim()) {
+        const lines = buffer.split('\n');
+        for (let line of lines) {
+          if (!line) continue;
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                fullResponse += content;
+                onStreamDelta?.(content);
+              }
+            } catch (e) {
+              console.error('Erro ao processar buffer final:', e);
+            }
+          }
+        }
+      }
+
+      console.log('Resposta completa recebida:', { 
+        responseLength: fullResponse.length 
+      });
+
+      return {
+        message: fullResponse
       }
     } catch (error) {
       console.error('Erro geral no sendMessage:', error);

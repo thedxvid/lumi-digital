@@ -90,7 +90,7 @@ export default function Chat() {
       conversationId = savedConversation?.id || newConversation.id;
       setCurrentConversationId(conversationId);
       setMessages([userMessage]);
-      lastSyncedConversationRef.current = conversationId; // Atualizar ref para nova conversa
+      lastSyncedConversationRef.current = conversationId;
     } else {
       // Add message to existing conversation
       const updatedMessages = [...messages, userMessage];
@@ -101,22 +101,53 @@ export default function Chat() {
       });
     }
 
+    // Criar mensagem do assistente vazia para streaming
+    const assistantMessageId = generateUUID();
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      content: '',
+      role: 'assistant',
+      timestamp: Date.now(),
+      agentId,
+    };
+
+    // Adicionar mensagem vazia do assistente
+    setMessages(prev => [...prev, assistantMessage]);
+
     try {
-      const response = await sendMessage(content, messages, images, agentId);
+      let accumulatedResponse = '';
+
+      const response = await sendMessage(
+        content, 
+        messages, 
+        images, 
+        agentId,
+        // Callback para atualizar progressivamente
+        (delta: string) => {
+          accumulatedResponse += delta;
+          setMessages(prev => {
+            const newMessages = [...prev];
+            const lastMessage = newMessages[newMessages.length - 1];
+            if (lastMessage?.role === 'assistant' && lastMessage.id === assistantMessageId) {
+              newMessages[newMessages.length - 1] = {
+                ...lastMessage,
+                content: accumulatedResponse
+              };
+            }
+            return newMessages;
+          });
+        }
+      );
       
       if (response) {
-        const assistantMessage: Message = {
-          id: generateUUID(),
-          content: response.message,
-          role: 'assistant',
-          timestamp: Date.now(),
-          generatedImages: response.generatedImages,
-          agentId,
-        };
-
-        // Use callback to ensure we have the latest state
+        // Atualizar mensagem final com resposta completa
         setMessages(prev => {
-          const updatedMessages = [...prev, assistantMessage];
+          const updatedMessages = prev.map(msg => 
+            msg.id === assistantMessageId 
+              ? { ...msg, content: response.message, generatedImages: response.generatedImages }
+              : msg
+          );
+          
           if (conversationId) {
             updateConversation(conversationId, {
               messages: updatedMessages,
@@ -129,16 +160,14 @@ export default function Chat() {
     } catch (error) {
       console.error('Error sending message:', error);
       
-      const errorMessage: Message = {
-        id: generateUUID(),
-        content: 'Desculpe, encontrei um problema técnico. Pode tentar novamente? 💙',
-        role: 'assistant',
-        timestamp: Date.now(),
-      };
-
-      // Use callback to ensure we have the latest state
+      // Atualizar com mensagem de erro
       setMessages(prev => {
-        const updatedMessages = [...prev, errorMessage];
+        const updatedMessages = prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, content: 'Desculpe, encontrei um problema técnico. Pode tentar novamente? 💙' }
+            : msg
+        );
+        
         if (conversationId) {
           updateConversation(conversationId, {
             messages: updatedMessages,
