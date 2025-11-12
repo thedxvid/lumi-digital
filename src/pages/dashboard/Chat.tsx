@@ -1,5 +1,6 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { ChatArea } from '@/components/ChatArea';
 import { ChatHistory } from '@/components/dashboard/ChatHistory';
@@ -17,9 +18,12 @@ export default function Chat() {
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [showHistory, setShowHistory] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState(getDefaultAgent().id);
+  const [isStreaming, setIsStreaming] = useState(false);
   const { loading, sendMessage } = useLumiChat();
   const { conversations, addConversation, updateConversation, deleteConversation, generateUUID } = useLumiStore();
   const lastSyncedConversationRef = useRef<string | undefined>();
+  const streamingContentRef = useRef('');
+  const currentAssistantIdRef = useRef<string | undefined>();
 
   // Sync messages with store when conversation changes
   useEffect(() => {
@@ -71,6 +75,26 @@ export default function Chat() {
     return conversation;
   };
 
+  // Callback otimizado para streaming com useCallback
+  const handleStreamDelta = useCallback((delta: string) => {
+    streamingContentRef.current += delta;
+    
+    // Usar flushSync para forçar render síncrono imediato
+    flushSync(() => {
+      setMessages(prev => {
+        const newMessages = [...prev];
+        const lastMessage = newMessages[newMessages.length - 1];
+        if (lastMessage?.role === 'assistant' && lastMessage.id === currentAssistantIdRef.current) {
+          newMessages[newMessages.length - 1] = {
+            ...lastMessage,
+            content: streamingContentRef.current
+          };
+        }
+        return newMessages;
+      });
+    });
+  }, []);
+
   const handleSendMessage = async (content: string, images?: string[], agentId?: string) => {
     const userMessage: Message = {
       id: generateUUID(),
@@ -111,32 +135,21 @@ export default function Chat() {
       agentId,
     };
 
+    // Resetar ref de streaming e configurar ID atual
+    streamingContentRef.current = '';
+    currentAssistantIdRef.current = assistantMessageId;
+    setIsStreaming(true);
+
     // Adicionar mensagem vazia do assistente
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      let accumulatedResponse = '';
-
       const response = await sendMessage(
         content, 
         messages, 
         images, 
         agentId,
-        // Callback para atualizar progressivamente
-        (delta: string) => {
-          accumulatedResponse += delta;
-          setMessages(prev => {
-            const newMessages = [...prev];
-            const lastMessage = newMessages[newMessages.length - 1];
-            if (lastMessage?.role === 'assistant' && lastMessage.id === assistantMessageId) {
-              newMessages[newMessages.length - 1] = {
-                ...lastMessage,
-                content: accumulatedResponse
-              };
-            }
-            return newMessages;
-          });
-        }
+        handleStreamDelta // Usar callback otimizado
       );
       
       if (response) {
@@ -176,6 +189,10 @@ export default function Chat() {
         }
         return updatedMessages;
       });
+    } finally {
+      setIsStreaming(false);
+      streamingContentRef.current = '';
+      currentAssistantIdRef.current = undefined;
     }
   };
 
@@ -317,6 +334,7 @@ export default function Chat() {
           <ChatArea
             messages={messages}
             isTyping={loading}
+            isStreaming={isStreaming}
             onSendMessage={handleSendMessage}
             selectedAgentId={selectedAgentId}
             onAgentChange={setSelectedAgentId}

@@ -73,7 +73,7 @@ export function useLumiChat() {
         throw new Error('Response body is null');
       }
 
-      // Processar stream SSE
+      // Processar stream SSE com otimizações
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -85,7 +85,7 @@ export function useLumiChat() {
         
         buffer += decoder.decode(value, { stream: true });
         
-        // Processar linhas SSE
+        // Processar linhas SSE imediatamente
         let newlineIndex;
         while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
           let line = buffer.slice(0, newlineIndex);
@@ -106,7 +106,7 @@ export function useLumiChat() {
             const data = line.slice(6).trim();
             
             if (data === '[DONE]') {
-              console.log('Stream concluído');
+              console.log('✅ Stream concluído');
               continue;
             }
             
@@ -116,13 +116,13 @@ export function useLumiChat() {
               
               if (content) {
                 fullResponse += content;
-                onStreamDelta?.(content);
+                console.log('📨 Delta recebido:', content.substring(0, 20).replace(/\n/g, '\\n'));
+                onStreamDelta?.(content); // Chamar imediatamente sem delay
               }
             } catch (e) {
-              console.error('Erro ao parsear SSE:', e, 'Line:', data);
-              // Re-adicionar ao buffer se JSON incompleto
-              buffer = line + '\n' + buffer;
-              break;
+              // JSON incompleto - apenas ignorar e continuar
+              console.warn('⚠️ JSON parcial ignorado, aguardando próximo chunk');
+              // NÃO fazer break - continuar processando próximas linhas
             }
           }
         }
