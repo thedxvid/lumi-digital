@@ -47,8 +47,8 @@ function safeStringify(value: any): string {
   return String(value);
 }
 
-// Function to format message content
-function formatMessageContent(content: string, isUser: boolean) {
+// Function to format message content with bold and bullets
+function formatMessageContent(content: string, isUser: boolean): string {
   const safeContent = safeStringify(content);
   
   // Para usuário: apenas retornar o texto limpo
@@ -56,12 +56,16 @@ function formatMessageContent(content: string, isUser: boolean) {
     return safeContent;
   }
   
-  // Para IA: substituir **texto** por • texto e * por •
-  const formattedContent = safeContent
-    .replace(/\*\*(.*?)\*\*/g, '• $1') // Substituir **texto** por • texto
-    .replace(/(?<!\*)\*(?!\*)/g, '•'); // Asteriscos simples também viram bullet points
+  // Para IA: processar formatação corretamente
+  // Primeiro substituir **texto** por marcador de negrito temporário
+  const boldRegex = /\*\*([^*]+)\*\*/g;
+  let formatted = safeContent.replace(boldRegex, '<<<BOLD>>>$1<<</BOLD>>>');
   
-  return formattedContent;
+  // Depois substituir *texto* (asterisco simples) por bullet point
+  const bulletRegex = /\*([^*]+)\*/g;
+  formatted = formatted.replace(bulletRegex, '• $1');
+  
+  return formatted;
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
@@ -80,6 +84,32 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     } catch (error) {
       toast.error('Erro ao copiar mensagem');
     }
+  };
+  
+  // Processar formatação para renderização
+  const renderFormattedContent = () => {
+    if (isUser) {
+      return formattedContent;
+    }
+    
+    // Para IA: renderizar com negrito
+    const parts = formattedContent.split('<<<BOLD>>>');
+    
+    return parts.map((part, index) => {
+      const boldEndMarker = '<<</BOLD>>>';
+      if (part.includes(boldEndMarker)) {
+        const splitParts = part.split(boldEndMarker);
+        const boldText = splitParts[0];
+        const restText = splitParts.slice(1).join(boldEndMarker);
+        return (
+          <span key={index}>
+            <strong className="font-semibold">{boldText}</strong>
+            {restText}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
   };
   
   return (
@@ -125,10 +155,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           {/* Conteúdo de texto */}
           {safeContent && (
             <div className="relative">
-              <span 
-                className="text-sm leading-relaxed whitespace-pre-wrap break-words block"
-              >
-                {formattedContent}
+              <span className="text-sm leading-relaxed whitespace-pre-wrap break-words block">
+                {renderFormattedContent()}
               </span>
               
               {/* Botão de copiar - apenas para mensagens da IA */}

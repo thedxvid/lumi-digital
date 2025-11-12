@@ -371,6 +371,11 @@ export function useLumiStore() {
   };
 
   const updateConversation = async (id: string, updates: Partial<Conversation>) => {
+    console.log(`📝 Atualizando conversa ${id}:`, {
+      messagesCount: updates.messages?.length,
+      timestamp: new Date(updates.updatedAt || Date.now()).toISOString()
+    });
+    
     let updatedConversation: Conversation | null = null;
 
     setStore(prev => ({

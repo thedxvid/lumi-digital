@@ -118,10 +118,14 @@ export default function Chat() {
       // Add message to existing conversation
       const updatedMessages = [...messages, userMessage];
       setMessages(updatedMessages);
+      
+      // ⚠️ SALVAR IMEDIATAMENTE - NÃO ESPERAR 5 SEGUNDOS!
       await updateConversation(conversationId, {
         messages: updatedMessages,
         updatedAt: Date.now()
       });
+      
+      console.log('💾 Mensagem do usuário salva imediatamente');
     }
 
     try {
@@ -142,7 +146,7 @@ export default function Chat() {
           agentId,
         };
 
-        const updatedMessages = [...messages, assistantMessage];
+        const updatedMessages = [...messages, userMessage, assistantMessage];
         setMessages(updatedMessages);
         
         if (conversationId) {
@@ -150,6 +154,7 @@ export default function Chat() {
             messages: updatedMessages,
             updatedAt: Date.now()
           });
+          console.log('💾 Resposta da IA salva');
         }
       }
     } catch (error) {
@@ -164,15 +169,17 @@ export default function Chat() {
         messages: messages,
         updatedAt: Date.now()
       });
+      console.log('💾 Salvando conversa atual antes de trocar');
     }
     
     // Agora carregar a nova conversa
     const conversation = conversations.find(conv => conv.id === id);
     if (conversation) {
+      console.log(`📂 Carregando conversa "${conversation.title}" com ${conversation.messages.length} mensagens`);
       setCurrentConversationId(id);
       setMessages(conversation.messages);
       setShowHistory(false);
-      lastSyncedConversationRef.current = id; // Atualizar ref para nova conversa
+      lastSyncedConversationRef.current = id;
     }
   };
 
