@@ -441,7 +441,7 @@ Lembre-se: você está aqui para iluminar o caminho digital dos seus usuários c
       userMessage
     ];
 
-    // Call Lovable AI Gateway com streaming
+    // Call Lovable AI Gateway sem streaming
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -453,7 +453,7 @@ Lembre-se: você está aqui para iluminar o caminho digital dos seus usuários c
         messages: messages,
         max_tokens: 1500,
         temperature: 0.7,
-        stream: true, // Ativar streaming
+        stream: false, // Desativar streaming
       }),
     });
 
@@ -511,17 +511,18 @@ Lembre-se: você está aqui para iluminar o caminho digital dos seus usuários c
       throw new Error(`AI error: ${response.status}`);
     }
 
-    console.log('Iniciando streaming da resposta LUMI');
+    console.log('✅ Resposta recebida com sucesso');
 
-    // Retornar stream diretamente ao cliente
-    return new Response(response.body, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no',
-      },
+    // Parse resposta JSON
+    const completion = await response.json();
+    const assistantMessage = completion.choices[0]?.message?.content || '';
+
+    // Retornar resposta completa como JSON
+    return new Response(JSON.stringify({
+      response: assistantMessage,
+      conversationHistory: [...conversationHistory, userMessage, { role: 'assistant', content: assistantMessage }]
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error: any) {

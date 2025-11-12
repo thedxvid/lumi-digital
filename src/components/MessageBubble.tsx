@@ -5,7 +5,6 @@ import { ImageGallery } from '@/components/chat/ImageGallery';
 
 interface MessageBubbleProps {
   message: Message;
-  isStreaming?: boolean;
 }
 
 // Function to safely convert any value to a string
@@ -56,7 +55,7 @@ function formatMessageContent(content: string) {
   return formattedContent;
 }
 
-export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
+export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   
   // Ensure message.content is always a string before processing
@@ -118,16 +117,10 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
           
           {/* Conteúdo de texto */}
           {safeContent && (
-            <div className="inline">
-              <span 
-                className="text-sm leading-relaxed whitespace-pre-wrap break-words"
-                dangerouslySetInnerHTML={{ __html: formattedContent }}
-              />
-              {/* Cursor de streaming */}
-              {isStreaming && !isUser && (
-                <span className="inline-block w-[2px] h-4 bg-lumi-gold animate-pulse ml-0.5 align-middle" />
-              )}
-            </div>
+            <span 
+              className="text-sm leading-relaxed whitespace-pre-wrap break-words"
+              dangerouslySetInnerHTML={{ __html: formattedContent }}
+            />
           )}
         </div>
         

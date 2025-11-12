@@ -10,20 +10,19 @@ import { getAgentById } from '@/data/lumiAgents';
 interface ChatAreaProps {
   messages: Message[];
   isTyping: boolean;
-  isStreaming?: boolean;
   onSendMessage: (message: string, images?: string[], agentId?: string) => void;
   selectedAgentId: string;
   onAgentChange: (agentId: string) => void;
 }
 
-export function ChatArea({ messages, isTyping, isStreaming, onSendMessage, selectedAgentId, onAgentChange }: ChatAreaProps) {
+export function ChatArea({ messages, isTyping, onSendMessage, selectedAgentId, onAgentChange }: ChatAreaProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Scroll automático otimizado
+  // Scroll automático suave
   useEffect(() => {
     if (messages.length > 0 || isTyping) {
-      bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [messages, isTyping]);
 
@@ -57,11 +56,10 @@ export function ChatArea({ messages, isTyping, isStreaming, onSendMessage, selec
             </div>
           )}
 
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <MessageBubble 
               key={message.id} 
-              message={message} 
-              isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+              message={message}
             />
           ))}
 

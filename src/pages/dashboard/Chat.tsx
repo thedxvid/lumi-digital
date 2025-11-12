@@ -1,6 +1,5 @@
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { flushSync } from 'react-dom';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ChatArea } from '@/components/ChatArea';
 import { ChatHistory } from '@/components/dashboard/ChatHistory';
@@ -18,12 +17,9 @@ export default function Chat() {
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [showHistory, setShowHistory] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState(getDefaultAgent().id);
-  const [isStreaming, setIsStreaming] = useState(false);
   const { loading, sendMessage } = useLumiChat();
   const { conversations, addConversation, updateConversation, deleteConversation, generateUUID } = useLumiStore();
   const lastSyncedConversationRef = useRef<string | undefined>();
-  const streamingContentRef = useRef('');
-  const currentAssistantIdRef = useRef<string | undefined>();
 
   // Sync messages with store when conversation changes
   useEffect(() => {
@@ -75,26 +71,6 @@ export default function Chat() {
     return conversation;
   };
 
-  // Callback otimizado com requestAnimationFrame para performance
-  const handleStreamDelta = useCallback((delta: string) => {
-    streamingContentRef.current += delta;
-    
-    // Usar requestAnimationFrame para sincronizar com o navegador
-    requestAnimationFrame(() => {
-      setMessages(prev => {
-        const newMessages = [...prev];
-        const lastMessage = newMessages[newMessages.length - 1];
-        if (lastMessage?.role === 'assistant' && lastMessage.id === currentAssistantIdRef.current) {
-          newMessages[newMessages.length - 1] = {
-            ...lastMessage,
-            content: streamingContentRef.current
-          };
-        }
-        return newMessages;
-      });
-    });
-  }, []);
-
   const handleSendMessage = async (content: string, images?: string[], agentId?: string) => {
     const userMessage: Message = {
       id: generateUUID(),
@@ -125,74 +101,36 @@ export default function Chat() {
       });
     }
 
-    // Criar mensagem do assistente vazia para streaming
-    const assistantMessageId = generateUUID();
-    const assistantMessage: Message = {
-      id: assistantMessageId,
-      content: '',
-      role: 'assistant',
-      timestamp: Date.now(),
-      agentId,
-    };
-
-    // Resetar ref de streaming e configurar ID atual
-    streamingContentRef.current = '';
-    currentAssistantIdRef.current = assistantMessageId;
-    setIsStreaming(true);
-
-    // Adicionar mensagem vazia do assistente
-    setMessages(prev => [...prev, assistantMessage]);
-
     try {
       const response = await sendMessage(
         content, 
         messages, 
         images, 
-        agentId,
-        handleStreamDelta // Usar callback otimizado
+        agentId
       );
       
       if (response) {
-        // Atualizar mensagem final com resposta completa
-        setMessages(prev => {
-          const updatedMessages = prev.map(msg => 
-            msg.id === assistantMessageId 
-              ? { ...msg, content: response.message, generatedImages: response.generatedImages }
-              : msg
-          );
-          
-          if (conversationId) {
-            updateConversation(conversationId, {
-              messages: updatedMessages,
-              updatedAt: Date.now()
-            });
-          }
-          return updatedMessages;
-        });
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      
-      // Atualizar com mensagem de erro
-      setMessages(prev => {
-        const updatedMessages = prev.map(msg => 
-          msg.id === assistantMessageId 
-            ? { ...msg, content: 'Desculpe, encontrei um problema técnico. Pode tentar novamente? 💙' }
-            : msg
-        );
+        const assistantMessage: Message = {
+          id: generateUUID(),
+          content: response.message,
+          role: 'assistant',
+          timestamp: Date.now(),
+          generatedImages: response.generatedImages,
+          agentId,
+        };
+
+        const updatedMessages = [...messages, assistantMessage];
+        setMessages(updatedMessages);
         
         if (conversationId) {
-          updateConversation(conversationId, {
+          await updateConversation(conversationId, {
             messages: updatedMessages,
             updatedAt: Date.now()
           });
         }
-        return updatedMessages;
-      });
-    } finally {
-      setIsStreaming(false);
-      streamingContentRef.current = '';
-      currentAssistantIdRef.current = undefined;
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
   };
 
@@ -334,7 +272,6 @@ export default function Chat() {
           <ChatArea
             messages={messages}
             isTyping={loading}
-            isStreaming={isStreaming}
             onSendMessage={handleSendMessage}
             selectedAgentId={selectedAgentId}
             onAgentChange={setSelectedAgentId}
