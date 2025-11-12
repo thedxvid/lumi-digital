@@ -1,7 +1,9 @@
-
 import { Message } from '@/types/lumi';
-import { Lightbulb, User } from 'lucide-react';
 import { ImageGallery } from '@/components/chat/ImageGallery';
+import { Copy, Check } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface MessageBubbleProps {
   message: Message;
@@ -45,42 +47,48 @@ function safeStringify(value: any): string {
   return String(value);
 }
 
-// Function to convert asterisks to bold text
-function formatMessageContent(content: string) {
-  // Ensure content is always a string
+// Function to format message content
+function formatMessageContent(content: string, isUser: boolean) {
   const safeContent = safeStringify(content);
   
-  // Replace **text** with <strong>text</strong>
-  const formattedContent = safeContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Para usuário: apenas retornar o texto limpo
+  if (isUser) {
+    return safeContent;
+  }
+  
+  // Para IA: substituir **texto** por • texto e * por •
+  const formattedContent = safeContent
+    .replace(/\*\*(.*?)\*\*/g, '• $1') // Substituir **texto** por • texto
+    .replace(/(?<!\*)\*(?!\*)/g, '•'); // Asteriscos simples também viram bullet points
+  
   return formattedContent;
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const [copied, setCopied] = useState(false);
   
-  // Ensure message.content is always a string before processing
   const safeContent = safeStringify(message.content);
-  const formattedContent = formatMessageContent(safeContent);
+  const formattedContent = formatMessageContent(safeContent, isUser);
+  
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(safeContent);
+      setCopied(true);
+      toast.success('Mensagem copiada!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast.error('Erro ao copiar mensagem');
+    }
+  };
   
   return (
-    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} mb-6`}>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-        isUser 
-          ? 'bg-primary' 
-          : 'bg-gradient-to-br from-lumi-gold to-lumi-gold-dark'
-      }`}>
-        {isUser ? (
-          <User className="h-4 w-4 text-primary-foreground" />
-        ) : (
-          <Lightbulb className="h-4 w-4 text-white" />
-        )}
-      </div>
-      
+    <div className={`flex gap-2 ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
       <div className={`max-w-[80%] break-words ${isUser ? 'text-right' : 'text-left'}`}>
-        <div className={`inline-block px-4 py-3 rounded-lg break-words overflow-hidden ${
+        <div className={`inline-block px-5 py-3 rounded-2xl break-words overflow-hidden relative group ${
           isUser
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-foreground border border-border'
+            ? 'bg-gradient-to-r from-lumi-gold to-lumi-gold-dark text-white shadow-md' // AMARELO DOURADO
+            : 'bg-transparent text-foreground' // SEM FUNDO
         }`}>
           {/* Imagens anexadas */}
           {message.images && message.images.length > 0 && (
@@ -92,7 +100,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                   alt={`Imagem ${index + 1}`}
                   className="max-w-full h-auto rounded-lg border border-border/20 cursor-pointer hover:scale-105 transition-transform"
                   onClick={() => {
-                    // Abrir imagem em nova aba para visualização maior
                     const newWindow = window.open();
                     if (newWindow) {
                       newWindow.document.write(`
@@ -117,14 +124,35 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           
           {/* Conteúdo de texto */}
           {safeContent && (
-            <span 
-              className="text-sm leading-relaxed whitespace-pre-wrap break-words"
-              dangerouslySetInnerHTML={{ __html: formattedContent }}
-            />
+            <div className="relative">
+              <span 
+                className="text-sm leading-relaxed whitespace-pre-wrap break-words block"
+              >
+                {formattedContent}
+              </span>
+              
+              {/* Botão de copiar - apenas para mensagens da IA */}
+              {!isUser && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0 hover:bg-muted/50"
+                  onClick={handleCopy}
+                  title="Copiar mensagem"
+                >
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-green-500" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              )}
+            </div>
           )}
         </div>
         
-        <div className={`text-xs text-muted-foreground mt-1 ${
+        {/* Timestamp */}
+        <div className={`text-xs text-muted-foreground mt-1.5 ${
           isUser ? 'text-right' : 'text-left'
         }`}>
           {new Date(message.timestamp).toLocaleTimeString('pt-BR', {

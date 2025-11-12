@@ -38,16 +38,39 @@ export default function Chat() {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (currentConversationId && messages.length > 0) {
-        updateConversation(currentConversationId, {
-          messages: messages,
-          updatedAt: Date.now()
-        });
+        // Salvar síncronamente no localStorage antes de sair
+        const conversation = conversations.find(conv => conv.id === currentConversationId);
+        if (conversation) {
+          const updated = {
+            ...conversation,
+            messages: messages,
+            updatedAt: Date.now()
+          };
+          localStorage.setItem('lumi-store', JSON.stringify({
+            conversations: conversations.map(c => c.id === currentConversationId ? updated : c),
+            settings: {}
+          }));
+        }
       }
     };
     
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []); // SEM dependências - só roda na montagem/desmontagem
+  }, [currentConversationId, messages, conversations]);
+
+  // Salvamento automático periódico
+  useEffect(() => {
+    if (currentConversationId && messages.length > 0) {
+      const timer = setInterval(() => {
+        updateConversation(currentConversationId, {
+          messages: messages,
+          updatedAt: Date.now()
+        });
+      }, 5000); // Salvar a cada 5 segundos
+      
+      return () => clearInterval(timer);
+    }
+  }, [currentConversationId, messages]);
 
   // Handle incoming prompt from other pages (like ModuleRunner)
   useEffect(() => {

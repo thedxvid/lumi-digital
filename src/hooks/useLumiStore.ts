@@ -165,13 +165,27 @@ export function useLumiStore() {
         // Sobrescrever com conversas locais se forem mais recentes ou tiverem mais mensagens
         localConversations.forEach(localConv => {
           const supabaseConv = mergedMap.get(localConv.id);
-          if (!supabaseConv || 
-              localConv.updatedAt > supabaseConv.updatedAt ||
-              localConv.messages.length > supabaseConv.messages.length) {
-            console.log(`🔄 Priorizando versão local de ${localConv.id} (${localConv.messages.length} msgs)`);
+          
+          // SEMPRE priorizar versão local se:
+          // 1. Não existe no Supabase, OU
+          // 2. Versão local tem mais mensagens, OU
+          // 3. Versão local foi atualizada mais recentemente E tem pelo menos as mesmas mensagens
+          const shouldUseLocal = !supabaseConv || 
+            localConv.messages.length > supabaseConv.messages.length ||
+            (localConv.updatedAt > supabaseConv.updatedAt && localConv.messages.length >= supabaseConv.messages.length);
+          
+          if (shouldUseLocal) {
+            console.log(`✅ Mantendo versão LOCAL de "${localConv.title}":`, {
+              localMessages: localConv.messages.length,
+              supabaseMessages: supabaseConv?.messages.length || 0,
+              localUpdated: new Date(localConv.updatedAt).toISOString(),
+              supabaseUpdated: supabaseConv ? new Date(supabaseConv.updatedAt).toISOString() : 'N/A'
+            });
             mergedMap.set(localConv.id, localConv);
             // Tentar salvar no Supabase
             saveConversationToSupabaseWithRetry(localConv);
+          } else {
+            console.log(`⚠️ Usando versão SUPABASE de "${localConv.title}" (mais recente)`);
           }
         });
 
