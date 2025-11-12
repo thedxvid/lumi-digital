@@ -50,15 +50,15 @@ export default function UserContexts() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Meus Contextos
+              Meus Agentes
             </h1>
             <p className="text-muted-foreground">
-              Crie contextos personalizados para que a Lumi entenda melhor seus produtos, ideias e campanhas
+              Crie agentes personalizados para que a Lumi entenda melhor seus produtos, ideias e campanhas
             </p>
           </div>
           <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Novo Contexto
+            Novo Agente
           </Button>
         </div>
 
@@ -69,14 +69,14 @@ export default function UserContexts() {
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                Nenhum contexto criado ainda
+                Nenhum agente criado ainda
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md">
-                Crie seu primeiro contexto para que a Lumi possa te ajudar de forma personalizada com seus produtos, ideias ou campanhas.
+                Crie seu primeiro agente para que a Lumi possa te ajudar de forma personalizada com seus produtos, ideias ou campanhas.
               </p>
               <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Criar Primeiro Contexto
+                Criar Primeiro Agente
               </Button>
             </CardContent>
           </Card>
@@ -118,9 +118,9 @@ export default function UserContexts() {
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Criar Novo Contexto</DialogTitle>
+              <DialogTitle>Criar Novo Agente</DialogTitle>
               <DialogDescription>
-                Preencha as informações abaixo para criar um contexto personalizado
+                Preencha as informações abaixo para criar um agente personalizado
               </DialogDescription>
             </DialogHeader>
             <UserContextForm

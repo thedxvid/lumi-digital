@@ -29,7 +29,7 @@ export function DashboardSidebar({
     icon: Mic,
     current: location.pathname === '/app/voice-chat'
   }, {
-    name: 'Meus Contextos',
+    name: 'Agentes',
     href: '/app/contexts',
     icon: BookUser,
     current: location.pathname === '/app/contexts'

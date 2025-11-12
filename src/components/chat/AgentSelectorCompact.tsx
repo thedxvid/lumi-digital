@@ -97,11 +97,11 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
             </SelectGroup>
           )}
           
-          {/* Categoria: Meus Contextos */}
+          {/* Categoria: Meus Agentes */}
           {contexts.length > 0 && (
             <SelectGroup>
               <div className="flex items-center justify-between px-2 py-1.5">
-                <SelectLabel className="m-0 p-0">Meus Contextos</SelectLabel>
+                <SelectLabel className="m-0 p-0">Meus Agentes</SelectLabel>
                 <Button
                   variant="ghost"
                   size="sm"
