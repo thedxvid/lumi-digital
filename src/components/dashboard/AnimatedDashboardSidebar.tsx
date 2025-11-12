@@ -12,10 +12,12 @@ import {
   Images,
   Search,
   Video,
-  TrendingUp
+  TrendingUp,
+  Shield
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export function AnimatedDashboardSidebar() {
   const [open, setOpen] = useState(true);
   const { signOut, user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
 
   // Inicializar CSS variable para padding do conteúdo
@@ -96,6 +99,16 @@ export function AnimatedDashboardSidebar() {
     },
   ];
 
+  const adminLinks = [
+    {
+      label: "Painel Admin",
+      href: "/admin",
+      icon: (
+        <Shield className="text-foreground h-5 w-5 flex-shrink-0" />
+      ),
+    },
+  ];
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -136,6 +149,24 @@ export function AnimatedDashboardSidebar() {
                 <SidebarLink key={idx} link={link} end={link.href === "/app"} />
               ))}
             </div>
+
+            {/* Links de Admin */}
+            {isAdmin && (
+              <>
+                {open && (
+                  <div className="mt-6 mb-2 px-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Administração
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-col gap-2">
+                  {adminLinks.map((link, idx) => (
+                    <SidebarLink key={`admin-${idx}`} link={link} />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Limites de uso */}
