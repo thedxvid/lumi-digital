@@ -20,10 +20,10 @@ export function ChatArea({ messages, isTyping, isStreaming, onSendMessage, selec
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Scroll automático suave durante streaming
+  // Scroll automático otimizado
   useEffect(() => {
     if (messages.length > 0 || isTyping) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
   }, [messages, isTyping]);
 

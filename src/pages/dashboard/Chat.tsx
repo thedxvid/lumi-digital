@@ -75,12 +75,12 @@ export default function Chat() {
     return conversation;
   };
 
-  // Callback otimizado para streaming com useCallback
+  // Callback otimizado com requestAnimationFrame para performance
   const handleStreamDelta = useCallback((delta: string) => {
     streamingContentRef.current += delta;
     
-    // Usar flushSync para forçar render síncrono imediato
-    flushSync(() => {
+    // Usar requestAnimationFrame para sincronizar com o navegador
+    requestAnimationFrame(() => {
       setMessages(prev => {
         const newMessages = [...prev];
         const lastMessage = newMessages[newMessages.length - 1];

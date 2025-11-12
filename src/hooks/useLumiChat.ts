@@ -73,42 +73,42 @@ export function useLumiChat() {
         throw new Error('Response body is null');
       }
 
-      // Processar stream SSE com otimizações
+      // Processar stream SSE com batching para performance
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
       let fullResponse = '';
+      let batchBuffer = '';
+      let batchTimeout: NodeJS.Timeout | null = null;
+
+      const flushBatch = () => {
+        if (batchBuffer && onStreamDelta) {
+          onStreamDelta(batchBuffer);
+          batchBuffer = '';
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          flushBatch(); // Flush qualquer conteúdo restante
+          break;
+        }
         
         buffer += decoder.decode(value, { stream: true });
         
-        // Processar linhas SSE imediatamente
+        // Processar linhas SSE
         let newlineIndex;
         while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
           let line = buffer.slice(0, newlineIndex);
           buffer = buffer.slice(newlineIndex + 1);
           
-          // Remover \r se existir
-          if (line.endsWith('\r')) {
-            line = line.slice(0, -1);
-          }
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (!line.trim() || line.startsWith(':')) continue;
           
-          // Ignorar linhas vazias e comentários
-          if (!line.trim() || line.startsWith(':')) {
-            continue;
-          }
-          
-          // Processar data: prefix
           if (line.startsWith('data: ')) {
             const data = line.slice(6).trim();
-            
-            if (data === '[DONE]') {
-              console.log('✅ Stream concluído');
-              continue;
-            }
+            if (data === '[DONE]') continue;
             
             try {
               const parsed = JSON.parse(data);
@@ -116,13 +116,14 @@ export function useLumiChat() {
               
               if (content) {
                 fullResponse += content;
-                console.log('📨 Delta recebido:', content.substring(0, 20).replace(/\n/g, '\\n'));
-                onStreamDelta?.(content); // Chamar imediatamente sem delay
+                batchBuffer += content;
+                
+                // Flush batch a cada 50ms para balance entre performance e fluidez
+                if (batchTimeout) clearTimeout(batchTimeout);
+                batchTimeout = setTimeout(flushBatch, 50);
               }
             } catch (e) {
-              // JSON incompleto - apenas ignorar e continuar
-              console.warn('⚠️ JSON parcial ignorado, aguardando próximo chunk');
-              // NÃO fazer break - continuar processando próximas linhas
+              // JSON incompleto - ignorar
             }
           }
         }
