@@ -129,9 +129,14 @@ export default function Chat() {
     }
 
     try {
+      // ⚠️ IMPORTANTE: Usar updatedMessages (com a mensagem do usuário) em vez de messages
+      const messagesForApi = conversationId 
+        ? [...messages, userMessage]
+        : [userMessage];
+      
       const response = await sendMessage(
         content, 
-        messages, 
+        messagesForApi, 
         images, 
         agentId
       );
@@ -146,12 +151,13 @@ export default function Chat() {
           agentId,
         };
 
-        const updatedMessages = [...messages, userMessage, assistantMessage];
-        setMessages(updatedMessages);
+        // Usar o array atualizado com AMBAS as mensagens
+        const finalMessages = [...messagesForApi, assistantMessage];
+        setMessages(finalMessages);
         
         if (conversationId) {
           await updateConversation(conversationId, {
-            messages: updatedMessages,
+            messages: finalMessages,
             updatedAt: Date.now()
           });
           console.log('💾 Resposta da IA salva');
