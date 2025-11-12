@@ -1,6 +1,6 @@
-
-import { Home, MessageSquare, Mic, History, BookUser } from 'lucide-react';
+import { Home, MessageSquare, Mic, History, BookUser, Shield } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ export function DashboardSidebar({
   onClose
 }: DashboardSidebarProps) {
   const location = useLocation();
+  const { isAdmin } = useAdminAuth();
   
   const mainNavigation = [{
     name: 'Visão Geral',
@@ -87,6 +88,37 @@ export function DashboardSidebar({
                 )}
               </ul>
             </div>
+
+            {/* Admin Section */}
+            {isAdmin && (
+              <div className="mb-6 mt-6 pt-6 border-t border-border">
+                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Administração
+                </div>
+                <ul className="space-y-1 sm:space-y-2 mt-2">
+                  <li>
+                    <NavLink 
+                      to="/admin" 
+                      onClick={() => {
+                        if (window.innerWidth < 1024) {
+                          onClose();
+                        }
+                      }} 
+                      className={({isActive}) => 
+                        `group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                          isActive 
+                            ? 'bg-lumi-gold text-white' 
+                            : 'text-foreground hover:text-foreground hover:bg-muted'
+                        }`
+                      }
+                    >
+                      <Shield className="mr-3 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 text-current" />
+                      <span className="whitespace-nowrap overflow-hidden text-ellipsis">Painel Admin</span>
+                    </NavLink>
+                  </li>
+                </ul>
+              </div>
+            )}
           </nav>
         </div>
       </aside>
