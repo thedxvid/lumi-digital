@@ -239,9 +239,6 @@ const LandingPage = () => {
             src={mockupLumi} 
             alt="Dashboard LUMI - Interface da plataforma" 
             className="w-full h-auto animate-fade-in object-contain"
-            style={{
-              mixBlendMode: 'multiply',
-            }} 
             loading="eager"
           />
         </div>
