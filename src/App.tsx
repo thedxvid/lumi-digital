@@ -16,6 +16,7 @@ import ProfileAnalysis from '@/pages/dashboard/ProfileAnalysis';
 import VideoGenerator from '@/pages/dashboard/VideoGenerator';
 import VideoAddons from '@/pages/dashboard/VideoAddons';
 import Settings from '@/pages/dashboard/Settings';
+import UserContexts from '@/pages/dashboard/UserContexts';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminOrders from '@/pages/admin/AdminOrders';
@@ -46,6 +47,7 @@ function App() {
             <Route path="profile-analysis" element={<ProfileAnalysis />} />
             <Route path="video-generator" element={<VideoGenerator />} />
             <Route path="video-addons" element={<VideoAddons />} />
+            <Route path="contexts" element={<UserContexts />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

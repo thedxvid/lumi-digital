@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
+import { useUserContexts } from '@/hooks/useUserContexts';
 import { LUMI_AGENTS } from '@/data/lumiAgents';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,12 +22,15 @@ interface AgentSelectorCompactProps {
 export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSelectorCompactProps) {
   const navigate = useNavigate();
   const { agents, getAgentById } = useAgents();
+  const { contexts } = useUserContexts();
   
   const customAgents = agents.filter(agent => 
     !LUMI_AGENTS.some(defaultAgent => defaultAgent.id === agent.id)
   );
   
-  const selectedAgent = getAgentById(selectedAgentId);
+  // Combine agents and contexts for lookup
+  const allOptions = [...agents, ...contexts];
+  const selectedAgent = allOptions.find(item => item.id === selectedAgentId) || getAgentById(selectedAgentId);
 
   return (
     <div className="space-y-2">
@@ -87,6 +91,36 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
                       {agent.icon}
                     </span>
                     <span>{agent.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+          
+          {/* Categoria: Meus Contextos */}
+          {contexts.length > 0 && (
+            <SelectGroup>
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <SelectLabel className="m-0 p-0">Meus Contextos</SelectLabel>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/app/contexts');
+                  }}
+                  className="h-6 px-2 text-xs hover:bg-accent"
+                >
+                  Gerenciar
+                </Button>
+              </div>
+              {contexts.map(context => (
+                <SelectItem key={context.id} value={context.id}>
+                  <div className="flex items-center gap-2">
+                    <span style={{ color: context.color }}>
+                      {context.icon}
+                    </span>
+                    <span>{context.name}</span>
                   </div>
                 </SelectItem>
               ))}

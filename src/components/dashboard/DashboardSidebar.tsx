@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Mic, History, Phone } from 'lucide-react';
+import { Home, MessageSquare, Mic, History, BookUser } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 interface DashboardSidebarProps {
@@ -28,6 +28,11 @@ export function DashboardSidebar({
     href: '/app/voice-chat',
     icon: Mic,
     current: location.pathname === '/app/voice-chat'
+  }, {
+    name: 'Meus Contextos',
+    href: '/app/contexts',
+    icon: BookUser,
+    current: location.pathname === '/app/contexts'
   }, {
     name: 'Histórico',
     href: '/app/history',
