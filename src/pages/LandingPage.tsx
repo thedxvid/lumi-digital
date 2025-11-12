@@ -238,7 +238,7 @@ const LandingPage = () => {
           <img 
             src={mockupLumi} 
             alt="Dashboard LUMI - Interface da plataforma" 
-            className="w-full h-auto transition-all duration-500 hover:scale-[1.02] animate-fade-in object-contain"
+            className="w-full h-auto animate-fade-in object-contain"
             style={{
               mixBlendMode: 'multiply',
             }} 
