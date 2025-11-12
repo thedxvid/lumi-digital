@@ -12,7 +12,9 @@ export function DashboardSidebar({
   onClose
 }: DashboardSidebarProps) {
   const location = useLocation();
-  const { isAdmin } = useAdminAuth();
+  const { isAdmin, loading } = useAdminAuth();
+  
+  console.log('🔧 [DashboardSidebar] Render:', { isAdmin, loading });
   
   const mainNavigation = [{
     name: 'Visão Geral',

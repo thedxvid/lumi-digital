@@ -8,6 +8,14 @@ export function useAdminAuth() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  console.log('🎯 [useAdminAuth] Hook called:', { 
+    userId: user?.id, 
+    email: user?.email,
+    authLoading, 
+    isAdmin, 
+    loading 
+  });
+
   useEffect(() => {
     async function checkAdminRole() {
       console.log('🔍 [useAdminAuth] Checking admin role...', { 
