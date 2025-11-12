@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,63 +28,77 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📧 Enviando email de teste para:', email);
 
-    const emailResponse = await resend.emails.send({
-      from: "Lumi Test <onboarding@resend.dev>",
-      to: [email],
-      subject: "🧪 Teste de Email - Sistema Lumi",
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">🧪 Teste de Email</h1>
-            </div>
-            
-            <div style="background: #ffffff; padding: 40px 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
-              <h2 style="color: #10b981; margin-top: 0;">Sistema Funcionando Perfeitamente! ✅</h2>
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "Lumi Test <onboarding@resend.dev>",
+        to: [email],
+        subject: "🧪 Teste de Email - Sistema Lumi",
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">🧪 Teste de Email</h1>
+              </div>
               
-              <p>Este é um email de teste do sistema Lumi.</p>
-              
-              <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 30px 0; border-radius: 4px;">
-                <p style="margin: 0; color: #065f46;">
-                  <strong>✅ Sucesso!</strong> O sistema de envio de emails está configurado corretamente e funcionando.
+              <div style="background: #ffffff; padding: 40px 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #10b981; margin-top: 0;">Sistema Funcionando Perfeitamente! ✅</h2>
+                
+                <p>Este é um email de teste do sistema Lumi.</p>
+                
+                <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                  <p style="margin: 0; color: #065f46;">
+                    <strong>✅ Sucesso!</strong> O sistema de envio de emails está configurado corretamente e funcionando.
+                  </p>
+                </div>
+                
+                <div style="background: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 4px; border: 1px solid #e5e7eb;">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280;"><strong>Detalhes do Teste:</strong></p>
+                  <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">📧 Destinatário: ${email}</p>
+                  <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">⏰ Data/Hora: ${new Date().toLocaleString('pt-BR')}</p>
+                  <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">🔧 Sistema: Resend + Supabase Edge Functions</p>
+                </div>
+                
+                <p style="color: #6b7280; font-size: 14px;">
+                  Se você recebeu este email, significa que o sistema de notificações está pronto para uso! 🎉
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+                
+                <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; text-align: center;">
+                  © ${new Date().getFullYear()} Lumi - Email de Teste
                 </p>
               </div>
-              
-              <div style="background: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 4px; border: 1px solid #e5e7eb;">
-                <p style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280;"><strong>Detalhes do Teste:</strong></p>
-                <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">📧 Destinatário: ${email}</p>
-                <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">⏰ Data/Hora: ${new Date().toLocaleString('pt-BR')}</p>
-                <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">🔧 Sistema: Resend + Supabase Edge Functions</p>
-              </div>
-              
-              <p style="color: #6b7280; font-size: 14px;">
-                Se você recebeu este email, significa que o sistema de notificações está pronto para uso! 🎉
-              </p>
-              
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-              
-              <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; text-align: center;">
-                © ${new Date().getFullYear()} Lumi - Email de Teste
-              </p>
-            </div>
-          </body>
-        </html>
-      `,
+            </body>
+          </html>
+        `,
+      }),
     });
 
-    console.log("✅ Email de teste enviado com sucesso:", emailResponse);
+    if (!emailResponse.ok) {
+      const errorData = await emailResponse.json();
+      throw new Error(`Resend API error: ${JSON.stringify(errorData)}`);
+    }
+
+    const responseData = await emailResponse.json();
+
+    console.log("✅ Email de teste enviado com sucesso:", responseData);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Email de teste enviado com sucesso!",
         data: {
-          email_id: emailResponse.data?.id,
+          email_id: responseData.id,
           email: email
         }
       }),
