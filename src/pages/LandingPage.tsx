@@ -235,18 +235,12 @@ const LandingPage = () => {
       {/* DASHBOARD PREVIEW SECTION - MOBILE OTIMIZADO */}
       <section className="relative -mt-8 md:-mt-16 px-4 mb-16">
         <div className="container mx-auto max-w-7xl">
-          <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-lumi-gold/20 border border-lumi-gold/10">
-            <img 
-              src={mockupLumi} 
-              alt="Dashboard LUMI - Interface da plataforma" 
-              className="w-full h-auto animate-fade-in object-contain"
-              loading="eager"
-              style={{ display: 'block', maxWidth: '100%', height: 'auto' }}
-              onError={(e) => {
-                console.error('Erro ao carregar mockup:', e);
-              }}
-            />
-          </div>
+          <img 
+            src={mockupLumi} 
+            alt="Dashboard LUMI - Interface da plataforma" 
+            className="w-full h-auto animate-fade-in"
+            loading="eager"
+          />
         </div>
       </section>
 
