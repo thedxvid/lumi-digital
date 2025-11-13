@@ -11,6 +11,17 @@ export const useUsageLimits = () => {
 
   useEffect(() => {
     loadLimits();
+    
+    // Listen for custom event to refresh limits
+    const handleRefresh = () => {
+      loadLimits();
+    };
+    
+    window.addEventListener('usage-limits-updated', handleRefresh);
+    
+    return () => {
+      window.removeEventListener('usage-limits-updated', handleRefresh);
+    };
   }, []);
 
   const loadLimits = async () => {

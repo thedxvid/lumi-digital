@@ -64,7 +64,23 @@ export const useVideoGenerator = () => {
           console.error('Error saving to history:', insertError);
         } else {
           console.log('Successfully saved to history');
+          
+          // Increment video usage counter
+          const { error: limitError } = await supabase.functions.invoke('check-limits', {
+            body: {
+              feature: 'videos',
+              increment: true
+            }
+          });
+
+          if (limitError) {
+            console.error('Error incrementing usage:', limitError);
+          }
+          
           await loadHistory();
+          
+          // Trigger a custom event to refresh usage limits across components
+          window.dispatchEvent(new CustomEvent('usage-limits-updated'));
         }
       }
 
