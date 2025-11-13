@@ -4,8 +4,36 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
-import { Loader2, Sparkles } from 'lucide-react';
-import type { VideoConfig } from '@/types/video';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Sparkles, Zap } from 'lucide-react';
+import type { VideoConfig, VideoAPIConfig } from '@/types/video';
+
+const VIDEO_APIS: VideoAPIConfig[] = [
+  {
+    id: 'fal_veo31',
+    name: 'fal_veo31',
+    display_name: 'Fal.ai Veo 3.1 (Google)',
+    cost_per_8s: 3.20,
+    description: 'Máxima qualidade - Mais caro',
+    provider: 'Google'
+  },
+  {
+    id: 'kie_veo3',
+    name: 'kie_veo3',
+    display_name: 'Kie.ai Veo 3 (Google)',
+    cost_per_8s: 0.40,
+    description: 'Ótima qualidade - Mais barato (87% economia)',
+    provider: 'Google'
+  },
+  {
+    id: 'fal_hunyuan',
+    name: 'fal_hunyuan',
+    display_name: 'Fal.ai Hunyuan Video (Tencent)',
+    cost_per_8s: 0.64,
+    description: 'Boa qualidade - Preço médio',
+    provider: 'Tencent'
+  }
+];
 
 interface VideoConfigFormProps {
   onGenerate: (config: VideoConfig) => void;
@@ -19,6 +47,7 @@ export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) =
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
+  const [apiProvider, setApiProvider] = useState<'fal_veo31' | 'kie_veo3' | 'fal_hunyuan' | 'fal_veo3_fast'>('kie_veo3');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +63,7 @@ export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) =
       resolution,
       generate_audio: generateAudio,
       enhance_prompt: enhancePrompt,
+      api_provider: apiProvider,
     });
   };
 
@@ -86,6 +116,31 @@ export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) =
                 </Button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-base font-semibold flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              API de Geração
+            </Label>
+            <Select value={apiProvider} onValueChange={(value: any) => setApiProvider(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VIDEO_APIS.map((api) => (
+                  <SelectItem key={api.id} value={api.name}>
+                    <div className="flex flex-col py-1">
+                      <span className="font-medium">{api.display_name}</span>
+                      <span className="text-xs text-muted-foreground">{api.description}</span>
+                      <span className="text-xs text-muted-foreground mt-0.5">
+                        Custo estimado (8s): ${api.cost_per_8s.toFixed(2)}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-3">

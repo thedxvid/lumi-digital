@@ -23,14 +23,11 @@ serve(async (req) => {
       negative_prompt,
       enhance_prompt = true,
       seed,
-      auto_fix = true
+      auto_fix = true,
+      api_provider = 'kie_veo3'
     } = await req.json();
 
-    console.log('Generating video with prompt:', prompt);
-
-    if (!FAL_KEY) {
-      throw new Error('FAL_KEY is not configured');
-    }
+    console.log('Generating video with prompt:', prompt, 'API:', api_provider);
 
     if (!prompt || prompt.trim().length < 10) {
       return new Response(
@@ -39,11 +36,53 @@ serve(async (req) => {
       );
     }
 
-    // Call Fal.ai API
-    const response = await fetch('https://fal.run/fal-ai/veo3.1', {
+    // Configuração das APIs disponíveis
+    const KIE_API_KEY = Deno.env.get('KIE_API_KEY');
+    
+    const apiConfigs: Record<string, { endpoint: string, key: string | undefined, authPrefix: string }> = {
+      fal_veo31: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
+      kie_veo3: {
+        endpoint: 'https://api.kie.ai/v1/video/veo3',
+        key: KIE_API_KEY,
+        authPrefix: 'Bearer'
+      },
+      fal_hunyuan: {
+        endpoint: 'https://fal.run/fal-ai/hunyuan-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
+      fal_veo3_fast: {
+        endpoint: 'https://fal.run/fal-ai/veo3-fast',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      }
+    };
+
+    const selectedAPI = apiConfigs[api_provider];
+    
+    if (!selectedAPI) {
+      return new Response(
+        JSON.stringify({ error: `API ${api_provider} não é suportada` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!selectedAPI.key) {
+      return new Response(
+        JSON.stringify({ error: `Chave da API ${api_provider} não está configurada` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Call selected API
+    const response = await fetch(selectedAPI.endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${FAL_KEY}`,
+        'Authorization': `${selectedAPI.authPrefix} ${selectedAPI.key}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

@@ -40,4 +40,14 @@ export interface VideoConfig {
   generate_audio: boolean;
   negative_prompt?: string;
   enhance_prompt?: boolean;
+  api_provider?: 'fal_veo31' | 'kie_veo3' | 'fal_hunyuan' | 'fal_veo3_fast';
+}
+
+export interface VideoAPIConfig {
+  id: string;
+  name: string;
+  display_name: string;
+  cost_per_8s: number;
+  description: string;
+  provider: string;
 }
