@@ -10,19 +10,19 @@ import type { VideoConfig, VideoAPIConfig } from '@/types/video';
 
 const VIDEO_APIS: VideoAPIConfig[] = [
   {
+    id: 'fal_veo3_fast',
+    name: 'fal_veo3_fast',
+    display_name: 'Fal.ai Veo 3 Fast (Google)',
+    cost_per_8s: 0.80,
+    description: 'Rápido e econômico - Recomendado',
+    provider: 'Google'
+  },
+  {
     id: 'fal_veo31',
     name: 'fal_veo31',
     display_name: 'Fal.ai Veo 3.1 (Google)',
     cost_per_8s: 3.20,
     description: 'Máxima qualidade - Mais caro',
-    provider: 'Google'
-  },
-  {
-    id: 'kie_veo3',
-    name: 'kie_veo3',
-    display_name: 'Kie.ai Veo 3 (Google)',
-    cost_per_8s: 0.40,
-    description: 'Ótima qualidade - Mais barato (87% economia)',
     provider: 'Google'
   },
   {
@@ -47,7 +47,7 @@ export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) =
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
-  const [apiProvider, setApiProvider] = useState<'fal_veo31' | 'kie_veo3' | 'fal_hunyuan' | 'fal_veo3_fast'>('kie_veo3');
+  const [apiProvider, setApiProvider] = useState<'fal_veo31' | 'fal_hunyuan' | 'fal_veo3_fast'>('fal_veo3_fast');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

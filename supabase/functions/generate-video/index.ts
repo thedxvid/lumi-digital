@@ -24,7 +24,7 @@ serve(async (req) => {
       enhance_prompt = true,
       seed,
       auto_fix = true,
-      api_provider = 'kie_veo3'
+      api_provider = 'fal_veo3_fast'
     } = await req.json();
 
     console.log('Generating video with prompt:', prompt, 'API:', api_provider);
@@ -37,26 +37,19 @@ serve(async (req) => {
     }
 
     // Configuração das APIs disponíveis
-    const KIE_API_KEY = Deno.env.get('KIE_API_KEY');
-    
     const apiConfigs: Record<string, { endpoint: string, key: string | undefined, authPrefix: string }> = {
+      fal_veo3_fast: {
+        endpoint: 'https://fal.run/fal-ai/veo3/fast',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
       fal_veo31: {
         endpoint: 'https://fal.run/fal-ai/veo3.1',
         key: FAL_KEY,
         authPrefix: 'Key'
       },
-      kie_veo3: {
-        endpoint: 'https://api.kie.ai/v1/video/veo3',
-        key: KIE_API_KEY,
-        authPrefix: 'Bearer'
-      },
       fal_hunyuan: {
         endpoint: 'https://fal.run/fal-ai/hunyuan-video',
-        key: FAL_KEY,
-        authPrefix: 'Key'
-      },
-      fal_veo3_fast: {
-        endpoint: 'https://fal.run/fal-ai/veo3-fast',
         key: FAL_KEY,
         authPrefix: 'Key'
       }
