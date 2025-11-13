@@ -25,19 +25,16 @@ interface UserContextFormProps {
 
 const PRODUCT_ICON = '🎯';
 
-const CONTEXT_GUIDE = 'Descreva seu produto, público-alvo e principais benefícios. Exemplo: "Curso online com 40 aulas sobre SEO técnico e content marketing, voltado para empreendedores digitais iniciantes que querem aumentar o tráfego orgânico."';
-
 export function UserContextForm({ onSubmit, onCancel, initialData }: UserContextFormProps) {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [detailedContext, setDetailedContext] = useState(initialData?.detailed_context || '');
   const [icon, setIcon] = useState(initialData?.icon || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !description.trim() || !detailedContext.trim()) {
+    if (!name.trim() || !description.trim()) {
       return;
     }
 
@@ -47,7 +44,7 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
         context_type: 'product',
         name: name.trim(),
         description: description.trim(),
-        detailed_context: detailedContext.trim(),
+        detailed_context: description.trim(), // Use description as detailed_context
         icon: icon.trim() || undefined,
       });
     } finally {
@@ -70,28 +67,12 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Descrição Curta *</Label>
+        <Label htmlFor="description">Descrição do Produto *</Label>
         <Textarea
           id="description"
-          placeholder="Resuma em poucas palavras o que é seu contexto"
+          placeholder="Descreva seu produto, público-alvo e principais benefícios. Exemplo: 'Curso online com 40 aulas sobre SEO técnico e content marketing, voltado para empreendedores digitais iniciantes que querem aumentar o tráfego orgânico.'"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-          maxLength={200}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="detailed-context">Contexto Detalhado *</Label>
-        <p className="text-sm text-muted-foreground mb-2">
-          {CONTEXT_GUIDE}
-        </p>
-        <Textarea
-          id="detailed-context"
-          placeholder="Descreva em detalhes para que a IA possa te ajudar melhor..."
-          value={detailedContext}
-          onChange={(e) => setDetailedContext(e.target.value)}
           rows={6}
           maxLength={1000}
           required
@@ -121,7 +102,7 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
         </Button>
         <Button 
           type="submit" 
-          disabled={loading || !name.trim() || !description.trim() || !detailedContext.trim()}
+          disabled={loading || !name.trim() || !description.trim()}
           className="flex-1"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
