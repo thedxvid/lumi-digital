@@ -59,7 +59,7 @@ Format: ${formConfig.format}`;
 
   return (
     <>
-      <div className="w-full max-w-7xl mx-auto py-6 px-4 sm:py-8 min-h-screen">
+      <div className="w-full max-w-7xl mx-auto py-6 px-4 sm:py-8">
         <div className="space-y-6">
           <div className="min-w-0">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2 break-words">Máquina de Criativos</h1>
