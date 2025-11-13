@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VideoConfigForm } from '@/components/video/VideoConfigForm';
 import { VideoHistoryGallery } from '@/components/video/VideoHistoryGallery';
 import { VideoResultModal } from '@/components/video/VideoResultModal';
+import { PlanUpgradeModal } from '@/components/video/PlanUpgradeModal';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Video, History, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { VideoConfig, VideoHistoryItem } from '@/types/video';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
 const VideoGenerator = () => {
+  const { subscription, loading: subscriptionLoading } = useSubscription();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const {
     loading,
     history,
@@ -22,6 +27,34 @@ const VideoGenerator = () => {
     toggleFavorite
   } = useVideoGenerator();
   const [fullscreenVideo, setFullscreenVideo] = useState<VideoHistoryItem | null>(null);
+
+  // Check if user has PRO plan
+  useEffect(() => {
+    if (!subscriptionLoading && subscription?.plan_type !== 'pro') {
+      setShowUpgradeModal(true);
+    }
+  }, [subscription, subscriptionLoading]);
+
+  // Show upgrade modal if not PRO
+  if (showUpgradeModal) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="blur-sm pointer-events-none select-none">
+          <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Gerador de Vídeos</h1>
+              <p className="text-muted-foreground">Crie vídeos profissionais com IA</p>
+            </div>
+            <Card className="p-6">
+              <div className="h-96 bg-muted/50 rounded-lg" />
+            </Card>
+          </div>
+        </div>
+        <PlanUpgradeModal open={showUpgradeModal} />
+      </div>
+    );
+  }
+
   const handleGenerate = async (config: VideoConfig) => {
     await generateVideo(config);
   };

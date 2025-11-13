@@ -15,7 +15,9 @@ serve(async (req) => {
 
   try {
     const { 
+      mode = 'text-to-video',
       prompt, 
+      input_images,
       aspect_ratio = '16:9', 
       duration = '8s', 
       resolution = '720p',
@@ -27,11 +29,19 @@ serve(async (req) => {
       api_provider = 'fal_veo3_fast'
     } = await req.json();
 
-    console.log('Generating video with prompt:', prompt, 'API:', api_provider);
+    console.log('Generating video:', { mode, api_provider, has_images: !!input_images });
 
-    if (!prompt || prompt.trim().length < 10) {
+    // Validations
+    if (mode === 'text-to-video' && (!prompt || prompt.trim().length < 10)) {
       return new Response(
         JSON.stringify({ error: 'Prompt deve ter pelo menos 10 caracteres' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (mode === 'image-to-video' && (!input_images || input_images.length === 0)) {
+      return new Response(
+        JSON.stringify({ error: 'Pelo menos 1 imagem é necessária para image-to-video' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -57,6 +67,32 @@ serve(async (req) => {
         endpoint: 'https://fal.run/fal-ai/hunyuan-video',
         key: FAL_KEY,
         authPrefix: 'Key'
+      },
+      // Image-to-Video APIs
+      fal_veo31_image_to_video: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1/image-to-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
+      fal_veo31_fast_image_to_video: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1/fast/image-to-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
+      fal_veo31_reference_to_video: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1/reference-to-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
+      fal_veo31_first_last_frame: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1/first-last-frame-to-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
+      fal_veo31_fast_first_last_frame: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1/fast/first-last-frame-to-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
       }
     };
 
@@ -76,10 +112,52 @@ serve(async (req) => {
       );
     }
 
-    // Preparar body específico para cada API
+    // Preparar body específico para cada API e modo
     let requestBody: any;
     
-    if (api_provider === 'fal_wan_fast') {
+    // Handle image-to-video mode
+    if (mode === 'image-to-video') {
+      if (api_provider === 'fal_veo31_first_last_frame' || api_provider === 'fal_veo31_fast_first_last_frame') {
+        // First/Last Frame requires 2 images
+        if (!input_images || input_images.length !== 2) {
+          return new Response(
+            JSON.stringify({ error: 'Este modelo requer exatamente 2 imagens' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        requestBody = {
+          prompt: prompt || 'Generate a smooth video transition',
+          first_frame_image_url: input_images[0],
+          last_frame_image_url: input_images[1],
+          aspect_ratio,
+          duration,
+          resolution,
+          generate_audio,
+          enhance_prompt,
+          seed,
+          auto_fix
+        };
+      } else {
+        // Regular image-to-video (1 image)
+        if (!input_images || input_images.length < 1) {
+          return new Response(
+            JSON.stringify({ error: 'Este modelo requer pelo menos 1 imagem' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        requestBody = {
+          prompt: prompt || 'Generate a video from this image',
+          image_url: input_images[0],
+          aspect_ratio,
+          duration,
+          resolution,
+          generate_audio,
+          enhance_prompt,
+          seed,
+          auto_fix
+        };
+      }
+    } else if (api_provider === 'fal_wan_fast') {
       // Wan usa parâmetros diferentes
       const durationSeconds = parseInt(duration.replace('s', ''));
       const num_frames = Math.min(durationSeconds * 24, 121); // Max 5s = 120 frames at 24fps
