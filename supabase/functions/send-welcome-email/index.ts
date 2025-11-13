@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lumi <onboarding@resend.dev>", // ← Modo sandbox: só envia para suportedalumi@gmail.com
+        from: "Lumi <noreply@applumi.com>",
         to: [email],
         subject: "Bem-vindo(a) à Lumi! 🎉",
         html: `
