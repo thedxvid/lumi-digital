@@ -52,6 +52,7 @@ export const useVideoGenerator = () => {
             duration: config.duration,
             resolution: config.resolution,
             has_audio: config.generate_audio,
+            api_used: config.api_provider || 'fal_veo3_fast',
           });
 
         if (insertError) {

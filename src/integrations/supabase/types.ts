@@ -880,6 +880,7 @@ export type Database = {
       }
       video_history: {
         Row: {
+          api_used: string | null
           aspect_ratio: string | null
           created_at: string
           duration: string | null
@@ -894,6 +895,7 @@ export type Database = {
           video_url: string
         }
         Insert: {
+          api_used?: string | null
           aspect_ratio?: string | null
           created_at?: string
           duration?: string | null
@@ -908,6 +910,7 @@ export type Database = {
           video_url: string
         }
         Update: {
+          api_used?: string | null
           aspect_ratio?: string | null
           created_at?: string
           duration?: string | null

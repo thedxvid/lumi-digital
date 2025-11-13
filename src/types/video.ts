@@ -28,6 +28,7 @@ export interface VideoHistoryItem {
   has_audio?: boolean;
   is_favorite?: boolean;
   tags?: string[];
+  api_used?: string;
   created_at: string;
   updated_at: string;
 }

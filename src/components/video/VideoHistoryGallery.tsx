@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, Trash2, Heart, Play, Clock, Maximize2 } from 'lucide-react';
+import { Download, Trash2, Heart, Play, Clock, Maximize2, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { VideoHistoryItem } from '@/types/video';
@@ -33,7 +33,22 @@ export const VideoHistoryGallery = ({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'favorites'>('all');
 
-  const filteredHistory = filter === 'favorites' 
+  const getAPIDisplayName = (apiName?: string) => {
+    switch (apiName) {
+      case 'fal_veo3_fast':
+        return 'Veo 3 Fast';
+      case 'fal_veo31':
+        return 'Veo 3.1';
+      case 'fal_hunyuan':
+        return 'Hunyuan';
+      case 'fal_wan_fast':
+        return 'Wan Fast';
+      default:
+        return apiName || 'Veo 3 Fast';
+    }
+  };
+
+  const filteredHistory = filter === 'favorites'
     ? history.filter(item => item.is_favorite)
     : history;
 
@@ -113,6 +128,12 @@ export const VideoHistoryGallery = ({
                 </p>
                 
                 <div className="flex flex-wrap gap-1">
+                  {item.api_used && (
+                    <Badge variant="default" className="text-xs">
+                      <Zap className="h-3 w-3 mr-1" />
+                      {getAPIDisplayName(item.api_used)}
+                    </Badge>
+                  )}
                   {item.aspect_ratio && (
                     <Badge variant="secondary" className="text-xs">
                       {item.aspect_ratio}
