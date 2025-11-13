@@ -18,9 +18,9 @@ export function MobileHeader() {
   const navigationLinks = [
     { label: "Visão Geral", href: "/app", icon: Home },
     { label: "Chat LUMI", href: "/app/chat", icon: MessageSquare },
+    { label: "Meus Produtos", href: "/app/contexts", icon: BookUser },
     { label: "Máquina de Criativos", href: "/app/creative-engine", icon: Lightbulb },
     { label: "Carrosséis", href: "/app/carousel", icon: Images },
-    { label: "Meus Produtos", href: "/app/contexts", icon: BookUser },
     { label: "Histórico", href: "/app/history", icon: History },
     { label: "Configurações", href: "/app/settings", icon: Settings },
   ];

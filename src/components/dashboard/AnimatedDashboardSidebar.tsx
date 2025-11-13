@@ -57,6 +57,13 @@ export function AnimatedDashboardSidebar() {
       ),
     },
     {
+      label: "Meus Produtos",
+      href: "/app/contexts",
+      icon: (
+        <BookUser className="text-foreground h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
       label: "Máquina de Criativos",
       href: "/app/creative-engine",
       icon: (
@@ -82,13 +89,6 @@ export function AnimatedDashboardSidebar() {
       href: "/app/video-generator",
       icon: (
         <Video className="text-foreground h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Meus Produtos",
-      href: "/app/contexts",
-      icon: (
-        <BookUser className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {
