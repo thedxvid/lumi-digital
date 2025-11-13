@@ -134,13 +134,13 @@ const Auth = () => {
   }
 
   return (
-    <div className="relative">
+    <div className="relative min-h-[100dvh]">
       {/* Botão de voltar */}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => navigate('/')}
-        className="absolute top-4 left-4 z-50 flex items-center gap-2 hover:bg-background/80 backdrop-blur-sm"
+        className="fixed top-safe left-4 md:absolute md:top-4 md:left-4 z-50 flex items-center gap-2 hover:bg-background/80 backdrop-blur-sm mt-4 md:mt-0"
       >
         <ArrowLeft className="h-4 w-4" />
         Voltar
