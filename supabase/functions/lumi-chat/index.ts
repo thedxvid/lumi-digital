@@ -12,6 +12,7 @@ interface ChatRequest {
   conversationHistory?: Array<{ role: string; content: string }>;
   images?: string[];
   agentId?: string;
+  productId?: string;
 }
 
 serve(async (req) => {
@@ -32,7 +33,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { message, conversationHistory = [], images = [], agentId } = await req.json() as ChatRequest;
+    const { message, conversationHistory = [], images = [], agentId, productId } = await req.json() as ChatRequest;
 
     if (!message || typeof message !== 'string') {
       throw new Error('Message is required and must be a string');
@@ -43,6 +44,7 @@ serve(async (req) => {
       historyLength: conversationHistory.length,
       imagesCount: images.length,
       agentId: agentId || 'default',
+      productId: productId || 'none',
       timestamp: new Date().toISOString()
     });
 
@@ -425,6 +427,21 @@ Lembre-se: você está aqui para iluminar o caminho digital dos seus usuários c
       if (!agentError && customAgent) {
         console.log('Usando agente customizado:', customAgent.name);
         systemPrompt = customAgent.system_prompt;
+      }
+    }
+
+    // If productId is provided, fetch product context and add to system prompt
+    if (productId) {
+      const { data: product, error: productError } = await supabase
+        .from('custom_agents')
+        .select('system_prompt, name')
+        .eq('id', productId)
+        .single();
+
+      if (!productError && product) {
+        console.log('Usando contexto do produto:', product.name);
+        // Adiciona o contexto do produto ao system prompt
+        systemPrompt = `${systemPrompt}\n\n---\n\n${product.system_prompt}`;
       }
     }
 

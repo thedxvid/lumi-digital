@@ -13,7 +13,8 @@ export function useLumiChat() {
     message: string, 
     conversationHistory: Message[] = [], 
     images?: string[], 
-    agentId?: string
+    agentId?: string,
+    productId?: string
   ): Promise<{ message: string; generatedImages?: string[] } | null> => {
     if (!session?.access_token) {
       toast.error('Você precisa estar logado para usar o chat');
@@ -40,7 +41,8 @@ export function useLumiChat() {
           message,
           conversationHistory: formattedHistory,
           images,
-          agentId
+          agentId,
+          productId
         }
       });
 

@@ -50,15 +50,15 @@ export default function UserContexts() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Meus Agentes
+              Meus Produtos
             </h1>
             <p className="text-muted-foreground">
-              Crie agentes personalizados para que a Lumi entenda melhor seus produtos, ideias e campanhas
+              Cadastre seus produtos para que a Lumi possa te ajudar de forma personalizada
             </p>
           </div>
           <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Novo Agente
+            Novo Produto
           </Button>
         </div>
 
@@ -69,14 +69,14 @@ export default function UserContexts() {
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                Nenhum agente criado ainda
+                Nenhum produto cadastrado ainda
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md">
-                Crie seu primeiro agente para que a Lumi possa te ajudar de forma personalizada com seus produtos, ideias ou campanhas.
+                Cadastre seu primeiro produto para que a Lumi possa te ajudar de forma personalizada.
               </p>
               <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Criar Primeiro Agente
+                Cadastrar Primeiro Produto
               </Button>
             </CardContent>
           </Card>
@@ -118,9 +118,9 @@ export default function UserContexts() {
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Criar Novo Agente</DialogTitle>
+              <DialogTitle>Cadastrar Novo Produto</DialogTitle>
               <DialogDescription>
-                Preencha as informações abaixo para criar um agente personalizado
+                Preencha as informações abaixo para cadastrar seu produto
               </DialogDescription>
             </DialogHeader>
             <UserContextForm
@@ -135,7 +135,7 @@ export default function UserContexts() {
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja excluir este contexto? Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

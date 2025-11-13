@@ -20,43 +20,28 @@ export interface UserContext {
 }
 
 interface CreateContextInput {
-  context_type: 'product' | 'idea' | 'campaign';
+  context_type: 'product';
   name: string;
   description: string;
   detailed_context: string;
   icon?: string;
 }
 
-const CONTEXT_CONFIG = {
-  product: {
-    icon: '🎯',
-    color: '#f59e0b',
-    label: 'Produto'
-  },
-  idea: {
-    icon: '💡',
-    color: '#8b5cf6',
-    label: 'Ideia/Projeto'
-  },
-  campaign: {
-    icon: '📢',
-    color: '#ec4899',
-    label: 'Campanha'
-  }
+const PRODUCT_CONFIG = {
+  icon: '🎯',
+  color: '#f59e0b',
+  label: 'Produto'
 };
 
 function generateSystemPrompt(input: CreateContextInput): string {
-  const typeLabel = CONTEXT_CONFIG[input.context_type].label;
-  
   return `Você é a Lumi, especialista em marketing digital.
 
-CONTEXTO DO USUÁRIO:
-Tipo: ${typeLabel}
-Nome: ${input.name}
+CONTEXTO DO PRODUTO DO USUÁRIO:
+Nome do Produto: ${input.name}
 Descrição: ${input.description}
 Detalhes: ${input.detailed_context}
 
-Ao responder, considere sempre este contexto e adapte suas sugestões para este cenário específico. Seja prático, criativo e focado em resultados que ajudem especificamente este ${typeLabel.toLowerCase()}.`;
+Ao responder, considere sempre este produto específico e adapte suas sugestões para este contexto. Seja prático, criativo e focado em resultados que ajudem especificamente este produto.`;
 }
 
 export function useUserContexts() {
@@ -94,12 +79,11 @@ export function useUserContexts() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      const config = CONTEXT_CONFIG[input.context_type];
       const contextData = {
         name: input.name,
         description: input.description,
-        icon: input.icon || config.icon,
-        color: config.color,
+        icon: input.icon || PRODUCT_CONFIG.icon,
+        color: PRODUCT_CONFIG.color,
         system_prompt: generateSystemPrompt(input),
         suggested_topics: [],
         capabilities: ['text', 'image'],

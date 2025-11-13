@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { ChatArea } from '@/components/ChatArea';
 import { ChatHistory } from '@/components/dashboard/ChatHistory';
 import { AgentSelectorCompact } from '@/components/chat/AgentSelectorCompact';
+import { ProductSelector } from '@/components/chat/ProductSelector';
 import { useLumiChat } from '@/hooks/useLumiChat';
 import { useLumiStore } from '@/hooks/useLumiStore';
 import { Message, Conversation } from '@/types/lumi';
@@ -17,6 +18,7 @@ export default function Chat() {
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>();
   const [showHistory, setShowHistory] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState(getDefaultAgent().id);
+  const [selectedProductId, setSelectedProductId] = useState<string | undefined>();
   const { loading, sendMessage } = useLumiChat();
   const { conversations, addConversation, updateConversation, deleteConversation, generateUUID } = useLumiStore();
   const lastSyncedConversationRef = useRef<string | undefined>();
@@ -102,6 +104,7 @@ export default function Chat() {
       timestamp: Date.now(),
       images,
       agentId,
+      productId: selectedProductId,
     };
 
     let conversationId = currentConversationId;
@@ -138,7 +141,8 @@ export default function Chat() {
         content, 
         messagesForApi, 
         images, 
-        agentId
+        agentId,
+        selectedProductId
       );
       
       if (response) {
@@ -229,10 +233,14 @@ export default function Chat() {
           </div>
           
           {/* Agent selector mobile */}
-          <div className="p-4 border-b">
+          <div className="p-4 border-b space-y-4">
             <AgentSelectorCompact
               selectedAgentId={selectedAgentId}
               onAgentChange={setSelectedAgentId}
+            />
+            <ProductSelector
+              selectedProductId={selectedProductId}
+              onProductChange={setSelectedProductId}
             />
           </div>
           
@@ -263,10 +271,14 @@ export default function Chat() {
           </div>
           
           {/* Agent selector desktop */}
-          <div className="p-4 border-b border-border flex-shrink-0">
+          <div className="p-4 border-b border-border flex-shrink-0 space-y-4">
             <AgentSelectorCompact
               selectedAgentId={selectedAgentId}
               onAgentChange={setSelectedAgentId}
+            />
+            <ProductSelector
+              selectedProductId={selectedProductId}
+              onProductChange={setSelectedProductId}
             />
           </div>
           
