@@ -42,47 +42,109 @@ serve(async (req) => {
     let enhancedPrompt = prompt;
     
     if (config) {
-      enhancedPrompt = `Create a professional ${config.creativeType} creative with the following specifications:
+      enhancedPrompt = `🎨 CREATIVE DESIGN BRIEF - CRITICAL INSTRUCTIONS 🎨
 
-OBJECTIVE: ${config.objective}
-TARGET: ${config.market} - ${config.targetAudience}
+═══════════════════════════════════════════════════════
+⚠️ TOP PRIORITY: TEXT ACCURACY - NO EXCEPTIONS ⚠️
+═══════════════════════════════════════════════════════
+
+YOU ARE CREATING: ${config.creativeType} creative
 FORMAT: ${config.format}
+OBJECTIVE: ${config.objective}
+TARGET MARKET: ${config.market}
+AUDIENCE: ${config.targetAudience}
 
-VISUAL STYLE:
-- Style: ${config.visualStyle}
-- Color Palette: ${config.colorPalette}
-- Typography: ${config.typography}
-- Tone: ${config.tone}
+VISUAL SPECIFICATIONS:
+→ Style: ${config.visualStyle}
+→ Color Palette: ${config.colorPalette}
+→ Typography: ${config.typography}
+→ Tone: ${config.tone}
 
-⚠️ CRITICAL TEXT RENDERING INSTRUCTIONS - HIGHEST PRIORITY ⚠️
-YOU MUST FOLLOW THESE RULES EXACTLY:
-- Reproduce ALL text EXACTLY as written below, character by character
-- Pay SPECIAL ATTENTION to Portuguese special characters: ç ã õ á é í ó ú â ê ô à ñ
-- DO NOT change, rephrase, correct, or "fix" any words under ANY circumstance
-- DO NOT apply spell checking or autocorrection
-- Maintain EXACT spelling, including ALL accents, cedillas, and tildes
-- If uncertain about any character, use the EXACT Unicode character provided
-- Text accuracy is MORE IMPORTANT than visual perfection
-- Even if a word looks wrong to you, render it EXACTLY as provided
+═══════════════════════════════════════════════════════
+🔴 ABSOLUTE TEXT RENDERING REQUIREMENTS 🔴
+═══════════════════════════════════════════════════════
 
-CONTENT TO RENDER EXACTLY (CHARACTER-BY-CHARACTER):
-${config.mainText ? `- Main Text: "${config.mainText}" ← RENDER EXACTLY AS WRITTEN, DO NOT ALTER ANY CHARACTER` : ''}
-${config.secondaryText ? `- Secondary Text: "${config.secondaryText}" ← RENDER EXACTLY AS WRITTEN, DO NOT ALTER ANY CHARACTER` : ''}
-${config.callToAction ? `- Call-to-Action: "${config.callToAction}" ← RENDER EXACTLY AS WRITTEN, DO NOT ALTER ANY CHARACTER` : ''}
+MANDATORY RULES - FAILURE TO FOLLOW WILL BREAK THE CREATIVE:
 
-DESIGN REQUIREMENTS:
-- Create a visually striking and professional creative
-- Ensure text is readable and well-positioned
-- Use the specified color palette and visual style
-- Make it suitable for ${config.objective} objective
-- Target the ${config.targetAudience} audience
-- Follow ${config.creativeType} best practices
-- Apply ${config.typography} typography principles
+1. COPY TEXT EXACTLY - Character by character, including:
+   ✓ Portuguese accents: á é í ó ú â ê ô à ã õ
+   ✓ Cedilla: ç
+   ✓ ALL punctuation: ! ? . , : ; - " ' ( )
+   ✓ Spacing and line breaks EXACTLY as provided
+   ✓ Capital and lowercase letters EXACTLY as written
 
-REMEMBER: TEXT ACCURACY IS THE TOP PRIORITY. Render every character exactly as provided above.
+2. DO NOT under ANY circumstance:
+   ✗ Fix grammar or spelling
+   ✗ Change word order
+   ✗ Add or remove words
+   ✗ Apply autocorrection
+   ✗ Translate anything
+   ✗ Substitute similar characters
+   ✗ "Improve" the text in any way
 
-Use the provided images as base and integrate them seamlessly into the design.
-${prompt}`;
+3. TEXT MUST BE:
+   → Clearly readable (good contrast)
+   → Properly positioned on the design
+   → Well-spaced and legible
+   → Using the specified typography: ${config.typography}
+
+═══════════════════════════════════════════════════════
+📝 TEXT CONTENT TO RENDER EXACTLY AS WRITTEN
+═══════════════════════════════════════════════════════
+${config.mainText ? `
+▶ MAIN TEXT (Primary headline):
+"${config.mainText}"
+↳ Make this the MOST prominent text element
+↳ Large, bold, eye-catching
+↳ Character-by-character accuracy REQUIRED
+` : ''}
+${config.secondaryText ? `
+▶ SECONDARY TEXT (Supporting information):
+"${config.secondaryText}"
+↳ Medium size, readable
+↳ Supports the main message
+↳ Character-by-character accuracy REQUIRED
+` : ''}
+${config.callToAction ? `
+▶ CALL-TO-ACTION (CTA button/text):
+"${config.callToAction}"
+↳ Clear, actionable, prominent
+↳ Use contrasting colors
+↳ Character-by-character accuracy REQUIRED
+` : ''}
+
+═══════════════════════════════════════════════════════
+🎨 DESIGN EXECUTION GUIDELINES
+═══════════════════════════════════════════════════════
+
+LAYOUT:
+• Professional and visually striking
+• Follow ${config.creativeType} best practices
+• Optimized for ${config.format} format
+• Hierarchy: Main Text → Secondary Text → CTA
+
+COLOR:
+• Apply ${config.colorPalette} palette consistently
+• Ensure excellent text contrast (WCAG AA minimum)
+• Use colors to guide attention flow
+
+COMPOSITION:
+• Integrate provided images seamlessly
+• Create visual balance and harmony
+• Draw attention to key message areas
+• Professional, polished result
+
+BRAND CONSISTENCY:
+• Maintain ${config.tone} tone throughout
+• Suitable for ${config.objective} objective
+• Resonates with ${config.targetAudience}
+
+═══════════════════════════════════════════════════════
+
+ADDITIONAL CONTEXT:
+${prompt}
+
+FINAL REMINDER: Render all text EXACTLY character-by-character as provided above. Text accuracy is non-negotiable.`;
     }
 
     // Prepare the message content with images

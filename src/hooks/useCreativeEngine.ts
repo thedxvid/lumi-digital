@@ -124,6 +124,21 @@ export function useCreativeEngine() {
       if (insertError) {
         console.error('Error saving to history:', insertError);
         // Don't throw, still return the image
+      } else {
+        // Increment creative images usage counter
+        const { error: limitError } = await supabase.functions.invoke('check-limits', {
+          body: {
+            feature: 'creative_images',
+            increment: true
+          },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (limitError) {
+          console.error('Error incrementing usage:', limitError);
+        }
       }
 
       toast.success('Criativo gerado com sucesso! 🎨');
@@ -134,6 +149,9 @@ export function useCreativeEngine() {
       
       // Refresh history
       await loadHistory();
+      
+      // Trigger a custom event to refresh usage limits across components
+      window.dispatchEvent(new CustomEvent('usage-limits-updated'));
 
       return data.generatedImage;
 
