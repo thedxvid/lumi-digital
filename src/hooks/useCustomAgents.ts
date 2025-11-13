@@ -26,6 +26,7 @@ export function useCustomAgents() {
       const { data, error } = await supabase
         .from('custom_agents' as any)
         .select('*')
+        .eq('entity_type', 'agent')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -40,9 +41,14 @@ export function useCustomAgents() {
 
   const createAgent = async (agent: Omit<CustomAgent, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      const agentData = {
+        ...agent,
+        entity_type: 'agent',
+      };
+      
       const { data, error } = await supabase
         .from('custom_agents' as any)
-        .insert([agent as any])
+        .insert([agentData as any])
         .select()
         .single();
 

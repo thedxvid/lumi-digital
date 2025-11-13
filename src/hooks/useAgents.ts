@@ -8,7 +8,7 @@ export function useAgents() {
 
   const allAgents = useMemo(() => {
     const activeCustomAgents = customAgents
-      .filter(agent => agent.is_active)
+      .filter(agent => agent.is_active && (agent as any).entity_type === 'agent')
       .map(agent => ({
         id: agent.id,
         name: agent.name,

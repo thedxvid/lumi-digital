@@ -62,6 +62,7 @@ export function useUserContexts() {
         .from('custom_agents' as any)
         .select('*')
         .eq('created_by', user.id)
+        .eq('entity_type', 'product')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -89,6 +90,7 @@ export function useUserContexts() {
         capabilities: ['text', 'image'],
         is_active: true,
         created_by: user.id,
+        entity_type: 'product',
       };
 
       const { data, error } = await supabase
