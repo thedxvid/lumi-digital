@@ -38,7 +38,7 @@ const VideoGenerator = () => {
   // Show upgrade modal if not PRO
   if (showUpgradeModal) {
     return (
-      <div className="relative min-h-screen">
+      <div className="relative">
         <div className="blur-sm pointer-events-none select-none">
           <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
             <div className="min-w-0">
@@ -64,7 +64,7 @@ const VideoGenerator = () => {
       generateVideo(currentConfig);
     }
   };
-  return <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6 min-h-screen">
+  return <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
       <div className="min-w-0">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words overflow-wrap-anywhere">Gerador de Vídeos</h1>
         <p className="text-muted-foreground">Crie vídeos profissionais com IA </p>
