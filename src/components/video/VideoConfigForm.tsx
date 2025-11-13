@@ -18,6 +18,14 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     provider: 'Google'
   },
   {
+    id: 'fal_wan_fast',
+    name: 'fal_wan_fast',
+    display_name: 'Fal.ai Wan 2.2 FastVideo',
+    cost_per_8s: 0.50,
+    description: 'Ultra rápido - Até 5s em 720p',
+    provider: 'Wan'
+  },
+  {
     id: 'fal_veo31',
     name: 'fal_veo31',
     display_name: 'Fal.ai Veo 3.1 (Google)',
@@ -47,7 +55,7 @@ export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) =
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
-  const [apiProvider, setApiProvider] = useState<'fal_veo31' | 'fal_hunyuan' | 'fal_veo3_fast'>('fal_veo3_fast');
+  const [apiProvider, setApiProvider] = useState<'fal_veo31' | 'fal_hunyuan' | 'fal_veo3_fast' | 'fal_wan_fast'>('fal_veo3_fast');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -43,6 +43,11 @@ serve(async (req) => {
         key: FAL_KEY,
         authPrefix: 'Key'
       },
+      fal_wan_fast: {
+        endpoint: 'https://fal.run/fal-ai/wan/v2.2-5b/text-to-video/fast-wan',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
       fal_veo31: {
         endpoint: 'https://fal.run/fal-ai/veo3.1',
         key: FAL_KEY,
@@ -71,14 +76,32 @@ serve(async (req) => {
       );
     }
 
-    // Call selected API
-    const response = await fetch(selectedAPI.endpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `${selectedAPI.authPrefix} ${selectedAPI.key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Preparar body específico para cada API
+    let requestBody: any;
+    
+    if (api_provider === 'fal_wan_fast') {
+      // Wan usa parâmetros diferentes
+      const durationSeconds = parseInt(duration.replace('s', ''));
+      const num_frames = Math.min(durationSeconds * 24, 121); // Max 5s = 120 frames at 24fps
+      
+      requestBody = {
+        prompt,
+        aspect_ratio,
+        resolution: resolution === '1080p' ? '720p' : resolution, // Wan suporta até 720p
+        negative_prompt,
+        num_frames,
+        frames_per_second: 24,
+        enable_prompt_expansion: enhance_prompt,
+        seed,
+        guidance_scale: 3.5,
+        interpolator_model: 'film',
+        num_interpolated_frames: 0,
+        video_quality: 'high',
+        video_write_mode: 'balanced'
+      };
+    } else {
+      // Veo e Hunyuan usam parâmetros padrão
+      requestBody = {
         prompt,
         aspect_ratio,
         duration,
@@ -88,7 +111,17 @@ serve(async (req) => {
         enhance_prompt,
         seed,
         auto_fix
-      }),
+      };
+    }
+
+    // Call selected API
+    const response = await fetch(selectedAPI.endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `${selectedAPI.authPrefix} ${selectedAPI.key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
