@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lumi <onboarding@resend.dev>",
+        from: "Lumi <noreply@seudominio.com.br>", // ← Trocar para seu domínio verificado
         to: [email],
         subject: "Bem-vindo(a) à Lumi! 🎉",
         html: `
