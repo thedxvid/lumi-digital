@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Home, MessageSquare, BookUser, Video, History, Settings } from "lucide-react";
+import { Home, MessageSquare, BookUser, History, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +19,6 @@ export function MobileBottomNav() {
       label: "Produtos",
       href: "/app/contexts",
       icon: BookUser,
-    },
-    {
-      label: "Vídeos",
-      href: "/app/video-generator",
-      icon: Video,
     },
     {
       label: "Histórico",

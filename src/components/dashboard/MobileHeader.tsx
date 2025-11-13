@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Lightbulb, Menu, Home, MessageSquare, Images, History, Settings, BookUser } from "lucide-react";
+import { Lightbulb, Menu, Home, MessageSquare, Images, History, Settings, BookUser, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +21,7 @@ export function MobileHeader() {
     { label: "Meus Produtos", href: "/app/contexts", icon: BookUser },
     { label: "Máquina de Criativos", href: "/app/creative-engine", icon: Lightbulb },
     { label: "Carrosséis", href: "/app/carousel", icon: Images },
+    { label: "Gerador de Vídeos", href: "/app/video-generator", icon: Video },
     { label: "Histórico", href: "/app/history", icon: History },
     { label: "Configurações", href: "/app/settings", icon: Settings },
   ];
