@@ -13,7 +13,8 @@ import {
   Search,
   Video,
   TrendingUp,
-  Shield
+  Shield,
+  BookUser
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,6 +82,13 @@ export function AnimatedDashboardSidebar() {
       href: "/app/video-generator",
       icon: (
         <Video className="text-foreground h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Meus Produtos",
+      href: "/app/contexts",
+      icon: (
+        <BookUser className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {

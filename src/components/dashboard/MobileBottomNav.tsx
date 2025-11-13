@@ -16,7 +16,7 @@ export function MobileBottomNav() {
       icon: MessageSquare,
     },
     {
-      label: "Agentes",
+      label: "Produtos",
       href: "/app/contexts",
       icon: BookUser,
     },

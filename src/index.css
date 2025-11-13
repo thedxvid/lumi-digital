@@ -5,6 +5,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area para PWA iOS */
+.safe-top {
+  padding-top: max(env(safe-area-inset-top), 12px);
+}
+
+/* Garantir que o conteúdo não fique atrás do header em PWA */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: calc(env(safe-area-inset-top) + 12px);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

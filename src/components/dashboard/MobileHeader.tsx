@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Lightbulb, Menu, Home, MessageSquare, Images, History, Settings } from "lucide-react";
+import { Lightbulb, Menu, Home, MessageSquare, Images, History, Settings, BookUser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,7 @@ export function MobileHeader() {
     { label: "Chat LUMI", href: "/app/chat", icon: MessageSquare },
     { label: "Máquina de Criativos", href: "/app/creative-engine", icon: Lightbulb },
     { label: "Carrosséis", href: "/app/carousel", icon: Images },
+    { label: "Meus Produtos", href: "/app/contexts", icon: BookUser },
     { label: "Histórico", href: "/app/history", icon: History },
     { label: "Configurações", href: "/app/settings", icon: Settings },
   ];
@@ -35,7 +36,7 @@ export function MobileHeader() {
   };
 
   return (
-    <header className="md:hidden fixed top-0 left-0 right-0 bg-card border-b border-border z-50 px-4 py-3 pt-safe">
+    <header className="md:hidden fixed top-0 left-0 right-0 bg-card border-b border-border z-50 px-4 py-3 safe-top">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-gradient-to-br from-lumi-gold to-lumi-gold-dark rounded-full flex items-center justify-center">
