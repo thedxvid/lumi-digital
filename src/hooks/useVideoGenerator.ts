@@ -41,6 +41,11 @@ export const useVideoGenerator = () => {
       // Save to history
       const { data: { user } } = await supabase.auth.getUser();
       
+      console.log('Saving to history with config:', {
+        api_provider: config.api_provider,
+        api_used_value: config.api_provider || 'fal_veo3_fast'
+      });
+      
       if (user) {
         const { error: insertError } = await supabase
           .from('video_history')
@@ -58,6 +63,7 @@ export const useVideoGenerator = () => {
         if (insertError) {
           console.error('Error saving to history:', insertError);
         } else {
+          console.log('Successfully saved to history');
           await loadHistory();
         }
       }
