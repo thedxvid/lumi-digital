@@ -1,5 +1,9 @@
+export type VideoMode = 'text-to-video' | 'image-to-video';
+
 export interface VideoGenerationRequest {
+  mode?: VideoMode;
   prompt: string;
+  input_images?: string[];
   aspect_ratio?: '9:16' | '16:9' | '1:1';
   duration?: '4s' | '6s' | '8s';
   resolution?: '720p' | '1080p';
@@ -34,14 +38,16 @@ export interface VideoHistoryItem {
 }
 
 export interface VideoConfig {
+  mode: VideoMode;
   prompt: string;
+  input_images?: string[];
   aspect_ratio: '9:16' | '16:9' | '1:1';
   duration: '4s' | '6s' | '8s';
   resolution: '720p' | '1080p';
   generate_audio: boolean;
   negative_prompt?: string;
   enhance_prompt?: boolean;
-  api_provider?: 'fal_veo31' | 'fal_hunyuan' | 'fal_veo3_fast' | 'fal_wan_fast';
+  api_provider?: string;
 }
 
 export interface VideoAPIConfig {
@@ -51,4 +57,7 @@ export interface VideoAPIConfig {
   cost_per_8s: number;
   description: string;
   provider: string;
+  mode: VideoMode;
+  requires_images?: 1 | 2;
+  endpoint?: string;
 }
