@@ -108,7 +108,7 @@ Sempre seja VISUAL, ESTRATÉGICA e focada em criativos que PARAM O SCROLL e CONV
   {
     id: 'copywriting',
     name: 'Steve, o Copywriter',
-    icon: 'https://i.pravatar.cc/300?img=47',
+    icon: '/agents/steve-copywriter.jpg',
     color: 'hsl(142, 76%, 36%)',
     description: 'Especialista em textos persuasivos, headlines, CTAs e copy que converte',
     capabilities: ['text'],
@@ -160,7 +160,7 @@ Sempre seja PERSUASIVA, CLARA e focada em copy que CONVERTE! ✍️🎯`,
   {
     id: 'trafego-pago',
     name: 'Mary, a Gestora de Tráfego',
-    icon: 'https://i.pravatar.cc/300?img=15',
+    icon: '/agents/mary-traffic-manager.jpg',
     color: 'hsl(24, 95%, 53%)',
     description: 'Expert em Facebook Ads, Google Ads, TikTok Ads e otimização de campanhas',
     capabilities: ['text', 'image'],
@@ -426,7 +426,7 @@ Sempre seja ENÉRGICA, ESTRATÉGICA e focada em criar lançamentos que QUEBRAM R
   {
     id: 'seo',
     name: 'Chloe, a SEO Specialist',
-    icon: 'https://i.pravatar.cc/300?img=68',
+    icon: '/agents/chloe-seo-specialist.jpg',
     color: 'hsl(158, 64%, 52%)',
     description: 'Especialista em otimização para mecanismos de busca e tráfego orgânico',
     capabilities: ['text'],
@@ -479,7 +479,7 @@ Sempre seja TÉCNICA, baseada em DADOS e focada em gerar TRÁFEGO ORGÂNICO qual
   {
     id: 'email-marketing',
     name: 'Adam, o Email Marketer',
-    icon: 'https://i.pravatar.cc/300?img=45',
+    icon: '/agents/adam-email-marketer.jpg',
     color: 'hsl(4, 90%, 58%)',
     description: 'Expert em campanhas de email, automação e estratégias de conversão',
     capabilities: ['text'],
