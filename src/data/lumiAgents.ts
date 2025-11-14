@@ -3,7 +3,7 @@ import { Agent } from '@/types/agents';
 export const LUMI_AGENTS: Agent[] = [
   {
     id: 'producao-conteudo',
-    name: 'Hellen',
+    name: 'Hellen, a Criadora de Conteúdo',
     icon: 'https://i.pravatar.cc/300?img=5',
     color: 'hsl(221, 83%, 53%)',
     description: 'Especialista em criação de conteúdo para blog, vídeos, redes sociais e podcasts',
@@ -55,7 +55,7 @@ Sempre seja CRIATIVA, ESTRATÉGICA e focada em criar conteúdo que ENGAJA e CONV
   },
   {
     id: 'criativos',
-    name: 'Joseph',
+    name: 'Joseph, o Designer',
     icon: 'https://i.pravatar.cc/300?img=12',
     color: 'hsl(271, 81%, 56%)',
     description: 'Expert em design, banners, anúncios visuais e identidade visual de marcas',
@@ -107,7 +107,7 @@ Sempre seja VISUAL, ESTRATÉGICA e focada em criativos que PARAM O SCROLL e CONV
   },
   {
     id: 'copywriting',
-    name: 'Steve',
+    name: 'Steve, o Copywriter',
     icon: 'https://i.pravatar.cc/300?img=47',
     color: 'hsl(142, 76%, 36%)',
     description: 'Especialista em textos persuasivos, headlines, CTAs e copy que converte',
@@ -159,7 +159,7 @@ Sempre seja PERSUASIVA, CLARA e focada em copy que CONVERTE! ✍️🎯`,
   },
   {
     id: 'trafego-pago',
-    name: 'Mary',
+    name: 'Mary, a Gestora de Tráfego',
     icon: 'https://i.pravatar.cc/300?img=15',
     color: 'hsl(24, 95%, 53%)',
     description: 'Expert em Facebook Ads, Google Ads, TikTok Ads e otimização de campanhas',
@@ -212,7 +212,7 @@ Sempre seja ANALÍTICA, baseada em DADOS e focada em maximizar o RETORNO sobre i
   },
   {
     id: 'social-media',
-    name: 'Emma',
+    name: 'Emma, a Social Media',
     icon: 'https://i.pravatar.cc/300?img=10',
     color: 'hsl(340, 82%, 52%)',
     description: 'Especialista em gestão de redes sociais, engajamento e crescimento orgânico',
@@ -265,7 +265,7 @@ Sempre seja CONECTADA, ESTRATÉGICA e focada em criar COMUNIDADES engajadas! �
   },
   {
     id: 'automacao',
-    name: 'Jack',
+    name: 'Jack, o Automatizador',
     icon: 'https://i.pravatar.cc/300?img=33',
     color: 'hsl(262, 83%, 58%)',
     description: 'Expert em automações, webhooks, integrações e otimização de processos',
@@ -318,7 +318,7 @@ Sempre seja TÉCNICA, PRÁTICA e focada em AUTOMATIZAR para ESCALAR! 🤖⚡`,
   },
   {
     id: 'estrategista',
-    name: 'Ava',
+    name: 'Ava, a Estrategista',
     icon: 'https://i.pravatar.cc/300?img=49',
     color: 'hsl(217, 91%, 60%)',
     description: 'Especialista em planejamento estratégico, análise de mercado e posicionamento',
@@ -371,7 +371,7 @@ Sempre seja ESTRATÉGICA, ANALÍTICA e focada em CRESCIMENTO sustentável e esca
   },
   {
     id: 'lancamentos',
-    name: 'Liam',
+    name: 'Liam, o Expert em Lançamentos',
     icon: 'https://i.pravatar.cc/300?img=13',
     color: 'hsl(45, 93%, 47%)',
     description: 'Expert em Product Launch Formula, lançamentos digitais e eventos de vendas',
@@ -425,7 +425,7 @@ Sempre seja ENÉRGICA, ESTRATÉGICA e focada em criar lançamentos que QUEBRAM R
   },
   {
     id: 'seo',
-    name: 'Chloe',
+    name: 'Chloe, a SEO Specialist',
     icon: 'https://i.pravatar.cc/300?img=68',
     color: 'hsl(158, 64%, 52%)',
     description: 'Especialista em otimização para mecanismos de busca e tráfego orgânico',
@@ -478,7 +478,7 @@ Sempre seja TÉCNICA, baseada em DADOS e focada em gerar TRÁFEGO ORGÂNICO qual
   },
   {
     id: 'email-marketing',
-    name: 'Adam',
+    name: 'Adam, o Email Marketer',
     icon: 'https://i.pravatar.cc/300?img=45',
     color: 'hsl(4, 90%, 58%)',
     description: 'Expert em campanhas de email, automação e estratégias de conversão',
