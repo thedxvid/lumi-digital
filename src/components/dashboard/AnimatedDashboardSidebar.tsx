@@ -9,29 +9,34 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Images,
   Search,
   Video,
   TrendingUp,
   Shield,
-  BookUser
+  BookUser,
+  Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UsageLimitBarSidebar } from "./UsageLimitBarSidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export function AnimatedDashboardSidebar() {
   const [open, setOpen] = useState(true);
+  const [contentProductionOpen, setContentProductionOpen] = useState(true);
   const { signOut, user } = useAuth();
   const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Inicializar CSS variable para padding do conteúdo
   useEffect(() => {
@@ -41,7 +46,20 @@ export function AnimatedDashboardSidebar() {
     );
   }, [open]);
 
-  const links = [
+  // Auto-expand content production if user is on one of those pages
+  useEffect(() => {
+    const contentProductionRoutes = [
+      '/app/creative-engine',
+      '/app/carousel',
+      '/app/profile-analysis',
+      '/app/video-generator'
+    ];
+    if (contentProductionRoutes.includes(location.pathname)) {
+      setContentProductionOpen(true);
+    }
+  }, [location.pathname]);
+
+  const mainLinks = [
     {
       label: "Visão Geral",
       href: "/app",
@@ -63,34 +81,40 @@ export function AnimatedDashboardSidebar() {
         <BookUser className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
+  ];
+
+  const contentProductionLinks = [
     {
       label: "Máquina de Criativos",
       href: "/app/creative-engine",
       icon: (
-        <Lightbulb className="text-foreground h-5 w-5 flex-shrink-0" />
+        <Lightbulb className="text-foreground h-4 w-4 flex-shrink-0" />
       ),
     },
     {
       label: "Carrosséis",
       href: "/app/carousel",
       icon: (
-        <Images className="text-foreground h-5 w-5 flex-shrink-0" />
+        <Images className="text-foreground h-4 w-4 flex-shrink-0" />
       ),
     },
     {
       label: "Análise de Perfil",
       href: "/app/profile-analysis",
       icon: (
-        <Search className="text-foreground h-5 w-5 flex-shrink-0" />
+        <Search className="text-foreground h-4 w-4 flex-shrink-0" />
       ),
     },
     {
       label: "Gerador de Vídeos",
       href: "/app/video-generator",
       icon: (
-        <Video className="text-foreground h-5 w-5 flex-shrink-0" />
+        <Video className="text-foreground h-4 w-4 flex-shrink-0" />
       ),
     },
+  ];
+
+  const bottomLinks = [
     {
       label: "Histórico",
       href: "/app/history",
@@ -146,8 +170,62 @@ export function AnimatedDashboardSidebar() {
             
             {/* Links principais */}
             <div className="mt-8 flex flex-col gap-2">
-              {links.map((link, idx) => (
+              {mainLinks.map((link, idx) => (
                 <SidebarLink key={idx} link={link} end={link.href === "/app"} />
+              ))}
+
+              {/* Dropdown de Produção de Conteúdo */}
+              {open ? (
+                <Collapsible open={contentProductionOpen} onOpenChange={setContentProductionOpen}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      className="flex items-center justify-between w-full px-2 py-2 rounded-md hover:bg-muted/50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="text-foreground h-5 w-5 flex-shrink-0" />
+                        <span className="text-sm text-foreground font-medium">
+                          Produção de Conteúdo
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                          contentProductionOpen && "rotate-180"
+                        )}
+                      />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="ml-4 mt-1 space-y-1">
+                    {contentProductionLinks.map((link, idx) => (
+                      <SidebarLink key={`content-${idx}`} link={link} />
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setOpen(true)}
+                        className="flex items-center justify-center w-full px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
+                      >
+                        <Sparkles className="text-foreground h-5 w-5 flex-shrink-0" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="z-50">
+                      <p className="font-semibold mb-1">Produção de Conteúdo</p>
+                      <ul className="text-xs space-y-1">
+                        {contentProductionLinks.map((link, idx) => (
+                          <li key={idx}>• {link.label}</li>
+                        ))}
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
+              {bottomLinks.map((link, idx) => (
+                <SidebarLink key={`bottom-${idx}`} link={link} />
               ))}
             </div>
 
