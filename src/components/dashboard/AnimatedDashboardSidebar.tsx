@@ -98,13 +98,6 @@ export function AnimatedDashboardSidebar() {
         <History className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
-    {
-      label: "Configurações",
-      href: "/app/settings",
-      icon: (
-        <Settings className="text-foreground h-5 w-5 flex-shrink-0" />
-      ),
-    },
   ];
 
   const adminLinks = [
@@ -205,6 +198,28 @@ export function AnimatedDashboardSidebar() {
 
           {/* User section e logout fixo no final */}
           <div className="space-y-2 border-t border-border pt-4 pb-4 flex-shrink-0">
+            {/* Configurações */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <SidebarLink
+                      link={{
+                        label: "Configurações",
+                        href: "/app/settings",
+                        icon: <Settings className="text-foreground h-5 w-5 flex-shrink-0" />,
+                      }}
+                    />
+                  </div>
+                </TooltipTrigger>
+                {!open && (
+                  <TooltipContent side="right">
+                    <p>Configurações</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+
             {/* Theme Toggle */}
             <div className={cn("flex py-2", open ? "justify-start px-2" : "justify-center")}>
               <ThemeToggle />
