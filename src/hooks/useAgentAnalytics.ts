@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { LUMI_AGENTS } from '@/data/lumiAgents';
 
 export interface AgentStats {
   agent_id: string;
@@ -29,9 +30,6 @@ export function useAgentAnalytics() {
         .select('agent_id, user_id, created_at') as any;
 
       if (error) throw error;
-
-      // Importar agentes para obter metadados
-      const { LUMI_AGENTS } = await import('@/data/lumiAgents');
       
       // Buscar agentes customizados
       const { data: customAgents } = await supabase
