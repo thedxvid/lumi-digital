@@ -47,16 +47,18 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
                   aria-label={`Selecionar ${agent.name}`}
                   aria-pressed={isSelected}
                 >
-                  {/* Ícone pequeno */}
-                  <div 
-                    className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-base"
-                    style={{ 
-                      backgroundColor: agent.color + '10', 
-                      color: agent.color 
+                  {/* Foto do agente */}
+                  <img 
+                    src={agent.icon} 
+                    alt={agent.name}
+                    className="flex-shrink-0 w-8 h-8 rounded-full object-cover border-2"
+                    style={{ borderColor: agent.color }}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.onerror = null;
+                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=${agent.color.replace(/[^\w]/g, '')}&color=fff`;
                     }}
-                  >
-                    {agent.icon}
-                  </div>
+                  />
                   
                   {/* Conteúdo textual compacto */}
                   <div className="flex-1 text-left min-w-0">

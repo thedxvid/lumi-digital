@@ -56,9 +56,17 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
           <SelectValue>
             {selectedAgent && (
               <div className="flex items-center gap-2">
-                <span style={{ color: selectedAgent.color }}>
-                  {selectedAgent.icon}
-                </span>
+                <img 
+                  src={selectedAgent.icon} 
+                  alt={selectedAgent.name}
+                  className="w-6 h-6 rounded-full object-cover border"
+                  style={{ borderColor: selectedAgent.color }}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.onerror = null;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAgent.name)}&background=${selectedAgent.color.replace(/[^\w]/g, '')}&color=fff`;
+                  }}
+                />
                 <span className="truncate">{selectedAgent.name}</span>
               </div>
             )}
@@ -71,9 +79,17 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
             {LUMI_AGENTS.map(agent => (
               <SelectItem key={agent.id} value={agent.id}>
                 <div className="flex items-center gap-2">
-                  <span style={{ color: agent.color }}>
-                    {agent.icon}
-                  </span>
+                  <img 
+                    src={agent.icon} 
+                    alt={agent.name}
+                    className="w-5 h-5 rounded-full object-cover border"
+                    style={{ borderColor: agent.color }}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.onerror = null;
+                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=${agent.color.replace(/[^\w]/g, '')}&color=fff`;
+                    }}
+                  />
                   <span>{agent.name}</span>
                 </div>
               </SelectItem>
@@ -87,9 +103,17 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
               {customAgents.map(agent => (
                 <SelectItem key={agent.id} value={agent.id}>
                   <div className="flex items-center gap-2">
-                    <span style={{ color: agent.color }}>
-                      {agent.icon}
-                    </span>
+                    <img 
+                      src={agent.icon} 
+                      alt={agent.name}
+                      className="w-5 h-5 rounded-full object-cover border"
+                      style={{ borderColor: agent.color }}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.onerror = null;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=${agent.color.replace(/[^\w]/g, '')}&color=fff`;
+                      }}
+                    />
                     <span>{agent.name}</span>
                   </div>
                 </SelectItem>

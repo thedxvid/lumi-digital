@@ -90,12 +90,17 @@ export default function AdminAgents() {
           {agents.map((agent) => (
             <Card key={agent.id} className="p-6">
               <div className="flex items-start gap-4">
-                <div
-                  className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl flex-shrink-0"
-                  style={{ backgroundColor: agent.color + '20', color: agent.color }}
-                >
-                  {agent.icon}
-                </div>
+                <img
+                  src={agent.icon}
+                  alt={agent.name}
+                  className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border-2"
+                  style={{ borderColor: agent.color }}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.onerror = null;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=${agent.color.replace(/[^\w]/g, '')}&color=fff&size=128`;
+                  }}
+                />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">

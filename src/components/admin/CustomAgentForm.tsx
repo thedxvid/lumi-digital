@@ -112,14 +112,18 @@ export function CustomAgentForm({ open, onOpenChange, onSubmit, editAgent }: Cus
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="icon">Ícone (Emoji) *</Label>
+              <Label htmlFor="icon">URL da Foto *</Label>
               <Input
                 id="icon"
+                type="url"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                placeholder="💼"
+                placeholder="https://i.pravatar.cc/300?img=5"
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Cole a URL da foto do agente (recomendado: 300x300px)
+              </p>
             </div>
           </div>
 
