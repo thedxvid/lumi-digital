@@ -32,6 +32,13 @@ export default function CreativeEngine() {
       return;
     }
 
+    // Se houver um prompt personalizado, usa ele diretamente
+    if (formConfig.customPrompt && formConfig.customPrompt.trim()) {
+      setConfig(formConfig);
+      await generateCreative(uploadedImages, formConfig.customPrompt.trim(), formConfig);
+      return;
+    }
+
     // Build a comprehensive prompt from the config
     const fullPrompt = `Create a ${formConfig.creativeType} creative for ${formConfig.market} with the following specifications:
     

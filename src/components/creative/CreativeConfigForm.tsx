@@ -35,6 +35,7 @@ export interface CreativeConfig {
   
   // Avançado
   tone: string;
+  customPrompt?: string;
 }
 
 interface CreativeConfigFormProps {
@@ -100,7 +101,8 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
     mainText: '',
     secondaryText: '',
     callToAction: '',
-    tone: 'professional'
+    tone: 'professional',
+    customPrompt: ''
   });
 
   const updateConfig = (field: keyof CreativeConfig, value: string) => {
@@ -320,6 +322,34 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Seção 6: Prompt Personalizado (Opcional) */}
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5" />
+            6. Prompt Personalizado (Opcional)
+          </CardTitle>
+          <CardDescription>
+            Descreva exatamente o que você quer no criativo. Este campo substitui toda a configuração acima.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="customPrompt">Seu Prompt</Label>
+            <Textarea
+              id="customPrompt"
+              value={config.customPrompt || ''}
+              onChange={(e) => updateConfig('customPrompt', e.target.value)}
+              placeholder="Ex: Crie um post para Instagram quadrado com fundo azul, texto 'Promo do Dia' em fonte grande e amarela, e CTA 'Compre Agora' em vermelho..."
+              className="min-h-[120px] resize-y"
+            />
+            <p className="text-xs text-muted-foreground">
+              {config.customPrompt?.length || 0} caracteres
+            </p>
           </div>
         </CardContent>
       </Card>
