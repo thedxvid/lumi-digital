@@ -198,55 +198,59 @@ export function AnimatedDashboardSidebar() {
 
           {/* User section e logout fixo no final */}
           <div className="space-y-2 border-t border-border pt-4 pb-4 flex-shrink-0">
-            {/* Configurações */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <SidebarLink
-                      link={{
-                        label: "Configurações",
-                        href: "/app/settings",
-                        icon: <Settings className="text-foreground h-5 w-5 flex-shrink-0" />,
-                      }}
-                    />
-                  </div>
-                </TooltipTrigger>
-                {!open && (
-                  <TooltipContent side="right">
-                    <p>Configurações</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-
             {/* Theme Toggle */}
             <div className={cn("flex py-2", open ? "justify-start px-2" : "justify-center")}>
               <ThemeToggle />
             </div>
             
+            {/* User Profile - Click to Settings */}
             {user && open && (
-              <div className="flex items-center gap-2 px-2 py-2">
-                <div className="h-8 w-8 rounded-full bg-lumi-gold flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold text-sm">
-                    {user.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="overflow-hidden flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => navigate('/app/settings')}
+                      className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors w-full"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-lumi-gold flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-semibold text-sm">
+                          {user.email?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="overflow-hidden flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <Settings className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>Abrir Configurações</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {user && !open && (
-              <div className="flex items-center justify-center py-2">
-                <div className="h-8 w-8 rounded-full bg-lumi-gold flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold text-sm">
-                    {user.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => navigate('/app/settings')}
+                      className="flex items-center justify-center py-2 rounded-md hover:bg-muted/50 transition-colors w-full"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-lumi-gold flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-semibold text-sm">
+                          {user.email?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>Abrir Configurações</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             
             <button
