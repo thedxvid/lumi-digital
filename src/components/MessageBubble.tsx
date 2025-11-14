@@ -4,6 +4,7 @@ import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { LUMI_AGENTS } from '@/data/lumiAgents';
 
 interface MessageBubbleProps {
   message: Message;
@@ -72,6 +73,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
   
+  // Buscar informações do agente
+  const agent = !isUser && message.agentId 
+    ? LUMI_AGENTS.find(a => a.id === message.agentId)
+    : null;
+  
   const safeContent = safeStringify(message.content);
   const formattedContent = formatMessageContent(safeContent, isUser);
   
@@ -113,7 +119,24 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   };
   
   return (
-    <div className={`flex gap-2 ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
+    <div className={`flex gap-2 sm:gap-3 ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
+      {/* Avatar do agente (apenas para mensagens da IA) */}
+      {!isUser && agent && (
+        <div className="flex-shrink-0 mt-1">
+          <img 
+            src={agent.icon} 
+            alt={agent.name}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border-2"
+            style={{ borderColor: agent.color }}
+            onError={(e) => {
+              const target = e.currentTarget;
+              target.onerror = null;
+              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=${agent.color.replace(/[^\w]/g, '')}&color=fff`;
+            }}
+          />
+        </div>
+      )}
+      
       <div className={`max-w-[80%] break-words ${isUser ? 'text-right' : 'text-left'}`}>
         <div className={`inline-block px-5 py-3 rounded-2xl break-words overflow-hidden relative group ${
           isUser
