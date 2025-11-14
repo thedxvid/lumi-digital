@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import type { VideoAddonType } from '@/types/subscription';
 
 export default function VideoAddons() {
-  const { limits, purchaseVideoAddon } = useUsageLimits();
+  const { limits } = useUsageLimits();
   const { subscription } = useSubscription();
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
@@ -27,10 +27,12 @@ export default function VideoAddons() {
 
     setPurchasing(packageType);
     
-    // TODO: Integrate with payment gateway
-    toast.info('Integração de pagamento em desenvolvimento');
+    // Sistema de pagamento será integrado em breve
+    toast.info('Sistema de pagamento em desenvolvimento', {
+      description: 'Entre em contato com o suporte para adquirir créditos extras.',
+      duration: 5000
+    });
     
-    await purchaseVideoAddon(packageType);
     setPurchasing(null);
   };
 
