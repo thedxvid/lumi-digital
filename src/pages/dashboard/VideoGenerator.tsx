@@ -5,6 +5,7 @@ import { VideoConfigForm } from '@/components/video/VideoConfigForm';
 import { VideoHistoryGallery } from '@/components/video/VideoHistoryGallery';
 import { VideoResultModal } from '@/components/video/VideoResultModal';
 import { PlanUpgradeModal } from '@/components/video/PlanUpgradeModal';
+import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Video, History, AlertCircle } from 'lucide-react';
@@ -108,7 +109,11 @@ const VideoGenerator = () => {
               </CardHeader>
               <CardContent>
                 <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                  <video src={generatedVideoUrl} controls className="w-full h-full object-contain" />
+                  <VideoPlayer 
+                    src={generatedVideoUrl} 
+                    controls 
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </CardContent>
             </Card>}
@@ -138,7 +143,12 @@ const VideoGenerator = () => {
           </DialogHeader>
           {fullscreenVideo && <div className="space-y-4">
               <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                <video src={fullscreenVideo.video_url} controls autoPlay className="w-full h-full object-contain" />
+                <VideoPlayer 
+                  src={fullscreenVideo.video_url} 
+                  controls 
+                  autoPlay={false}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="text-sm">
