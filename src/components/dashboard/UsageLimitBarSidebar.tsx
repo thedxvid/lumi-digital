@@ -54,46 +54,36 @@ export function UsageLimitBarSidebar() {
   };
 
   return (
-    <div className="w-full space-y-2 border-t border-border pt-3">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-2">
-        <div className="h-2 w-2 rounded-full bg-green-500" />
-        <span className="text-xs font-medium text-foreground">Limites de Uso</span>
-      </div>
-
-      {/* Conteúdo */}
-      <div className="space-y-2">
-          <TooltipProvider>
-            {features.map((feature, index) => {
-              const percentage = (feature.used / feature.limit) * 100;
-              const Icon = feature.icon;
-              
-              return (
-                <Tooltip key={index}>
-                  <TooltipTrigger asChild>
-                    <div className="space-y-1.5 cursor-help hover:bg-muted/30 rounded p-2 transition-colors">
-                      {/* Header */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className={cn("h-3.5 w-3.5", feature.color)} />
-                          <span className="text-xs font-medium text-foreground">
-                            {feature.name}
-                          </span>
-                        </div>
-                        <span className="text-xs text-muted-foreground tabular-nums">
-                          {feature.used}/{feature.limit}
+    <div className="w-full border-t border-border pt-3">
+      <div className="space-y-1">
+        <TooltipProvider>
+          {features.map((feature, index) => {
+            const percentage = (feature.used / feature.limit) * 100;
+            const Icon = feature.icon;
+            
+            return (
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+                  <div className="space-y-1 cursor-help hover:bg-muted/30 rounded px-2 py-1.5 transition-colors">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Icon className={cn("h-3 w-3", feature.color)} />
+                        <span className="text-xs text-foreground">
+                          {feature.name}
                         </span>
                       </div>
-                      
-                      {/* Progress bar */}
-                      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={cn("h-full rounded-full transition-all", getStatusColor(percentage))}
-                          style={{ width: `${Math.min(percentage, 100)}%` }}
-                        />
-                      </div>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {feature.used}/{feature.limit}
+                      </span>
                     </div>
-                  </TooltipTrigger>
+                    <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={cn("h-full rounded-full transition-all", getStatusColor(percentage))}
+                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </TooltipTrigger>
                   <TooltipContent side="right" className="w-56 p-3">
                     {/* Header com ícone e nome */}
                     <div className="flex items-center gap-2 mb-3">
@@ -150,7 +140,7 @@ export function UsageLimitBarSidebar() {
             onClick={handleUpgrade}
             variant="outline"
             size="sm"
-            className="w-full mt-2 text-xs gap-1.5 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/40"
+            className="w-full mt-1 text-xs gap-1.5 h-7 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/40"
           >
             <ShoppingCart className="h-3 w-3" />
             Comprar Créditos
