@@ -64,6 +64,19 @@ export function useLumiChat() {
         responseLength: data.response?.length 
       });
 
+      // Registrar uso do agente para analytics
+      if (agentId) {
+        try {
+          await supabase.from('agent_usage').insert({
+            agent_id: agentId,
+            user_id: session.user.id
+          });
+        } catch (analyticsError) {
+          console.error('Erro ao registrar analytics do agente:', analyticsError);
+          // Não falhar a requisição se analytics falharem
+        }
+      }
+
       return {
         message: data.response,
         generatedImages: data.generatedImages
