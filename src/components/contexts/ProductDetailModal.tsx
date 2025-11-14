@@ -17,6 +17,8 @@ interface ProductDetailModalProps {
     system_prompt?: string;
     created_at?: string;
     updated_at?: string;
+    pdf_filename?: string;
+    user_role?: string;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -70,6 +72,29 @@ export function ProductDetailModal({
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-4 rounded-lg">
                   {product.detailed_context}
                 </p>
+              </div>
+            )}
+
+            {/* Quem você é */}
+            {product.user_role && (
+              <div>
+                <h3 className="text-sm font-semibold mb-2">Quem você é</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-4 rounded-lg">
+                  {product.user_role}
+                </p>
+              </div>
+            )}
+
+            {/* Documento PDF */}
+            {product.pdf_filename && (
+              <div>
+                <h3 className="text-sm font-semibold mb-2">Documento PDF</h3>
+                <div className="flex items-center gap-2 bg-muted/50 p-4 rounded-lg">
+                  <Badge variant="secondary">{product.pdf_filename}</Badge>
+                  <p className="text-xs text-muted-foreground">
+                    PDF carregado como contexto adicional
+                  </p>
+                </div>
               </div>
             )}
 
