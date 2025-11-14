@@ -34,10 +34,14 @@ export function SuggestedTopics({ agent, onTopicClick }: SuggestedTopicsProps) {
           >
             <div className="flex items-center gap-2">
               <div 
-                className="w-6 h-6 rounded-md flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-110 transition-transform"
-                style={{ backgroundColor: agent.color + '20', color: agent.color }}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-110 transition-transform overflow-hidden border"
+                style={{ borderColor: agent.color + '40' }}
               >
-                {agent.icon}
+                <img 
+                  src={agent.icon} 
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               </div>
               <p className="text-xs font-medium flex-1 leading-snug line-clamp-2">
                 {topic}
