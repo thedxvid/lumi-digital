@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -27,6 +27,11 @@ export function useCarousel() {
   const [history, setHistory] = useState<CarouselHistoryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
+
+  // Load history on mount
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   const generateCarousel = async (config: {
     title: string;

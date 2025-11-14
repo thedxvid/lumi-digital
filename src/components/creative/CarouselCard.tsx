@@ -1,6 +1,8 @@
-import { Download, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Trash2, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
@@ -27,6 +29,8 @@ export function CarouselCard({
   createdAt, 
   onDelete 
 }: CarouselCardProps) {
+  const [selectedImage, setSelectedImage] = useState<CarouselImage | null>(null);
+  
   const handleDownloadAll = async () => {
     for (let i = 0; i < images.length; i++) {
       const link = document.createElement('a');
@@ -48,7 +52,7 @@ export function CarouselCard({
           <CarouselContent>
             {images.map((image, index) => (
               <CarouselItem key={index}>
-                <div className="aspect-square relative">
+                <div className="aspect-square relative cursor-pointer" onClick={() => setSelectedImage(image)}>
                   <img
                     src={image.url}
                     alt={image.description}
@@ -56,6 +60,9 @@ export function CarouselCard({
                   />
                   <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
                     {index + 1}/{images.length}
+                  </div>
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                    <Maximize2 className="w-8 h-8 text-white drop-shadow-lg" />
                   </div>
                 </div>
               </CarouselItem>
@@ -92,6 +99,23 @@ export function CarouselCard({
           <span>{format(new Date(createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</span>
         </div>
       </div>
+      
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl">
+          {selectedImage && (
+            <div className="space-y-4">
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.description}
+                className="w-full h-auto rounded-lg"
+              />
+              <p className="text-sm text-muted-foreground text-center">
+                {selectedImage.description}
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
