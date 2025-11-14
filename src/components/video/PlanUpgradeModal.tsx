@@ -1,19 +1,30 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock, Sparkles, Video, Check } from 'lucide-react';
+import { Lock, Sparkles, Video, Check, ShoppingCart } from 'lucide-react';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useNavigate } from 'react-router-dom';
 
 interface PlanUpgradeModalProps {
   open: boolean;
 }
 
 export const PlanUpgradeModal = ({ open }: PlanUpgradeModalProps) => {
+  const { subscription } = useSubscription();
+  const navigate = useNavigate();
+
   const handleUpgrade = () => {
     window.location.href = '/app/pricing?feature=video-generator';
+  };
+
+  const handleBuyCredits = () => {
+    navigate('/app/video-addons');
   };
 
   const handleGoBack = () => {
     window.location.href = '/app/overview';
   };
+
+  const isProUser = subscription?.plan_type === 'pro';
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
@@ -58,21 +69,43 @@ export const PlanUpgradeModal = ({ open }: PlanUpgradeModalProps) => {
         </div>
 
         <div className="flex flex-col gap-2">
-          <Button 
-            onClick={handleUpgrade}
-            className="w-full bg-gradient-to-r from-lumi-gold to-lumi-gold-dark hover:opacity-90"
-            size="lg"
-          >
-            <Video className="h-4 w-4 mr-2" />
-            Fazer Upgrade para PRO
-          </Button>
-          <Button 
-            onClick={handleGoBack}
-            variant="outline"
-            className="w-full"
-          >
-            Voltar
-          </Button>
+          {isProUser ? (
+            <>
+              <Button 
+                onClick={handleBuyCredits}
+                className="w-full bg-green-600 hover:bg-green-700"
+                size="lg"
+              >
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Comprar Créditos Extras
+              </Button>
+              <Button 
+                onClick={handleGoBack}
+                variant="outline"
+                className="w-full"
+              >
+                Voltar
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                onClick={handleUpgrade}
+                className="w-full bg-gradient-to-r from-lumi-gold to-lumi-gold-dark hover:opacity-90"
+                size="lg"
+              >
+                <Video className="h-4 w-4 mr-2" />
+                Fazer Upgrade para PRO
+              </Button>
+              <Button 
+                onClick={handleGoBack}
+                variant="outline"
+                className="w-full"
+              >
+                Voltar
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
