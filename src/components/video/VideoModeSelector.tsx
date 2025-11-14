@@ -20,7 +20,7 @@ export const VideoModeSelector = ({ mode, onModeChange, disabled }: VideoModeSel
         disabled={disabled}
       >
         <FileText className="h-4 w-4 mr-2" />
-        Text-to-Video
+        Texto-para-Vídeo
       </Button>
       <Button
         type="button"
@@ -30,7 +30,7 @@ export const VideoModeSelector = ({ mode, onModeChange, disabled }: VideoModeSel
         disabled={disabled}
       >
         <Image className="h-4 w-4 mr-2" />
-        Image-to-Video
+        Imagem-para-Vídeo
       </Button>
     </div>
   );

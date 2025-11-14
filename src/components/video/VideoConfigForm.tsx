@@ -32,59 +32,15 @@ const VIDEO_APIS: VideoAPIConfig[] = [
   },
   // Image-to-Video APIs
   {
-    id: 'fal_veo31_image_to_video',
-    name: 'fal_veo31_image_to_video',
-    display_name: 'Veo 3.1 Image-to-Video',
-    cost_per_8s: 3.20,
+    id: 'fal_kling_v25_image_to_video',
+    name: 'fal_kling_v25_image_to_video',
+    display_name: 'Kling v2.5 Turbo Pro (Imagem)',
+    cost_per_8s: 0.60,
     description: 'Gera vídeo a partir de 1 imagem',
-    provider: 'Google',
+    provider: 'Kling AI',
     mode: 'image-to-video',
     requires_images: 1,
-    endpoint: 'https://fal.run/fal-ai/veo3.1/image-to-video'
-  },
-  {
-    id: 'fal_veo31_fast_image_to_video',
-    name: 'fal_veo31_fast_image_to_video',
-    display_name: 'Veo 3.1 Fast Image-to-Video',
-    cost_per_8s: 0.80,
-    description: 'Versão rápida - 1 imagem',
-    provider: 'Google',
-    mode: 'image-to-video',
-    requires_images: 1,
-    endpoint: 'https://fal.run/fal-ai/veo3.1/fast/image-to-video'
-  },
-  {
-    id: 'fal_veo31_reference_to_video',
-    name: 'fal_veo31_reference_to_video',
-    display_name: 'Veo 3.1 Reference-to-Video',
-    cost_per_8s: 3.20,
-    description: 'Usa imagem como referência',
-    provider: 'Google',
-    mode: 'image-to-video',
-    requires_images: 1,
-    endpoint: 'https://fal.run/fal-ai/veo3.1/reference-to-video'
-  },
-  {
-    id: 'fal_veo31_first_last_frame',
-    name: 'fal_veo31_first_last_frame',
-    display_name: 'Veo 3.1 First/Last Frame',
-    cost_per_8s: 3.20,
-    description: 'Gera vídeo entre 2 frames',
-    provider: 'Google',
-    mode: 'image-to-video',
-    requires_images: 2,
-    endpoint: 'https://fal.run/fal-ai/veo3.1/first-last-frame-to-video'
-  },
-  {
-    id: 'fal_veo31_fast_first_last_frame',
-    name: 'fal_veo31_fast_first_last_frame',
-    display_name: 'Veo 3.1 Fast First/Last Frame',
-    cost_per_8s: 0.80,
-    description: 'Versão rápida - 2 frames',
-    provider: 'Google',
-    mode: 'image-to-video',
-    requires_images: 2,
-    endpoint: 'https://fal.run/fal-ai/veo3.1/fast/first-last-frame-to-video'
+    endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video'
   }
 ];
 
