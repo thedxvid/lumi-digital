@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, ShoppingCart, DollarSign, Activity } from 'lucide-react';
+import { AgentAnalytics } from '@/components/admin/AgentAnalytics';
 
 interface DashboardStats {
   totalUsers: number;
@@ -142,6 +143,9 @@ const AdminDashboard = () => {
           </Card>
         ))}
       </div>
+
+      {/* Agent Analytics */}
+      <AgentAnalytics />
 
       {/* Recent Activity */}
       <Card>
