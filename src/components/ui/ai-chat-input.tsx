@@ -122,7 +122,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
   };
 
   return (
-    <div className={cn("w-full flex justify-center items-center px-4 sm:px-0", className)}>
+    <div className={cn("w-full flex justify-center items-center px-2 sm:px-0", className)}>
       <motion.div
         ref={wrapperRef}
         className="w-full max-w-4xl"
@@ -159,7 +159,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
           )}
 
           {/* Input Row */}
-          <div className="flex items-center gap-2 p-2 sm:p-3 w-full">
+          <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-3 w-full">
             <input
               ref={fileInputRef}
               type="file"
@@ -170,7 +170,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
             />
 
             <button
-              className="p-2 sm:p-3 rounded-full hover:bg-muted transition flex-shrink-0"
+              className="p-1.5 sm:p-3 rounded-full hover:bg-muted transition flex-shrink-0"
               title="Anexar imagem"
               type="button"
               tabIndex={-1}
@@ -180,7 +180,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
               }}
               disabled={disabled || uploading || selectedImages.length >= 5}
             >
-              <ImageIcon size={18} className="text-foreground sm:w-5 sm:h-5" />
+              <ImageIcon size={16} className="text-foreground sm:w-5 sm:h-5" />
             </button>
 
             {/* Text Input & Placeholder */}
@@ -198,7 +198,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
             </div>
 
             <button
-              className="flex items-center gap-1 bg-primary hover:bg-primary/90 text-primary-foreground p-2 sm:p-3 rounded-full font-medium justify-center transition flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 bg-primary hover:bg-primary/90 text-primary-foreground p-1.5 sm:p-3 rounded-full font-medium justify-center transition flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Enviar"
               type="submit"
               disabled={(!inputValue.trim() && selectedImages.length === 0) || disabled || uploading}
