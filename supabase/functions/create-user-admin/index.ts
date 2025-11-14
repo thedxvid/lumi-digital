@@ -13,6 +13,8 @@ interface CreateUserRequest {
   full_name: string;
   role: 'user' | 'admin';
   access_granted: boolean;
+  plan_type?: 'basic' | 'pro';
+  duration_months?: 1 | 3 | 6;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,7 +34,15 @@ const handler = async (req: Request): Promise<Response> => {
     // Criar cliente com service role key para operações administrativas
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, password, full_name, role, access_granted }: CreateUserRequest = await req.json();
+    const { 
+      email, 
+      password, 
+      full_name, 
+      role, 
+      access_granted,
+      plan_type = 'basic',
+      duration_months = 3
+    }: CreateUserRequest = await req.json();
 
     console.log('🔧 Criando usuário:', { email, full_name, role, access_granted });
 
@@ -112,7 +122,67 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ Perfil atualizado com sucesso');
 
-    // 3. Adicionar role se não for usuário comum
+    // 3. Criar subscription se access_granted for true
+    if (access_granted) {
+      console.log('🔨 Criando subscription...');
+      
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + duration_months);
+      
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .insert({
+          user_id: authUser.user.id,
+          plan_type,
+          duration_months,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          is_active: true,
+          auto_renew: false,
+        });
+      
+      if (subscriptionError) {
+        console.error('❌ Erro ao criar subscription:', subscriptionError);
+      } else {
+        console.log('✅ Subscription criada com sucesso');
+      }
+    }
+
+    // 4. Atualizar usage_limits se access_granted for true
+    if (access_granted) {
+      console.log('🔨 Atualizando usage_limits...');
+      
+      const limitsConfig = plan_type === 'pro' ? {
+        creative_images_daily_limit: 30,
+        creative_images_monthly_limit: 900,
+        profile_analysis_daily_limit: 10,
+        carousels_monthly_limit: 10,
+        videos_monthly_limit: 15,
+      } : {
+        creative_images_daily_limit: 10,
+        creative_images_monthly_limit: 300,
+        profile_analysis_daily_limit: 5,
+        carousels_monthly_limit: 3,
+        videos_monthly_limit: 0,
+      };
+      
+      const { error: limitsError } = await supabase
+        .from('usage_limits')
+        .update({
+          plan_type,
+          ...limitsConfig,
+        })
+        .eq('user_id', authUser.user.id);
+      
+      if (limitsError) {
+        console.error('❌ Erro ao atualizar usage_limits:', limitsError);
+      } else {
+        console.log('✅ Usage limits atualizados');
+      }
+    }
+
+    // 5. Adicionar role se não for usuário comum
     if (role === 'admin') {
       console.log('🔨 Adicionando role de admin...');
       const { error: roleError } = await supabase
@@ -130,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // 4. Log da atividade
+    // 6. Log da atividade
     try {
       const { error: logError } = await supabase.rpc('log_activity', {
         _action: 'user_created_by_admin',

@@ -50,7 +50,7 @@ export function UsageLimitBarSidebar() {
   const shouldShowUpgrade = features.some(f => (f.used / f.limit) * 100 >= 80);
 
   const handleUpgrade = () => {
-    window.location.href = '/#pricing';
+    navigate('/app/pricing');
   };
 
   return (

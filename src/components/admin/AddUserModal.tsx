@@ -17,13 +17,17 @@ interface AddUserModalProps {
 }
 
 type UserRole = 'user' | 'admin';
+type PlanType = 'basic' | 'pro';
+type DurationMonths = 1 | 3 | 6;
 
 const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) => {
   const [formData, setFormData] = useState({
     email: '',
     fullName: '',
     role: 'user' as UserRole,
-    accessGranted: true
+    accessGranted: true,
+    planType: 'basic' as PlanType,
+    durationMonths: 3 as DurationMonths
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -65,7 +69,9 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
           password: generatedPassword,
           full_name: formData.fullName,
           role: formData.role,
-          access_granted: formData.accessGranted
+          access_granted: formData.accessGranted,
+          plan_type: formData.planType,
+          duration_months: formData.durationMonths
         }
       });
 
@@ -125,7 +131,9 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
         email: '',
         fullName: '',
         role: 'user',
-        accessGranted: true
+        accessGranted: true,
+        planType: 'basic',
+        durationMonths: 3
       });
 
       onUserAdded();
@@ -144,7 +152,7 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean | UserRole) => {
+  const handleInputChange = (field: string, value: string | boolean | UserRole | PlanType | DurationMonths) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -215,6 +223,45 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
             />
             <Label htmlFor="accessGranted">Conceder acesso imediatamente</Label>
           </div>
+
+          {formData.accessGranted && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="planType">Plano</Label>
+                <Select 
+                  value={formData.planType} 
+                  onValueChange={(value: PlanType) => handleInputChange('planType', value)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o plano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="basic">Básico (10 imagens/dia, 5 análises/dia)</SelectItem>
+                    <SelectItem value="pro">PRO (30 imagens/dia, 10 análises/dia, 15 vídeos/mês)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="durationMonths">Duração do Plano</Label>
+                <Select 
+                  value={formData.durationMonths.toString()} 
+                  onValueChange={(value) => handleInputChange('durationMonths', parseInt(value) as DurationMonths)}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a duração" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 mês</SelectItem>
+                    <SelectItem value="3">3 meses (padrão)</SelectItem>
+                    <SelectItem value="6">6 meses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
 
           <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
             <p className="text-sm text-blue-800">
