@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, UserCheck, UserX, Mail, Users, Plus, Shield } from 'lucide-react';
+import { Search, UserCheck, UserX, Mail, Users, Plus, Shield, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AddUserModal from '@/components/admin/AddUserModal';
 import EmailTestModal from '@/components/admin/EmailTestModal';
 import { UserRolesManager } from '@/components/admin/UserRolesManager';
+import { UserLimitsEditor } from '@/components/admin/UserLimitsEditor';
 
 interface User {
   id: string;
@@ -29,6 +30,8 @@ const AdminUsers = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string>('');
   const [showRolesModal, setShowRolesModal] = useState(false);
+  const [showLimitsEditor, setShowLimitsEditor] = useState(false);
+  const [selectedUserForLimits, setSelectedUserForLimits] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -313,6 +316,18 @@ const AdminUsers = () => {
                     Roles
                   </Button>
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedUserForLimits({ id: user.id, name: user.full_name || 'Usuário' });
+                      setShowLimitsEditor(true);
+                    }}
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Editar Limites
+                  </Button>
+                  <Button
                     variant={user.access_granted ? "destructive" : "default"}
                     size="sm"
                     onClick={() => toggleUserAccess(user.id, user.access_granted)}
@@ -361,6 +376,19 @@ const AdminUsers = () => {
           userName={selectedUserName}
           open={showRolesModal}
           onOpenChange={handleRolesModalClose}
+        />
+      )}
+
+      {selectedUserForLimits && (
+        <UserLimitsEditor
+          userId={selectedUserForLimits.id}
+          userName={selectedUserForLimits.name}
+          isOpen={showLimitsEditor}
+          onClose={() => {
+            setShowLimitsEditor(false);
+            setSelectedUserForLimits(null);
+          }}
+          onSuccess={fetchUsers}
         />
       )}
     </div>

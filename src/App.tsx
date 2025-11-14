@@ -22,6 +22,8 @@ import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminOrders from '@/pages/admin/AdminOrders';
 import AdminAgents from '@/pages/admin/AdminAgents';
+import AdminLogs from '@/pages/admin/AdminLogs';
+import AdminSettings from '@/pages/admin/AdminSettings';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProtectedAdminRoute } from '@/components/ProtectedAdminRoute';
 
@@ -59,6 +61,8 @@ function App() {
             <Route path="users" element={<AdminUsers />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="agents" element={<AdminAgents />} />
+            <Route path="logs" element={<AdminLogs />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
 
           {/* Redirect to Home if no route matches */}
