@@ -263,9 +263,10 @@ export default function Chat() {
                 variant="ghost"
                 size="sm"
                 onClick={handleNewChat}
-                className="text-primary hover:text-primary/80"
+                className="text-primary hover:text-primary/80 gap-1.5"
               >
                 <MessageSquare className="h-4 w-4" />
+                <span className="text-sm">Novo Chat</span>
               </Button>
             </div>
           </div>
@@ -304,9 +305,10 @@ export default function Chat() {
                 variant="ghost"
                 size="sm"
                 onClick={handleNewChat}
-                className="h-8"
+                className="h-8 gap-1"
               >
                 <MessageSquare className="h-4 w-4" />
+                <span className="text-xs">Novo</span>
               </Button>
               <Button
                 variant="ghost"
