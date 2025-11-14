@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Image, FileText, Film, ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Image, FileText, Film, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
@@ -9,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { getNextDailyReset, getNextMonthlyReset } from '@/utils/dateHelpers';
 
 export function UsageLimitBarSidebar() {
-  const [isExpanded, setIsExpanded] = useState(false);
   const { limits } = useUsageLimits();
   const { subscription } = useSubscription();
   const navigate = useNavigate();
@@ -56,26 +54,15 @@ export function UsageLimitBarSidebar() {
   };
 
   return (
-    <div className="w-full">
-      {/* Header Compacto - Sempre visível */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-      >
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-green-500" />
-          <span className="text-xs font-medium text-foreground">Limites de Uso</span>
-        </div>
-        {isExpanded ? (
-          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-        )}
-      </button>
+    <div className="w-full space-y-2 border-t border-border pt-3">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-2">
+        <div className="h-2 w-2 rounded-full bg-green-500" />
+        <span className="text-xs font-medium text-foreground">Limites de Uso</span>
+      </div>
 
-      {/* Conteúdo Expansível */}
-      {isExpanded && (
-        <div className="mt-2 space-y-2">
+      {/* Conteúdo */}
+      <div className="space-y-2">
           <TooltipProvider>
             {features.map((feature, index) => {
               const percentage = (feature.used / feature.limit) * 100;
@@ -158,19 +145,18 @@ export function UsageLimitBarSidebar() {
             })}
           </TooltipProvider>
 
-          {shouldShowUpgrade && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleUpgrade}
-              className="w-full text-xs mt-2 gap-1.5"
-            >
-              <ShoppingCart className="h-3 w-3" />
-              Comprar Créditos de Vídeo
-            </Button>
-          )}
-        </div>
-      )}
+        {shouldShowUpgrade && (
+          <Button
+            onClick={handleUpgrade}
+            variant="outline"
+            size="sm"
+            className="w-full mt-2 text-xs gap-1.5 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/40"
+          >
+            <ShoppingCart className="h-3 w-3" />
+            Comprar Créditos
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
