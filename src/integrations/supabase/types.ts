@@ -44,6 +44,27 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_usage: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       carousel_history: {
         Row: {
           call_to_action: string | null
@@ -206,9 +227,12 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          pdf_content: string | null
+          pdf_filename: string | null
           suggested_topics: Json
           system_prompt: string
           updated_at: string | null
+          user_role: string | null
         }
         Insert: {
           capabilities?: Json
@@ -221,9 +245,12 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          pdf_content?: string | null
+          pdf_filename?: string | null
           suggested_topics?: Json
           system_prompt: string
           updated_at?: string | null
+          user_role?: string | null
         }
         Update: {
           capabilities?: Json
@@ -236,9 +263,12 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          pdf_content?: string | null
+          pdf_filename?: string | null
           suggested_topics?: Json
           system_prompt?: string
           updated_at?: string | null
+          user_role?: string | null
         }
         Relationships: []
       }
@@ -1080,6 +1110,10 @@ export type Database = {
         Returns: string
       }
       get_user_streak: { Args: { _user_id: string }; Returns: number }
+      get_video_model_for_plan: {
+        Args: { p_plan_type: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

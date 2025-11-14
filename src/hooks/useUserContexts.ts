@@ -18,6 +18,9 @@ export interface UserContext {
   context_type?: 'product' | 'idea' | 'campaign';
   entity_type?: 'agent' | 'product';
   detailed_context?: string;
+  pdf_content?: string;
+  pdf_filename?: string;
+  user_role?: string;
 }
 
 interface CreateContextInput {
@@ -26,6 +29,9 @@ interface CreateContextInput {
   description: string;
   detailed_context: string;
   icon?: string;
+  pdf_content?: string;
+  pdf_filename?: string;
+  user_role?: string;
 }
 
 const PRODUCT_CONFIG = {
@@ -35,14 +41,26 @@ const PRODUCT_CONFIG = {
 };
 
 function generateSystemPrompt(input: CreateContextInput): string {
-  return `Você é a Lumi, especialista em marketing digital.
+  let prompt = `Você é a Lumi, especialista em marketing digital.
 
 CONTEXTO DO PRODUTO DO USUÁRIO:
 Nome do Produto: ${input.name}
 Descrição: ${input.description}
-Detalhes: ${input.detailed_context}
+Detalhes: ${input.detailed_context}`;
 
-Ao responder, considere sempre este produto específico e adapte suas sugestões para este contexto. Seja prático, criativo e focado em resultados que ajudem especificamente este produto.`;
+  if (input.user_role) {
+    prompt += `\n\nQUEM É O USUÁRIO:
+${input.user_role}`;
+  }
+
+  if (input.pdf_content) {
+    prompt += `\n\nCONTEÚDO DO DOCUMENTO (${input.pdf_filename}):
+${input.pdf_content}`;
+  }
+
+  prompt += `\n\nAo responder, considere sempre este produto específico e adapte suas sugestões para este contexto. Seja prático, criativo e focado em resultados que ajudem especificamente este produto.`;
+  
+  return prompt;
 }
 
 export function useUserContexts() {
@@ -92,6 +110,9 @@ export function useUserContexts() {
         is_active: true,
         created_by: user.id,
         entity_type: 'product',
+        pdf_content: input.pdf_content,
+        pdf_filename: input.pdf_filename,
+        user_role: input.user_role,
       };
 
       const { data, error } = await supabase
@@ -118,9 +139,12 @@ export function useUserContexts() {
       if (input.name) updates.name = input.name;
       if (input.description) updates.description = input.description;
       if (input.icon) updates.icon = input.icon;
+      if (input.pdf_content !== undefined) updates.pdf_content = input.pdf_content;
+      if (input.pdf_filename !== undefined) updates.pdf_filename = input.pdf_filename;
+      if (input.user_role !== undefined) updates.user_role = input.user_role;
       
       // Se qualquer campo relevante mudou, regenerar o system_prompt
-      if (input.context_type || input.name || input.description || input.detailed_context) {
+      if (input.context_type || input.name || input.description || input.detailed_context || input.pdf_content !== undefined || input.user_role !== undefined) {
         const existingContext = contexts.find(c => c.id === id);
         if (existingContext) {
           const fullInput: CreateContextInput = {
@@ -128,6 +152,9 @@ export function useUserContexts() {
             name: input.name || existingContext.name,
             description: input.description || existingContext.description,
             detailed_context: input.detailed_context || (existingContext as any).detailed_context || '',
+            pdf_content: input.pdf_content !== undefined ? input.pdf_content : existingContext.pdf_content,
+            pdf_filename: input.pdf_filename !== undefined ? input.pdf_filename : existingContext.pdf_filename,
+            user_role: input.user_role !== undefined ? input.user_role : existingContext.user_role,
           };
           updates.system_prompt = generateSystemPrompt(fullInput);
         }
