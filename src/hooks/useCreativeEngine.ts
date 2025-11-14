@@ -30,10 +30,10 @@ export interface CreativeConfig {
   creativeType: string;
   format: string;
   objective: string;
-  market: string;
-  targetAudience: string;
+  market?: string;
+  targetAudience?: string;
   visualStyle: string;
-  colorPalette: string;
+  colorPalette?: string;
   typography: string;
   mainText: string;
   secondaryText: string;

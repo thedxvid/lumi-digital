@@ -20,12 +20,12 @@ export interface CreativeConfig {
   
   // Objetivo e Contexto
   objective: string;
-  market: string;
-  targetAudience: string;
+  market?: string;
+  targetAudience?: string;
   
   // Estilo Visual
   visualStyle: string;
-  colorPalette: string;
+  colorPalette?: string;
   typography: string;
   
   // Conteúdo
@@ -95,10 +95,7 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
     creativeType: 'social-post',
     format: 'square',
     objective: 'engagement',
-    market: '',
-    targetAudience: 'adult',
     visualStyle: 'modern',
-    colorPalette: 'vibrant',
     typography: 'sans-serif',
     mainText: '',
     secondaryText: '',
@@ -115,7 +112,7 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
     onGenerate(config);
   };
 
-  const canGenerate = config.market && config.mainText;
+  const canGenerate = true;
 
   const hasSpecialChars = (text: string) => /[çãõáéíóúâêôàñ]/i.test(text);
   const hasAnySpecialChars = hasSpecialChars(config.mainText) || 
@@ -144,15 +141,15 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
         </CardContent>
       </Card>
 
-      {/* Seção 2: Objetivo e Contexto */}
+      {/* Seção 2: Objetivo */}
       <Card>
         <CardHeader>
-          <CardTitle>2. Objetivo e Contexto</CardTitle>
-          <CardDescription>Defina o propósito e público do criativo</CardDescription>
+          <CardTitle>2. Objetivo do Criativo</CardTitle>
+          <CardDescription>Defina o propósito do seu criativo</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="space-y-2">
-            <Label>Objetivo do Criativo</Label>
+            <Label>Objetivo</Label>
             <Select value={config.objective} onValueChange={(value) => updateConfig('objective', value)}>
               <SelectTrigger>
                 <SelectValue />
@@ -163,41 +160,6 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
                     <div>
                       <div className="font-medium">{obj.label}</div>
                       <div className="text-xs text-muted-foreground">{obj.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Mercado/Nicho *</Label>
-            <Select value={config.market} onValueChange={(value) => updateConfig('market', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o mercado" />
-              </SelectTrigger>
-              <SelectContent>
-                {markets.map((market) => (
-                  <SelectItem key={market} value={market}>
-                    {market}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Público-Alvo</Label>
-            <Select value={config.targetAudience} onValueChange={(value) => updateConfig('targetAudience', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {audiences.map((audience) => (
-                  <SelectItem key={audience.value} value={audience.value}>
-                    <div>
-                      <div className="font-medium">{audience.label}</div>
-                      <div className="text-xs text-muted-foreground">{audience.description}</div>
                     </div>
                   </SelectItem>
                 ))}
@@ -217,11 +179,6 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
           <StyleVisualSelector 
             value={config.visualStyle}
             onChange={(value) => updateConfig('visualStyle', value)}
-          />
-          <Separator />
-          <ColorPaletteSelector 
-            value={config.colorPalette}
-            onChange={(value) => updateConfig('colorPalette', value)}
           />
           <Separator />
           <div className="space-y-2">
@@ -249,7 +206,7 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
       <Card>
         <CardHeader>
           <CardTitle>4. Conteúdo e Mensagem</CardTitle>
-          <CardDescription>Adicione os textos do seu criativo</CardDescription>
+          <CardDescription>Adicione os textos do seu criativo ou deixe em branco para gerar baseado apenas no prompt</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {hasAnySpecialChars && (
@@ -264,9 +221,9 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
             </Alert>
           )}
           <div className="space-y-2">
-            <Label>Texto Principal *</Label>
+            <Label>Texto Principal (Opcional)</Label>
             <Input
-              placeholder="Ex: Transforme seu corpo em 90 dias"
+              placeholder="Ex: Transforme seu corpo em 90 dias (deixe em branco para gerar automaticamente)"
               value={config.mainText}
               onChange={(e) => updateConfig('mainText', e.target.value)}
               maxLength={60}
