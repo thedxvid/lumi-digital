@@ -1,6 +1,7 @@
 import { useUserContexts } from '@/hooks/useUserContexts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ProductSelectorProps {
   selectedProductId?: string;
@@ -9,6 +10,7 @@ interface ProductSelectorProps {
 
 export function ProductSelector({ selectedProductId, onProductChange }: ProductSelectorProps) {
   const { contexts: products, loading } = useUserContexts();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -22,7 +24,12 @@ export function ProductSelector({ selectedProductId, onProductChange }: ProductS
     <div className="space-y-2">
       <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
         Produto (Contexto)
-        <span className="text-xs text-primary font-normal">➕ (Criar)</span>
+        <button 
+          onClick={() => navigate('/app/contexts')}
+          className="text-xs text-muted-foreground/50 hover:text-muted-foreground/80 transition-colors font-normal"
+        >
+          (Criar)
+        </button>
       </label>
       <Select value={selectedProductId || 'none'} onValueChange={(value) => onProductChange(value === 'none' ? undefined : value)}>
         <SelectTrigger className="w-full">
