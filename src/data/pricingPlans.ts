@@ -87,26 +87,64 @@ export const pricingPlans: PlanConfig[] = [
   },
 ];
 
+// Pacotes para Plano PRO (Kling v2.5 Turbo - $0.60/vídeo)
 export const videoAddons: VideoAddonConfig[] = [
   {
     type: 'plus_10',
     credits: 10,
     price: 59.90,
     name: 'Pacote +10 Vídeos',
+    planType: 'pro',
+    description: 'Com Kling v2.5 Turbo Pro',
   },
   {
     type: 'plus_20',
     credits: 20,
     price: 99.90,
     name: 'Pacote +20 Vídeos',
+    planType: 'pro',
+    description: 'Com Kling v2.5 Turbo Pro',
   },
   {
     type: 'plus_30',
     credits: 30,
     price: 129.90,
     name: 'Pacote +30 Vídeos',
+    planType: 'pro',
+    description: 'Com Kling v2.5 Turbo Pro',
   },
 ];
+
+// Pacotes para Plano PRO Advanced (Veo 3.1 - $3.20/vídeo ~5-6x mais caro)
+export const videoAddonsAdvanced: VideoAddonConfig[] = [
+  {
+    type: 'advanced_5',
+    credits: 5,
+    price: 99.90,
+    name: 'Pacote Premium +5 Vídeos',
+    planType: 'pro_advanced',
+    description: 'Com Veo 3.1 Google - Qualidade Máxima',
+  },
+  {
+    type: 'advanced_10',
+    credits: 10,
+    price: 189.90,
+    name: 'Pacote Premium +10 Vídeos',
+    planType: 'pro_advanced',
+    description: 'Com Veo 3.1 Google - Qualidade Máxima',
+  },
+  {
+    type: 'advanced_15',
+    credits: 15,
+    price: 269.90,
+    name: 'Pacote Premium +15 Vídeos',
+    planType: 'pro_advanced',
+    description: 'Com Veo 3.1 Google - Qualidade Máxima',
+  },
+];
+
+// Todos os pacotes combinados
+export const allVideoAddons = [...videoAddons, ...videoAddonsAdvanced];
 
 export const getPricePerMonth = (totalPrice: number, months: number): number => {
   return totalPrice / months;

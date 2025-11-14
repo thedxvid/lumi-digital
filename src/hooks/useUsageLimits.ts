@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { UsageLimits } from '@/types/subscription';
+import type { UsageLimits, VideoAddonType } from '@/types/subscription';
+import { allVideoAddons } from '@/data/pricingPlans';
 
 type FeatureType = 'creative_images' | 'profile_analysis' | 'carousels' | 'videos';
 
@@ -93,7 +94,7 @@ export const useUsageLimits = () => {
     }
   };
 
-  const purchaseVideoAddon = async (packageType: 'plus_10' | 'plus_20' | 'plus_30') => {
+  const purchaseVideoAddon = async (packageType: VideoAddonType): Promise<boolean> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -102,13 +103,13 @@ export const useUsageLimits = () => {
         return false;
       }
 
-      const packages = {
-        plus_10: { credits: 10, price: 59.90 },
-        plus_20: { credits: 20, price: 99.90 },
-        plus_30: { credits: 30, price: 129.90 },
-      };
-
-      const pkg = packages[packageType];
+      // Find package config from all available addons
+      const pkg = allVideoAddons.find(addon => addon.type === packageType);
+      
+      if (!pkg) {
+        toast.error('Pacote não encontrado');
+        return false;
+      }
 
       // Insert addon record
       const { error: addonError } = await supabase

@@ -1,6 +1,12 @@
 export type PlanType = 'free' | 'basic' | 'pro' | 'pro_advanced';
 export type DurationMonths = 1 | 3 | 6;
-export type VideoAddonType = 'plus_10' | 'plus_20' | 'plus_30';
+export type VideoAddonType = 
+  | 'plus_10' 
+  | 'plus_20' 
+  | 'plus_30'
+  | 'advanced_5'
+  | 'advanced_10'
+  | 'advanced_15';
 
 export interface Subscription {
   id: string;
@@ -74,4 +80,6 @@ export interface VideoAddonConfig {
   credits: number;
   price: number;
   name: string;
+  planType: 'pro' | 'pro_advanced';
+  description?: string;
 }
