@@ -6,6 +6,7 @@ import { Download, Trash2, Heart, Play, Clock, Maximize2, Zap } from 'lucide-rea
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { VideoHistoryItem } from '@/types/video';
+import { VideoPlayer } from './VideoPlayer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,9 +108,17 @@ export const VideoHistoryGallery = ({
             <div className="relative aspect-video bg-muted">
               <video
                 src={item.video_url}
-                className="w-full h-full object-cover"
-                controls
-                preload="metadata"
+                poster={item.video_url + '#t=0.1'}
+                className="w-full h-full object-cover cursor-pointer"
+                preload="none"
+                onClick={(e) => {
+                  const video = e.currentTarget;
+                  if (video.paused) {
+                    video.play();
+                  } else {
+                    video.pause();
+                  }
+                }}
               />
               <Button
                 variant="secondary"

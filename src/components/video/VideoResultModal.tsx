@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Download, RotateCcw, X } from 'lucide-react';
 import type { VideoConfig } from '@/types/video';
+import { VideoPlayer } from './VideoPlayer';
 
 interface VideoResultModalProps {
   open: boolean;
@@ -49,10 +50,10 @@ export const VideoResultModal = ({
         <div className="space-y-4">
           {videoUrl && (
             <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-              <video
+              <VideoPlayer
                 src={videoUrl}
                 controls
-                autoPlay
+                autoPlay={false}
                 className="w-full h-full object-contain"
               />
             </div>
