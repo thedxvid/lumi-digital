@@ -174,14 +174,9 @@ export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) =
               <SelectContent>
                 {availableAPIs.map((api) => (
                   <SelectItem key={api.id} value={api.id}>
-                    <div className="flex items-center justify-between gap-4 w-full">
-                      <div>
-                        <div className="font-medium">{api.display_name}</div>
-                        <div className="text-xs text-muted-foreground">{api.description}</div>
-                      </div>
-                      <div className="text-xs font-semibold text-lumi-gold whitespace-nowrap">
-                        ${api.cost_per_8s.toFixed(2)}/8s
-                      </div>
+                    <div>
+                      <div className="font-medium">{api.display_name}</div>
+                      <div className="text-xs text-muted-foreground">{api.description}</div>
                     </div>
                   </SelectItem>
                 ))}
