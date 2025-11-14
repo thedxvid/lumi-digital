@@ -1,6 +1,5 @@
 import React from 'react';
 import { SmartDashboard } from '@/components/dashboard/SmartDashboard';
-import { GoalsTracker } from '@/components/dashboard/GoalsTracker';
 import UsageDashboard from '@/components/dashboard/UsageDashboard';
 import { UserStatsCard } from '@/components/dashboard/UserStatsCard';
 import { WeeklyActivityChart } from '@/components/dashboard/WeeklyActivityChart';
@@ -27,9 +26,6 @@ const Overview = () => {
 
         {/* Atividade Semanal */}
         <WeeklyActivityChart />
-
-        {/* Metas do Usuário */}
-        <GoalsTracker />
 
         {/* Seu Uso do Plano */}
         <div>
