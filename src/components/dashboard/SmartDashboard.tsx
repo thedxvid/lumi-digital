@@ -1,7 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Clock, TrendingUp, Target, Flame } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -83,108 +82,57 @@ export function SmartDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6">
-      {/* Continue de onde parou */}
-      <Card className="">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <Clock className="w-5 h-5 text-primary" />
-            Continue de onde parou
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-sm text-muted-foreground">Carregando...</div>
-          ) : recentItems.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                Você ainda não tem atividades recentes
-              </p>
-              <Button onClick={() => navigate('/app/chat')}>
-                Começar agora
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleItemClick(item)}
-                  className="w-full text-left p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">
-                        {item.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                          {item.type === 'chat' ? 'Chat' : 'Módulo'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {getTimeAgo(item.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
+    <Card className="overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">Continue de onde parou</h2>
+          {currentStreak > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/20 rounded-full">
+              <span className="text-2xl">🔥</span>
+              <span className="font-bold text-orange-600">{currentStreak} dias</span>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Stats rápidas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 sm:gap-6">
-        {/* Streak */}
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500/10 to-red-500/10">
-                <Flame className="w-6 h-6 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {currentStreak} dias
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Sequência atual
-                </p>
-              </div>
-            </div>
-            {currentStreak > 0 && (
-              <p className="text-xs text-muted-foreground mt-3">
-                Continue assim! 🔥
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm sm:text-base">Ações Rápidas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 px-4 sm:px-6 pb-4 sm:pb-6">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => navigate('/app/chat')}
-            >
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Novo Chat
+        </div>
+        
+        {loading ? (
+          <div className="text-sm text-muted-foreground">Carregando...</div>
+        ) : recentItems.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              Você ainda não tem atividades recentes
+            </p>
+            <Button onClick={() => navigate('/app/chat')}>
+              Começar agora
             </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => navigate('/app/module/lead-diagnosis')}
-            >
-              <Target className="w-4 h-4 mr-2" />
-              Diagnóstico de Leads
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleItemClick(item)}
+                className="w-full text-left p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">
+                      {item.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        {item.type === 'chat' ? 'Chat' : 'Módulo'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {getTimeAgo(item.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

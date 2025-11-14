@@ -67,7 +67,7 @@ export function useLumiChat() {
       // Registrar uso do agente para analytics
       if (agentId) {
         try {
-          await supabase.from('agent_usage').insert({
+          await supabase.from('agent_usage' as any).insert({
             agent_id: agentId,
             user_id: session.user.id
           });

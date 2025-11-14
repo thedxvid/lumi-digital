@@ -25,8 +25,8 @@ export function useAgentAnalytics() {
 
       // Buscar estatísticas agregadas de uso dos agentes
       const { data: usageData, error } = await supabase
-        .from('agent_usage')
-        .select('agent_id, user_id, created_at');
+        .from('agent_usage' as any)
+        .select('agent_id, user_id, created_at') as any;
 
       if (error) throw error;
 
@@ -57,7 +57,7 @@ export function useAgentAnalytics() {
         last_used: string;
       }>();
 
-      usageData?.forEach(usage => {
+      usageData?.forEach((usage: any) => {
         const existing = agentStatsMap.get(usage.agent_id) || {
           total_uses: 0,
           unique_users: new Set<string>(),
