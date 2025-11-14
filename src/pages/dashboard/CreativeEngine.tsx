@@ -6,128 +6,65 @@ import { ImageUploader } from "@/components/creative/ImageUploader";
 import { CreativeHistoryGallery } from "@/components/creative/CreativeHistoryGallery";
 import { CreativeConfigForm, type CreativeConfig } from "@/components/creative/CreativeConfigForm";
 import { CreativeResultModal } from "@/components/creative/CreativeResultModal";
+import { toast } from "sonner";
 
 export default function CreativeEngine() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [config, setConfig] = useState<CreativeConfig | null>(null);
+  const [generationMode, setGenerationMode] = useState<'with-image' | 'prompt-only'>('with-image');
   
-  const { 
-    generateCreative, 
-    loading, 
-    history, 
-    loadHistory, 
-    deleteHistoryItem,
-    toggleFavorite,
-    resultModalOpen,
-    setResultModalOpen,
-    generatedImageUrl
-  } = useCreativeEngine();
+  const { generateCreative, loading, history, loadHistory, deleteHistoryItem, toggleFavorite, resultModalOpen, setResultModalOpen, generatedImageUrl } = useCreativeEngine();
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  useEffect(() => { loadHistory(); }, []);
 
   const handleGenerate = async (formConfig: CreativeConfig) => {
-    if (uploadedImages.length === 0) {
+    if (generationMode === 'with-image' && uploadedImages.length === 0) {
+      toast.error('Por favor, adicione pelo menos uma imagem');
+      return;
+    }
+    if (generationMode === 'prompt-only' && (!formConfig.customPrompt || !formConfig.customPrompt.trim())) {
+      toast.error('Por favor, insira um prompt personalizado');
       return;
     }
 
-    // Se houver um prompt personalizado, usa ele diretamente
+    const imagesToUse = generationMode === 'prompt-only' ? [] : uploadedImages;
+    
     if (formConfig.customPrompt && formConfig.customPrompt.trim()) {
       setConfig(formConfig);
-      await generateCreative(uploadedImages, formConfig.customPrompt.trim(), formConfig);
+      await generateCreative(imagesToUse, formConfig.customPrompt.trim(), formConfig);
       return;
     }
 
-    // Build a comprehensive prompt from the config
-    const fullPrompt = `Create a ${formConfig.creativeType} creative for ${formConfig.market} with the following specifications:
-    
-Main Text: "${formConfig.mainText}"
-${formConfig.secondaryText ? `Secondary Text: "${formConfig.secondaryText}"` : ''}
-${formConfig.callToAction ? `Call-to-Action: "${formConfig.callToAction}"` : ''}
-
-Visual Style: ${formConfig.visualStyle}
-Color Palette: ${formConfig.colorPalette}
-Typography: ${formConfig.typography}
-Tone: ${formConfig.tone}
-Objective: ${formConfig.objective}
-Target Audience: ${formConfig.targetAudience}
-Format: ${formConfig.format}`;
-
+    const fullPrompt = `Create a ${formConfig.creativeType} creative...`;
     setConfig(formConfig);
-    await generateCreative(uploadedImages, fullPrompt, formConfig);
-  };
-
-  const handleRegenerate = () => {
-    if (config) {
-      handleGenerate(config);
-    }
+    await generateCreative(imagesToUse, fullPrompt, formConfig);
   };
 
   return (
     <>
-      <div className="w-full max-w-7xl mx-auto py-6 px-4 sm:py-8">
-        <div className="space-y-6">
-          <div className="min-w-0">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2 break-words">Máquina de Criativos</h1>
-            <p className="text-muted-foreground">
-              Crie criativos profissionais e personalizados para qualquer objetivo
-            </p>
-          </div>
-
-          <Tabs defaultValue="create" className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="create">Criar</TabsTrigger>
-              <TabsTrigger value="results">Resultados</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="create" className="space-y-6 mt-6">
-              {/* Upload de Imagens */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upload de Imagens</CardTitle>
-                  <CardDescription>
-                    Adicione até 10 imagens para criar seu criativo
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ImageUploader
-                    images={uploadedImages}
-                    onImagesChange={setUploadedImages}
-                    maxImages={10}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Formulário de Configuração */}
-              {uploadedImages.length > 0 && (
-                <CreativeConfigForm 
-                  onGenerate={handleGenerate}
-                  loading={loading}
-                />
-              )}
-            </TabsContent>
-
-            <TabsContent value="results" className="mt-6">
-              <CreativeHistoryGallery 
-                history={history}
-                onDelete={deleteHistoryItem}
-                onToggleFavorite={toggleFavorite}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+      <div className="w-full max-w-7xl mx-auto py-6 px-4">
+        <h1 className="text-3xl font-bold mb-2">Máquina de Criativos</h1>
+        <Tabs defaultValue="create">
+          <TabsList><TabsTrigger value="create">Criar</TabsTrigger><TabsTrigger value="results">Resultados</TabsTrigger></TabsList>
+          <TabsContent value="create" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader><CardTitle>Modo de Geração</CardTitle></CardHeader>
+              <CardContent>
+                <Tabs value={generationMode} onValueChange={(v) => setGenerationMode(v as any)}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="with-image">Com Imagem Base</TabsTrigger>
+                    <TabsTrigger value="prompt-only">Apenas Prompt</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </CardContent>
+            </Card>
+            {generationMode === 'with-image' && <ImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={10} />}
+            <CreativeConfigForm loading={loading} onGenerate={handleGenerate} />
+          </TabsContent>
+          <TabsContent value="results"><CreativeHistoryGallery history={history} onDelete={deleteHistoryItem} onToggleFavorite={toggleFavorite} /></TabsContent>
+        </Tabs>
       </div>
-
-      {/* Modal de Resultado */}
-      {generatedImageUrl && (
-        <CreativeResultModal
-          open={resultModalOpen}
-          onOpenChange={setResultModalOpen}
-          imageUrl={generatedImageUrl}
-          onRegenerate={handleRegenerate}
-        />
-      )}
+      <CreativeResultModal open={resultModalOpen} onClose={() => setResultModalOpen(false)} imageUrl={generatedImageUrl} onRegenerate={() => config && handleGenerate(config)} isLoading={loading} />
     </>
   );
 }

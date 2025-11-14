@@ -20,6 +20,8 @@ export interface CarouselHistoryItem {
   tone?: string;
   call_to_action?: string;
   slides_config?: any;
+  generation_mode?: 'config' | 'prompt-only';
+  uploaded_images?: string[];
 }
 
 export function useCarousel() {
@@ -41,6 +43,9 @@ export function useCarousel() {
     tone: string;
     callToAction?: string;
     slides: any[];
+    generationMode?: 'config' | 'prompt-only';
+    customPrompt?: string;
+    uploadedImages?: string[];
   }): Promise<CarouselHistoryItem | null> => {
     console.log('🚀 generateCarousel started', config);
     setLoading(true);

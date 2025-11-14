@@ -24,8 +24,9 @@ serve(async (req) => {
       throw new Error('Prompt is required and must be a string')
     }
 
-    if (!images || !Array.isArray(images) || images.length === 0) {
-      throw new Error('At least one image is required')
+    // Images are now optional (can be empty for prompt-only mode)
+    if (!images || !Array.isArray(images)) {
+      throw new Error('Images must be an array (can be empty)')
     }
 
     if (images.length > 10) {

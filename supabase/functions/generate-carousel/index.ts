@@ -21,6 +21,9 @@ interface GenerateCarouselRequest {
   tone: string;
   callToAction?: string;
   slides: SlideConfig[];
+  generationMode?: 'config' | 'prompt-only';
+  customPrompt?: string;
+  uploadedImages?: string[];
 }
 
 serve(async (req) => {
@@ -59,14 +62,27 @@ serve(async (req) => {
       colorPalette,
       tone,
       callToAction,
-      slides
+      slides,
+      generationMode = 'config',
+      customPrompt,
+      uploadedImages = []
     }: GenerateCarouselRequest = await req.json();
 
-    if (!title || imageCount < 2 || imageCount > 10 || !slides || slides.length !== imageCount) {
-      return new Response(
-        JSON.stringify({ error: "Invalid request. Title required, imageCount must be 2-10, and slides must match imageCount" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Validação baseada no modo
+    if (generationMode === 'prompt-only') {
+      if (!title || imageCount < 2 || imageCount > 10 || !customPrompt) {
+        return new Response(
+          JSON.stringify({ error: "Invalid request. Title, imageCount (2-10), and customPrompt required for prompt-only mode" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      if (!title || imageCount < 2 || imageCount > 10 || !slides || slides.length !== imageCount) {
+        return new Response(
+          JSON.stringify({ error: "Invalid request. Title required, imageCount must be 2-10, and slides must match imageCount" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -111,22 +127,50 @@ serve(async (req) => {
     const images: { url: string; description: string }[] = [];
 
     for (let i = 0; i < imageCount; i++) {
-      const slide = slides[i];
+      let slidePrompt: string;
       
-      // Build comprehensive prompt for each slide
-      const visualElementsText = slide.visualElements.length > 0 
-        ? `Include visual elements: ${slide.visualElements.join(", ")}.`
-        : "";
-      
-      const highlightText = slide.highlight 
-        ? `Highlight this text prominently: "${slide.highlight}".`
-        : "";
-      
-      const ctaText = callToAction 
-        ? `Include call-to-action button: "${callToAction}".`
-        : "";
+      // Se for modo prompt-only, usa o customPrompt diretamente com indicação do slide
+      if (generationMode === 'prompt-only') {
+        slidePrompt = `
+🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
-      const imagePrompt = `Create a ${themeDescriptions[theme] || "modern"} carousel slide image (slide ${i + 1} of ${imageCount}) with ${paletteDescriptions[colorPalette] || "vibrant colors"}.
+CAROUSEL TITLE: "${title}"
+
+USER REQUEST:
+${customPrompt}
+
+THEME: ${themeDescriptions[theme] || theme}
+COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
+TONE: ${toneDescriptions[tone] || tone}
+${callToAction ? `CALL TO ACTION: "${callToAction}"` : ''}
+
+INSTRUCTIONS:
+Create slide ${i + 1} of ${imageCount} based on the user's request above.
+- Follow the theme, color palette, and tone specified
+- Make it cohesive with the overall carousel concept
+- Ensure text is clear and readable
+- Use professional design
+${uploadedImages[i] ? '- Use the provided image as reference/background' : ''}
+
+${i === imageCount - 1 && callToAction ? `This is the FINAL slide - include the call to action: "${callToAction}"` : ''}
+      `.trim();
+      } else {
+        // Modo config: usa a configuração detalhada do slide
+        const slide = slides[i];
+        
+        const visualElementsText = slide.visualElements.length > 0 
+          ? `Include visual elements: ${slide.visualElements.join(", ")}.`
+          : "";
+        
+        const highlightText = slide.highlight 
+          ? `Highlight this text prominently: "${slide.highlight}".`
+          : "";
+        
+        const ctaText = callToAction 
+          ? `Include call-to-action button: "${callToAction}".`
+          : "";
+
+        slidePrompt = `Create a ${themeDescriptions[theme] || "modern"} carousel slide image (slide ${i + 1} of ${imageCount}) with ${paletteDescriptions[colorPalette] || "vibrant colors"}.
 
 Title: "${slide.title}"
 Content: ${slide.content}
@@ -136,25 +180,47 @@ ${ctaText}
 
 Style: ${themeDescriptions[theme] || "modern"}
 Tone: ${toneDescriptions[tone] || "professional"}
-Make it visually appealing for Instagram carousel format, square aspect ratio (1:1), ${theme} aesthetic.`;
+Make it visually appealing for Instagram carousel format, square aspect ratio (1:1), ${theme} aesthetic.
+${uploadedImages[i] ? '- Use the provided image as reference/background' : ''}
+${i === imageCount - 1 && callToAction ? `FINAL SLIDE - Include this CTA: "${callToAction}"` : ''}
+      `.trim();
+      }
 
-      console.log(`Requesting image ${i + 1}/${imageCount}...`);
+      console.log(`Generating slide ${i + 1}/${imageCount}...`);
+
+      // Prepara o conteúdo da mensagem
+      const messageContent: any[] = [
+        {
+          type: "text",
+          text: slidePrompt
+        }
+      ];
+
+      // Se houver imagem específica para este slide, adiciona
+      if (uploadedImages[i]) {
+        messageContent.push({
+          type: "image_url",
+          image_url: {
+            url: uploadedImages[i]
+          }
+        });
+      }
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "google/gemini-2.5-flash-image-preview",
           messages: [
             {
               role: "user",
-              content: imagePrompt,
+              content: messageContent,
             },
           ],
-          modalities: ["image"],
+          modalities: ["image", "text"],
         }),
       });
 
