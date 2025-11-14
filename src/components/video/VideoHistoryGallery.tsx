@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, Trash2, Heart, Play, Clock, Maximize2, Zap } from 'lucide-react';
+import { Download, Trash2, Heart, Play, Clock, Maximize2, Zap, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { VideoHistoryItem } from '@/types/video';
 import { VideoPlayer } from './VideoPlayer';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,14 +27,21 @@ interface VideoHistoryGalleryProps {
   onViewFullscreen: (item: VideoHistoryItem) => void;
 }
 
-export const VideoHistoryGallery = ({
-  history,
-  onDelete,
-  onToggleFavorite,
-  onViewFullscreen,
-}: VideoHistoryGalleryProps) => {
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'favorites'>('all');
+const VideoCard = ({ item, onDelete, onToggleFavorite, onViewFullscreen }: {
+  item: VideoHistoryItem;
+  onDelete: (id: string) => void;
+  onToggleFavorite: (id: string, currentValue: boolean) => void;
+  onViewFullscreen: (item: VideoHistoryItem) => void;
+}) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const entry = useIntersectionObserver(cardRef, {
+    threshold: 0.1,
+    freezeOnceVisible: false,
+  });
+
+  const isVisible = !!entry?.isIntersecting;
 
   const getAPIDisplayName = (apiName?: string) => {
     switch (apiName) {
@@ -48,10 +57,6 @@ export const VideoHistoryGallery = ({
         return apiName || 'Veo 3 Fast';
     }
   };
-
-  const filteredHistory = filter === 'favorites'
-    ? history.filter(item => item.is_favorite)
-    : history;
 
   const handleDownload = async (url: string, id: string) => {
     try {
@@ -69,6 +74,142 @@ export const VideoHistoryGallery = ({
       console.error('Error downloading video:', error);
     }
   };
+
+  return (
+    <Card ref={cardRef} className="overflow-hidden group">
+      <div className="relative aspect-video bg-muted">
+        {!isVisible ? (
+          <Skeleton className="w-full h-full" />
+        ) : hasError ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+            <AlertCircle className="h-8 w-8" />
+            <p className="text-sm">Erro ao carregar vídeo</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setHasError(false);
+                setIsLoading(true);
+              }}
+            >
+              Tentar novamente
+            </Button>
+          </div>
+        ) : (
+          <>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <Skeleton className="w-full h-full" />
+              </div>
+            )}
+            <video
+              src={item.video_url}
+              className="w-full h-full object-cover cursor-pointer"
+              preload="metadata"
+              onLoadedMetadata={() => setIsLoading(false)}
+              onError={() => {
+                setIsLoading(false);
+                setHasError(true);
+              }}
+              onClick={(e) => {
+                const video = e.currentTarget;
+                if (video.paused) {
+                  video.play();
+                } else {
+                  video.pause();
+                }
+              }}
+            />
+          </>
+        )}
+        <Button
+          variant="secondary"
+          size="icon"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => onViewFullscreen(item)}
+        >
+          <Maximize2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <CardContent className="p-4 space-y-3">
+        <div className="space-y-2">
+          <p className="text-sm line-clamp-2 font-medium">
+            {item.prompt}
+          </p>
+          
+          <div className="flex flex-wrap gap-1">
+            {item.api_used && (
+              <Badge variant="default" className="text-xs">
+                <Zap className="h-3 w-3 mr-1" />
+                {getAPIDisplayName(item.api_used)}
+              </Badge>
+            )}
+            {item.aspect_ratio && (
+              <Badge variant="secondary" className="text-xs">
+                {item.aspect_ratio}
+              </Badge>
+            )}
+            {item.duration && (
+              <Badge variant="secondary" className="text-xs">
+                <Clock className="h-3 w-3 mr-1" />
+                {item.duration}
+              </Badge>
+            )}
+            {item.resolution && (
+              <Badge variant="secondary" className="text-xs">
+                {item.resolution}
+              </Badge>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            {format(new Date(item.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+          </p>
+        </div>
+
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onToggleFavorite(item.id, item.is_favorite || false)}
+            className={item.is_favorite ? 'text-red-500' : ''}
+          >
+            <Heart className={`h-4 w-4 ${item.is_favorite ? 'fill-current' : ''}`} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDownload(item.video_url, item.id)}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(item.id)}
+            className="text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const VideoHistoryGallery = ({
+  history,
+  onDelete,
+  onToggleFavorite,
+  onViewFullscreen,
+}: VideoHistoryGalleryProps) => {
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'favorites'>('all');
+
+  const filteredHistory = filter === 'favorites'
+    ? history.filter(item => item.is_favorite)
+    : history;
 
   if (history.length === 0) {
     return (
@@ -104,95 +245,13 @@ export const VideoHistoryGallery = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredHistory.map((item) => (
-          <Card key={item.id} className="overflow-hidden group">
-            <div className="relative aspect-video bg-muted">
-              <video
-                src={item.video_url}
-                poster={item.video_url + '#t=0.1'}
-                className="w-full h-full object-cover cursor-pointer"
-                preload="none"
-                onClick={(e) => {
-                  const video = e.currentTarget;
-                  if (video.paused) {
-                    video.play();
-                  } else {
-                    video.pause();
-                  }
-                }}
-              />
-              <Button
-                variant="secondary"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => onViewFullscreen(item)}
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <CardContent className="p-4 space-y-3">
-              <div className="space-y-2">
-                <p className="text-sm line-clamp-2 font-medium">
-                  {item.prompt}
-                </p>
-                
-                <div className="flex flex-wrap gap-1">
-                  {item.api_used && (
-                    <Badge variant="default" className="text-xs">
-                      <Zap className="h-3 w-3 mr-1" />
-                      {getAPIDisplayName(item.api_used)}
-                    </Badge>
-                  )}
-                  {item.aspect_ratio && (
-                    <Badge variant="secondary" className="text-xs">
-                      {item.aspect_ratio}
-                    </Badge>
-                  )}
-                  {item.duration && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {item.duration}
-                    </Badge>
-                  )}
-                  {item.resolution && (
-                    <Badge variant="secondary" className="text-xs">
-                      {item.resolution}
-                    </Badge>
-                  )}
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(item.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-                </p>
-              </div>
-
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onToggleFavorite(item.id, item.is_favorite || false)}
-                  className={item.is_favorite ? 'text-red-500' : ''}
-                >
-                  <Heart className={`h-4 w-4 ${item.is_favorite ? 'fill-current' : ''}`} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDownload(item.video_url, item.id)}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setDeleteId(item.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <VideoCard
+            key={item.id}
+            item={item}
+            onDelete={setDeleteId}
+            onToggleFavorite={onToggleFavorite}
+            onViewFullscreen={onViewFullscreen}
+          />
         ))}
       </div>
 
