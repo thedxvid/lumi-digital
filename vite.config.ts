@@ -114,6 +114,23 @@ export default defineConfig(({ mode }) => ({
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
+          },
+          {
+            // Cache de vídeos da fal.media (gerados pela Lumi)
+            urlPattern: /^https:\/\/.*\.fal\.media\/.*\.mp4$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'lumi-videos-cache',
+              expiration: {
+                maxEntries: 50, // Máximo de 50 vídeos no cache
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 dias
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              // Range requests support para streaming de vídeo
+              rangeRequests: true
+            }
           }
         ]
       },
