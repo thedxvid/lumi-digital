@@ -20,8 +20,9 @@ export function ProductSelector({ selectedProductId, onProductChange }: ProductS
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-muted-foreground">
+      <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
         Produto (Contexto)
+        <span className="text-xs text-primary font-normal">➕ (Criar)</span>
       </label>
       <Select value={selectedProductId || 'none'} onValueChange={(value) => onProductChange(value === 'none' ? undefined : value)}>
         <SelectTrigger className="w-full">

@@ -16,6 +16,7 @@ export interface UserContext {
   updated_at?: string;
   created_by?: string;
   context_type?: 'product' | 'idea' | 'campaign';
+  entity_type?: 'agent' | 'product';
   detailed_context?: string;
 }
 

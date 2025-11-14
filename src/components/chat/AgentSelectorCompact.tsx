@@ -24,8 +24,11 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
     !LUMI_AGENTS.some(defaultAgent => defaultAgent.id === agent.id)
   );
   
-  // Combine agents and contexts for lookup
-  const allOptions = [...agents, ...contexts];
+  // Filtrar apenas contexts que NÃO são produtos (entity_type !== 'product')
+  const agentContexts = contexts.filter(context => context.entity_type !== 'product');
+  
+  // Combine agents and agent contexts for lookup (exclude products)
+  const allOptions = [...agents, ...agentContexts];
   const selectedAgent = allOptions.find(item => item.id === selectedAgentId) || getAgentById(selectedAgentId);
 
   return (
@@ -106,10 +109,10 @@ export function AgentSelectorCompact({ selectedAgentId, onAgentChange }: AgentSe
           )}
           
           {/* Categoria: Meus Agentes */}
-          {contexts.length > 0 && (
+          {agentContexts.length > 0 && (
             <SelectGroup>
               <SelectLabel>Meus Agentes</SelectLabel>
-              {contexts.map(context => (
+              {agentContexts.map(context => (
                 <SelectItem key={context.id} value={context.id}>
                   <div className="flex items-center gap-2">
                     <span style={{ color: context.color }}>
