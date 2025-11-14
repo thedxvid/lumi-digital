@@ -26,7 +26,7 @@ serve(async (req) => {
       enhance_prompt = true,
       seed,
       auto_fix = true,
-      api_provider = 'fal_veo3_fast'
+      api_provider = 'fal_kling_v25_turbo'
     } = await req.json();
 
     console.log('Generating video:', { mode, api_provider, has_images: !!input_images });
@@ -48,23 +48,13 @@ serve(async (req) => {
 
     // Configuração das APIs disponíveis
     const apiConfigs: Record<string, { endpoint: string, key: string | undefined, authPrefix: string }> = {
-      fal_veo3_fast: {
-        endpoint: 'https://fal.run/fal-ai/veo3/fast',
-        key: FAL_KEY,
-        authPrefix: 'Key'
-      },
-      fal_wan_fast: {
-        endpoint: 'https://fal.run/fal-ai/wan/v2.2-5b/text-to-video/fast-wan',
+      fal_kling_v25_turbo: {
+        endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/text-to-video',
         key: FAL_KEY,
         authPrefix: 'Key'
       },
       fal_veo31: {
         endpoint: 'https://fal.run/fal-ai/veo3.1',
-        key: FAL_KEY,
-        authPrefix: 'Key'
-      },
-      fal_hunyuan: {
-        endpoint: 'https://fal.run/fal-ai/hunyuan-video',
         key: FAL_KEY,
         authPrefix: 'Key'
       },
@@ -157,28 +147,20 @@ serve(async (req) => {
           auto_fix
         };
       }
-    } else if (api_provider === 'fal_wan_fast') {
-      // Wan usa parâmetros diferentes
+    } else if (api_provider === 'fal_kling_v25_turbo') {
+      // Kling v2.5 usa parâmetros específicos
       const durationSeconds = parseInt(duration.replace('s', ''));
-      const num_frames = Math.min(durationSeconds * 24, 121); // Max 5s = 120 frames at 24fps
+      const klingDuration = durationSeconds <= 5 ? "5" : "10";
       
       requestBody = {
         prompt,
+        duration: klingDuration,
         aspect_ratio,
-        resolution: resolution === '1080p' ? '720p' : resolution, // Wan suporta até 720p
-        negative_prompt,
-        num_frames,
-        frames_per_second: 24,
-        enable_prompt_expansion: enhance_prompt,
-        seed,
-        guidance_scale: 3.5,
-        interpolator_model: 'film',
-        num_interpolated_frames: 0,
-        video_quality: 'high',
-        video_write_mode: 'balanced'
+        negative_prompt: negative_prompt || 'blur, distort, and low quality',
+        cfg_scale: 0.5
       };
     } else {
-      // Veo e Hunyuan usam parâmetros padrão
+      // Veo 3.1 usa parâmetros padrão
       requestBody = {
         prompt,
         aspect_ratio,
