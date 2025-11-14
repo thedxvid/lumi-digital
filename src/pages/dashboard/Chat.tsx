@@ -295,24 +295,34 @@ export default function Chat() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col relative z-0 min-w-0 overflow-hidden h-screen">
-        {/* Mobile Header with History Button */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-border flex-shrink-0">
-          <h1 className="text-lg font-semibold">Chat LUMI</h1>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleNewChat}
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHistory(true)}
-            >
-              Histórico
-            </Button>
+        {/* Mobile Agent Selector & Actions - Sticky */}
+        <div className="md:hidden sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border flex-shrink-0 shadow-sm">
+          <div className="flex items-center justify-between p-3 border-b border-border/50">
+            <h1 className="text-base font-semibold">Chat LUMI</h1>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNewChat}
+                className="h-8"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHistory(true)}
+                className="h-8 text-xs"
+              >
+                Histórico
+              </Button>
+            </div>
+          </div>
+          <div className="p-3">
+            <AgentSelectorCompact
+              selectedAgentId={selectedAgentId}
+              onAgentChange={setSelectedAgentId}
+            />
           </div>
         </div>
 
