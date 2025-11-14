@@ -34,7 +34,7 @@ export default function UsageDashboard() {
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           Você ainda não possui um plano ativo.{' '}
-          <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = '/pricing'}>
+          <Button variant="link" className="p-0 h-auto" onClick={() => window.location.href = '/app/pricing'}>
             Ver planos disponíveis
           </Button>
         </AlertDescription>
@@ -193,7 +193,7 @@ export default function UsageDashboard() {
       </div>
 
       <div className="flex gap-4 justify-center">
-        <Button variant="outline" onClick={() => window.location.href = '/pricing'}>
+        <Button variant="outline" onClick={() => window.location.href = '/app/pricing'}>
           Fazer Upgrade
         </Button>
         {subscription.plan_type === 'pro' && (
