@@ -13,12 +13,12 @@ import { VideoImageUploader } from './VideoImageUploader';
 const VIDEO_APIS: VideoAPIConfig[] = [
   // Text-to-Video APIs
   {
-    id: 'fal_veo3_fast',
-    name: 'fal_veo3_fast',
-    display_name: 'Veo 3 Fast (Text)',
-    cost_per_8s: 0.80,
-    description: 'Rápido e econômico',
-    provider: 'Google',
+    id: 'fal_kling_v25_turbo',
+    name: 'fal_kling_v25_turbo',
+    display_name: 'Kling v2.5 Turbo Pro',
+    cost_per_8s: 0.60,
+    description: 'Movimento fluido e visual cinematográfico',
+    provider: 'Kling AI',
     mode: 'text-to-video'
   },
   {
@@ -26,26 +26,8 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     name: 'fal_veo31',
     display_name: 'Veo 3.1 (Text)',
     cost_per_8s: 3.20,
-    description: 'Máxima qualidade',
+    description: 'Máxima qualidade - Plano Pro Advanced',
     provider: 'Google',
-    mode: 'text-to-video'
-  },
-  {
-    id: 'fal_hunyuan',
-    name: 'fal_hunyuan',
-    display_name: 'Hunyuan Video (Text)',
-    cost_per_8s: 0.64,
-    description: 'Boa qualidade',
-    provider: 'Tencent',
-    mode: 'text-to-video'
-  },
-  {
-    id: 'fal_wan_fast',
-    name: 'fal_wan_fast',
-    display_name: 'Wan 2.2 FastVideo (Text)',
-    cost_per_8s: 0.50,
-    description: 'Ultra rápido - até 5s em 720p',
-    provider: 'Wan',
     mode: 'text-to-video'
   },
   // Image-to-Video APIs
@@ -120,7 +102,7 @@ export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) =
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
-  const [apiProvider, setApiProvider] = useState<string>('fal_veo3_fast');
+  const [apiProvider, setApiProvider] = useState<string>('fal_kling_v25_turbo');
 
   // Filter APIs based on mode
   const availableAPIs = VIDEO_APIS.filter(api => api.mode === mode);
