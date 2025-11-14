@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { VideoConfigForm } from '@/components/video/VideoConfigForm';
 import { VideoHistoryGallery } from '@/components/video/VideoHistoryGallery';
 import { VideoResultModal } from '@/components/video/VideoResultModal';
@@ -8,12 +10,13 @@ import { PlanUpgradeModal } from '@/components/video/PlanUpgradeModal';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 import { useSubscription } from '@/hooks/useSubscription';
-import { Video, History, AlertCircle } from 'lucide-react';
+import { Video, History, AlertCircle, ShoppingCart } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { VideoConfig, VideoHistoryItem } from '@/types/video';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const VideoGenerator = () => {
+  const navigate = useNavigate();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const {
@@ -66,9 +69,18 @@ const VideoGenerator = () => {
     }
   };
   return <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-      <div className="min-w-0">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words overflow-wrap-anywhere">Gerador de Vídeos</h1>
-        <p className="text-muted-foreground">Crie vídeos profissionais com IA </p>
+      <div className="min-w-0 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words overflow-wrap-anywhere">Gerador de Vídeos</h1>
+          <p className="text-muted-foreground">Crie vídeos profissionais com IA </p>
+        </div>
+        <Button 
+          onClick={() => navigate('/app/video-addons')}
+          className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Comprar Créditos
+        </Button>
       </div>
 
       <Alert>

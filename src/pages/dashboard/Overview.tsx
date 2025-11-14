@@ -1,5 +1,4 @@
 import React from 'react';
-import { SmartDashboard } from '@/components/dashboard/SmartDashboard';
 import UsageDashboard from '@/components/dashboard/UsageDashboard';
 import { UserStatsCard } from '@/components/dashboard/UserStatsCard';
 import { WeeklyActivityChart } from '@/components/dashboard/WeeklyActivityChart';
@@ -17,9 +16,6 @@ const Overview = () => {
             Escolha um agente especializado e comece a criar com a LUMI
           </p>
         </div>
-
-        {/* Continue de onde parou */}
-        <SmartDashboard />
 
         {/* Suas Estatísticas */}
         <UserStatsCard />
