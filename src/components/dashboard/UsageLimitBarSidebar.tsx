@@ -54,7 +54,7 @@ export function UsageLimitBarSidebar() {
   };
 
   return (
-    <div className="w-full border-t border-border pt-3">
+    <div className="w-full">
       <div className="space-y-1">
         <TooltipProvider>
           {features.map((feature, index) => {
