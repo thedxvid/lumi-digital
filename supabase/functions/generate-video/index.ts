@@ -220,6 +220,21 @@ serve(async (req) => {
         );
       }
       
+      if (response.status === 422) {
+        try {
+          const errorData = JSON.parse(errorText);
+          const isContentViolation = errorData.detail?.some((d: any) => d.type === 'content_policy_violation');
+          if (isContentViolation) {
+            return new Response(
+              JSON.stringify({ error: 'O conteúdo do prompt foi bloqueado pelos filtros de segurança. Por favor, reformule sua solicitação com um texto diferente.' }),
+              { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        } catch (e) {
+          // If we can't parse the error, continue to generic error
+        }
+      }
+      
       throw new Error(`Fal.ai API error: ${response.status} - ${errorText}`);
     }
 
