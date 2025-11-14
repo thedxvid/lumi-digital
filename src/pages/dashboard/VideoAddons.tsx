@@ -51,15 +51,41 @@ export default function VideoAddons() {
           </Badge>
         )}
 
-        {limits && isProUser && (
-          <div className="max-w-md mx-auto p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Seus créditos atuais:</p>
-            <div className="flex justify-center gap-4 text-lg font-semibold">
-              <span>Mensais: {limits.videos_monthly_limit - limits.videos_monthly_used}/{limits.videos_monthly_limit}</span>
-              <span className="text-primary">Extras: {limits.video_credits - limits.video_credits_used}/{limits.video_credits}</span>
+        {limits && isProUser && (() => {
+          const videoUsed = limits.videos_monthly_used + limits.video_credits_used;
+          const videoTotal = limits.videos_monthly_limit + limits.video_credits;
+          const videoPercentage = (videoUsed / videoTotal) * 100;
+          
+          return (
+            <div className="max-w-md mx-auto p-4 bg-muted rounded-lg border-2 border-green-600/50">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">Seus créditos de vídeo:</p>
+                {videoPercentage >= 80 && (
+                  <Badge variant="destructive" className="animate-pulse">
+                    {videoPercentage >= 90 ? '🔴 Crítico' : '⚠️ Atenção'}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex justify-center gap-4 text-lg font-semibold mb-2">
+                <span>📅 Mensais: {limits.videos_monthly_limit - limits.videos_monthly_used}/{limits.videos_monthly_limit}</span>
+                <span className="text-green-600">⚡ Extras: {limits.video_credits - limits.video_credits_used}/{limits.video_credits}</span>
+              </div>
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${
+                    videoPercentage >= 90 ? 'bg-red-500' : 
+                    videoPercentage >= 80 ? 'bg-yellow-500' : 
+                    'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(videoPercentage, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                {videoPercentage.toFixed(1)}% utilizado
+              </p>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
