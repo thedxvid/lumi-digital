@@ -85,7 +85,7 @@ export function AnimatedDashboardSidebar() {
 
   const contentProductionLinks = [
     {
-      label: "Máquina de Criativos",
+      label: "Criativos",
       href: "/app/creative-engine",
       icon: (
         <Lightbulb className="text-foreground h-4 w-4 flex-shrink-0" />
