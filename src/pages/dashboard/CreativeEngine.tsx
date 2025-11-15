@@ -18,8 +18,6 @@ export default function CreativeEngine() {
   useEffect(() => { loadHistory(); }, []);
 
   const handleGenerate = async (formConfig: CreativeConfig) => {
-    console.log('🔍 handleGenerate chamado:', { generationMode, formConfig });
-    
     // Validações
     if (generationMode === 'with-image' && uploadedImages.length === 0) {
       toast.error('Por favor, adicione pelo menos uma imagem');
@@ -34,7 +32,6 @@ export default function CreativeEngine() {
     
     // No modo prompt-only, usa apenas o customPrompt
     if (generationMode === 'prompt-only') {
-      console.log('✅ Gerando com prompt-only:', formConfig.customPrompt);
       setConfig(formConfig);
       await generateCreative(imagesToUse, formConfig.customPrompt!.trim(), formConfig);
       return;
@@ -42,13 +39,11 @@ export default function CreativeEngine() {
     
     // No modo with-image, pode usar customPrompt ou gerar um prompt baseado na config
     if (formConfig.customPrompt && formConfig.customPrompt.trim()) {
-      console.log('✅ Gerando com customPrompt:', formConfig.customPrompt);
       setConfig(formConfig);
       await generateCreative(imagesToUse, formConfig.customPrompt.trim(), formConfig);
       return;
     }
 
-    console.log('✅ Gerando com config padrão');
     const fullPrompt = `Create a ${formConfig.creativeType} creative...`;
     setConfig(formConfig);
     await generateCreative(imagesToUse, fullPrompt, formConfig);
