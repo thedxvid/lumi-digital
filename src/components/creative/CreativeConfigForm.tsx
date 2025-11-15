@@ -80,7 +80,6 @@ export function CreativeConfigForm({ onGenerate, loading, generationMode = 'with
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('📝 Form submitted com config:', config);
     onGenerate(config);
   };
 

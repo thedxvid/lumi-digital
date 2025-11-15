@@ -54,22 +54,18 @@ export function useCreativeEngine() {
       return null;
     }
 
-    if (!images || images.length === 0) {
-      toast.error('Adicione pelo menos uma imagem');
-      return null;
-    }
-
     if (!prompt.trim()) {
-      toast.error('Descreva o que você deseja fazer com as imagens');
+      toast.error('Descreva o que você deseja criar');
       return null;
     }
 
     setLoading(true);
     
     try {
-      console.log('Sending images to Creative Engine:', { 
+      console.log('Sending to Creative Engine:', { 
         imageCount: images.length,
-        promptLength: prompt.length 
+        promptLength: prompt.length,
+        mode: images.length > 0 ? 'with-images' : 'prompt-only'
       });
 
       const { data, error } = await supabase.functions.invoke('creative-engine', {
