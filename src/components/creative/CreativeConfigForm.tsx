@@ -14,26 +14,17 @@ import { ColorPaletteSelector } from "./ColorPaletteSelector";
 import { Loader2, AlertCircle, Eye, Sparkles } from "lucide-react";
 
 export interface CreativeConfig {
-  // Tipo e Formato
   creativeType: string;
   format: string;
-  
-  // Objetivo e Contexto
   objective: string;
   market?: string;
   targetAudience?: string;
-  
-  // Estilo Visual
   visualStyle: string;
   colorPalette?: string;
   typography: string;
-  
-  // Conteúdo
   mainText: string;
   secondaryText: string;
   callToAction: string;
-  
-  // Avançado
   tone: string;
   customPrompt?: string;
 }
@@ -41,6 +32,7 @@ export interface CreativeConfig {
 interface CreativeConfigFormProps {
   onGenerate: (config: CreativeConfig) => void;
   loading: boolean;
+  generationMode?: 'with-image' | 'prompt-only';
 }
 
 const objectives = [
@@ -50,29 +42,6 @@ const objectives = [
   { value: 'awareness', label: '🔔 Awareness', description: 'Aumentar reconhecimento de marca' },
   { value: 'promotional', label: '🎁 Promocional', description: 'Promoção, desconto, oferta' },
   { value: 'informative', label: 'ℹ️ Informativo', description: 'Comunicar novidade, atualização' }
-];
-
-const markets = [
-  '🏋️ Fitness e Saúde',
-  '🍔 Alimentação e Gastronomia',
-  '💼 Negócios e Empreendedorismo',
-  '🎓 Educação e Cursos',
-  '💄 Beleza e Estética',
-  '🏠 Imóveis e Arquitetura',
-  '👗 Moda e Vestuário',
-  '💻 Tecnologia e Software',
-  '🎮 Entretenimento e Jogos',
-  '🚗 Automotivo',
-  '🌱 Sustentabilidade',
-  '✨ Outro'
-];
-
-const audiences = [
-  { value: 'professional', label: '👨‍💼 Profissional/Corporativo', description: '25-45 anos' },
-  { value: 'young', label: '👦 Jovem/Adolescente', description: '13-24 anos' },
-  { value: 'adult', label: '👨 Adulto', description: '25-44 anos' },
-  { value: 'mature', label: '👴 Maturidade', description: '45+ anos' },
-  { value: 'family', label: '👨‍👩‍👧‍👦 Famílias', description: 'Grupos familiares' }
 ];
 
 const typographies = [
@@ -91,7 +60,7 @@ const tones = [
   { value: 'humorous', label: '😂 Bem-humorado' }
 ];
 
-export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormProps) {
+export function CreativeConfigForm({ onGenerate, loading, generationMode = 'with-image' }: CreativeConfigFormProps) {
   const [config, setConfig] = useState<CreativeConfig>({
     creativeType: 'social-post',
     format: 'square',
@@ -114,8 +83,6 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
     onGenerate(config);
   };
 
-  const canGenerate = true;
-
   const hasSpecialChars = (text: string) => /[çãõáéíóúâêôàñ]/i.test(text);
   const hasAnySpecialChars = hasSpecialChars(config.mainText) || 
                              hasSpecialChars(config.secondaryText) || 
@@ -123,245 +90,242 @@ export function CreativeConfigForm({ onGenerate, loading }: CreativeConfigFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Seção 1: Tipo e Formato */}
-      <Card>
-        <CardHeader>
-          <CardTitle>1. Tipo e Formato</CardTitle>
-          <CardDescription>Escolha o tipo de criativo e suas dimensões</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <CreativeTypeSelector 
-            value={config.creativeType} 
-            onChange={(value) => updateConfig('creativeType', value)} 
-          />
-          <Separator />
-          <FormatSelector 
-            creativeType={config.creativeType}
-            value={config.format}
-            onChange={(value) => updateConfig('format', value)}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Seção 2: Objetivo */}
-      <Card>
-        <CardHeader>
-          <CardTitle>2. Objetivo do Criativo</CardTitle>
-          <CardDescription>Defina o propósito do seu criativo</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label>Objetivo</Label>
-            <Select value={config.objective} onValueChange={(value) => updateConfig('objective', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {objectives.map((obj) => (
-                  <SelectItem key={obj.value} value={obj.value}>
-                    <div>
-                      <div className="font-medium">{obj.label}</div>
-                      <div className="text-xs text-muted-foreground">{obj.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Seção 3: Estilo e Identidade Visual */}
-      <Card>
-        <CardHeader>
-          <CardTitle>3. Estilo e Identidade Visual</CardTitle>
-          <CardDescription>Personalize a aparência do seu criativo</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <StyleVisualSelector 
-            value={config.visualStyle}
-            onChange={(value) => updateConfig('visualStyle', value)}
-          />
-          <Separator />
-          <div className="space-y-2">
-            <Label>Tipografia</Label>
-            <Select value={config.typography} onValueChange={(value) => updateConfig('typography', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {typographies.map((typo) => (
-                  <SelectItem key={typo.value} value={typo.value}>
-                    <div>
-                      <div className="font-medium">{typo.label}</div>
-                      <div className="text-xs text-muted-foreground">{typo.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Seção 4: Conteúdo e Mensagem */}
-      <Card>
-        <CardHeader>
-          <CardTitle>4. Conteúdo e Mensagem</CardTitle>
-          <CardDescription>Adicione os textos do seu criativo ou deixe em branco para gerar baseado apenas no prompt</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {hasAnySpecialChars && (
-            <Alert className="border-orange-500/50 bg-orange-500/10">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              <AlertDescription className="text-sm">
-                <strong>⚠️ Caracteres especiais detectados</strong> (ç, ã, etc.)
-                <br />
-                O modelo de IA pode ter dificuldade em renderizá-los perfeitamente. 
-                Revise cuidadosamente o resultado após a geração e regenere se necessário.
-              </AlertDescription>
-            </Alert>
-          )}
-          <div className="space-y-2">
-            <Label>Texto Principal (Opcional)</Label>
-            <Input
-              placeholder="Ex: Transforme seu corpo em 90 dias (deixe em branco para gerar automaticamente)"
-              value={config.mainText}
-              onChange={(e) => updateConfig('mainText', e.target.value)}
-              maxLength={60}
-            />
-            <p className="text-xs text-muted-foreground">{config.mainText.length}/60 caracteres</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Texto Secundário</Label>
-            <Textarea
-              placeholder="Ex: Método aprovado por mais de 10.000 alunos"
-              value={config.secondaryText}
-              onChange={(e) => updateConfig('secondaryText', e.target.value)}
-              maxLength={150}
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">{config.secondaryText.length}/150 caracteres</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Call-to-Action</Label>
-            <Input
-              placeholder={
-                config.objective === 'sales' ? 'Ex: Compre Agora' :
-                config.objective === 'engagement' ? 'Ex: Comente Aqui' :
-                'Ex: Saiba Mais'
-              }
-              value={config.callToAction}
-              onChange={(e) => updateConfig('callToAction', e.target.value)}
-              maxLength={30}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Preview dos Textos */}
-      {config.mainText && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Eye className="w-4 h-4" />
-              Prévia dos Textos que Serão Renderizados
+      {generationMode === 'prompt-only' ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              Descreva seu Criativo
             </CardTitle>
+            <CardDescription>
+              Descreva detalhadamente o criativo que você deseja gerar. Seja específico sobre cores, textos, estilo e formato.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">Texto Principal:</div>
-              <div className="text-sm font-medium bg-background/50 p-2 rounded border">
-                "{config.mainText}"
-              </div>
-            </div>
-            {config.secondaryText && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">Texto Secundário:</div>
-                <div className="text-sm bg-background/50 p-2 rounded border">
-                  "{config.secondaryText}"
-                </div>
-              </div>
-            )}
-            {config.callToAction && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">Call-to-Action:</div>
-                <div className="text-sm font-medium bg-background/50 p-2 rounded border">
-                  "{config.callToAction}"
-                </div>
-              </div>
-            )}
-            <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t">
-              <Sparkles className="w-3 h-3 mt-0.5 shrink-0" />
-              <p>Estes textos serão renderizados exatamente como aparecem acima. Revise antes de gerar.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Seção 5: Configurações Avançadas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>5. Tom de Voz</CardTitle>
-          <CardDescription>Como você quer se comunicar</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label>Tom de Voz</Label>
-            <Select value={config.tone} onValueChange={(value) => updateConfig('tone', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {tones.map((tone) => (
-                  <SelectItem key={tone.value} value={tone.value}>
-                    {tone.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Seção 6: Prompt Personalizado (Opcional) */}
-      <Card className="border-dashed">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5" />
-            6. Prompt Personalizado (Opcional)
-          </CardTitle>
-          <CardDescription>
-            Descreva exatamente o que você quer no criativo. Este campo substitui toda a configuração acima.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="customPrompt">Seu Prompt</Label>
+          <CardContent>
             <Textarea
-              id="customPrompt"
               value={config.customPrompt || ''}
               onChange={(e) => updateConfig('customPrompt', e.target.value)}
-              placeholder="Ex: Crie um post para Instagram quadrado com fundo azul, texto 'Promo do Dia' em fonte grande e amarela, e CTA 'Compre Agora' em vermelho..."
-              className="min-h-[120px] resize-y"
+              placeholder="Ex: Crie um post para Instagram quadrado com fundo azul gradiente, texto principal 'Promoção Imperdível' em fonte grande e branca, subtexto 'Apenas hoje!' em amarelo, e botão 'Compre Agora' em vermelho com cantos arredondados..."
+              className="min-h-[300px] resize-y"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-2">
               {config.customPrompt?.length || 0} caracteres
             </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>1. Tipo e Formato</CardTitle>
+              <CardDescription>Escolha o tipo de criativo e suas dimensões</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <CreativeTypeSelector 
+                value={config.creativeType} 
+                onChange={(value) => updateConfig('creativeType', value)} 
+              />
+              <Separator />
+              <FormatSelector 
+                creativeType={config.creativeType}
+                value={config.format}
+                onChange={(value) => updateConfig('format', value)}
+              />
+            </CardContent>
+          </Card>
 
-      <Button type="submit" size="lg" className="w-full" disabled={loading || !canGenerate}>
+          <Card>
+            <CardHeader>
+              <CardTitle>2. Objetivo do Criativo</CardTitle>
+              <CardDescription>Defina o propósito do seu criativo</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label>Objetivo</Label>
+                <Select value={config.objective} onValueChange={(value) => updateConfig('objective', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {objectives.map((obj) => (
+                      <SelectItem key={obj.value} value={obj.value}>
+                        <div>
+                          <div className="font-medium">{obj.label}</div>
+                          <div className="text-xs text-muted-foreground">{obj.description}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>3. Estilo e Identidade Visual</CardTitle>
+              <CardDescription>Personalize a aparência do seu criativo</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <StyleVisualSelector 
+                value={config.visualStyle}
+                onChange={(value) => updateConfig('visualStyle', value)}
+              />
+              <Separator />
+              <div className="space-y-2">
+                <Label>Tipografia</Label>
+                <Select value={config.typography} onValueChange={(value) => updateConfig('typography', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {typographies.map((typo) => (
+                      <SelectItem key={typo.value} value={typo.value}>
+                        <div>
+                          <div className="font-medium">{typo.label}</div>
+                          <div className="text-xs text-muted-foreground">{typo.description}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>4. Conteúdo e Mensagem</CardTitle>
+              <CardDescription>Adicione os textos do seu criativo</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {hasAnySpecialChars && (
+                <Alert className="border-orange-500/50 bg-orange-500/10">
+                  <AlertCircle className="h-4 w-4 text-orange-500" />
+                  <AlertDescription className="text-sm">
+                    <strong>Atenção:</strong> Caracteres especiais podem não ser renderizados corretamente.
+                  </AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="mainText">Texto Principal</Label>
+                <Input
+                  id="mainText"
+                  value={config.mainText}
+                  onChange={(e) => updateConfig('mainText', e.target.value)}
+                  placeholder="Ex: Grande Promoção!"
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {config.mainText.length}/100 caracteres
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="secondaryText">Texto Secundário (Opcional)</Label>
+                <Input
+                  id="secondaryText"
+                  value={config.secondaryText}
+                  onChange={(e) => updateConfig('secondaryText', e.target.value)}
+                  placeholder="Ex: Até 50% de desconto"
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {config.secondaryText.length}/100 caracteres
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="callToAction">Call to Action</Label>
+                <Input
+                  id="callToAction"
+                  value={config.callToAction}
+                  onChange={(e) => updateConfig('callToAction', e.target.value)}
+                  placeholder="Ex: Compre Agora!"
+                  maxLength={50}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {config.callToAction.length}/50 caracteres
+                </p>
+              </div>
+
+              {(config.mainText || config.secondaryText || config.callToAction) && (
+                <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Eye className="w-4 h-4" />
+                    <span className="text-sm font-medium">Preview</span>
+                  </div>
+                  <div className="space-y-2">
+                    {config.mainText && <p className="text-lg font-bold">{config.mainText}</p>}
+                    {config.secondaryText && <p className="text-sm text-muted-foreground">{config.secondaryText}</p>}
+                    {config.callToAction && <p className="text-sm font-semibold text-primary">{config.callToAction}</p>}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>5. Tom de Voz</CardTitle>
+              <CardDescription>Escolha o tom para os textos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select value={config.tone} onValueChange={(value) => updateConfig('tone', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {tones.map((tone) => (
+                    <SelectItem key={tone.value} value={tone.value}>
+                      {tone.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                6. Prompt Personalizado (Opcional)
+              </CardTitle>
+              <CardDescription>
+                Descreva exatamente o que você quer no criativo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="customPrompt">Seu Prompt</Label>
+                <Textarea
+                  id="customPrompt"
+                  value={config.customPrompt || ''}
+                  onChange={(e) => updateConfig('customPrompt', e.target.value)}
+                  placeholder="Ex: Crie um post para Instagram quadrado com fundo azul..."
+                  className="min-h-[120px] resize-y"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {config.customPrompt?.length || 0} caracteres
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      <Button type="submit" size="lg" className="w-full" disabled={loading}>
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Gerando Criativo...
           </>
         ) : (
-          'Gerar Criativo'
+          <>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Gerar Criativo
+          </>
         )}
       </Button>
     </form>
