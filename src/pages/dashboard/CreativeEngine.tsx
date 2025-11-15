@@ -59,7 +59,7 @@ export default function CreativeEngine() {
               </CardContent>
             </Card>
             {generationMode === 'with-image' && <ImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={10} />}
-            <CreativeConfigForm loading={loading} onGenerate={handleGenerate} />
+            <CreativeConfigForm loading={loading} onGenerate={handleGenerate} generationMode={generationMode} />
           </TabsContent>
           <TabsContent value="results"><CreativeHistoryGallery history={history} onDelete={deleteHistoryItem} onToggleFavorite={toggleFavorite} /></TabsContent>
         </Tabs>
