@@ -83,7 +83,7 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
         </CardContent>
       </Card>
       {generationMode === 'prompt-only' && <Card><CardContent className="pt-6"><Textarea value={customPrompt} onChange={(e) => setCustomPrompt(e.target.value)} placeholder="Descreva o carrossel..." className="min-h-[200px]" /></CardContent></Card>}
-      {generationMode === 'config' && <>{slides.map((s, i) => <SlideConfigCard key={i} slideNumber={i+1} slide={s} onChange={(u) => { const n = [...slides]; n[i] = u; setSlides(n); }} />)}<CarouselImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={imageCount} /></>}
+      {generationMode === 'config' && <>{slides.map((s, i) => <SlideConfigCard key={i} slideNumber={i+1} slide={s} onChange={(u) => { const n = [...slides]; n[i] = u; setSlides(n); }} disabled={false} />)}<CarouselImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={imageCount} /></>}
       <Button type="submit" className="w-full" disabled={loading || !canGenerate}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Gerando...</> : <><Sparkles className="mr-2 h-4 w-4" />Gerar</>}</Button>
     </form>
   );
