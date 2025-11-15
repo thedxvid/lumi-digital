@@ -64,7 +64,7 @@ export default function CreativeEngine() {
           <TabsContent value="results"><CreativeHistoryGallery history={history} onDelete={deleteHistoryItem} onToggleFavorite={toggleFavorite} /></TabsContent>
         </Tabs>
       </div>
-      <CreativeResultModal open={resultModalOpen} onClose={() => setResultModalOpen(false)} imageUrl={generatedImageUrl} onRegenerate={() => config && handleGenerate(config)} isLoading={loading} />
+      <CreativeResultModal open={resultModalOpen} onOpenChange={setResultModalOpen} imageUrl={generatedImageUrl} onRegenerate={() => config && handleGenerate(config)} />
     </>
   );
 }
