@@ -35,18 +35,25 @@ const VideoGenerator = () => {
   const [fullscreenVideo, setFullscreenVideo] = useState<VideoHistoryItem | null>(null);
   const [preloadedImage, setPreloadedImage] = useState<string | null>(null);
   const [initialMode, setInitialMode] = useState<'text-to-video' | 'image-to-video'>('text-to-video');
+  const [hasLoadedImage, setHasLoadedImage] = useState(false);
 
   // Handle preloaded image from creative generator
   useEffect(() => {
     const state = location.state as { preloadedImage?: string; mode?: 'image-to-video' } | null;
-    if (state?.preloadedImage) {
+    console.log('📸 VideoGenerator - Location state:', state);
+    
+    if (state?.preloadedImage && !hasLoadedImage) {
+      console.log('✅ Loading preloaded image:', state.preloadedImage.substring(0, 50) + '...');
       setPreloadedImage(state.preloadedImage);
       setInitialMode(state.mode || 'image-to-video');
+      setHasLoadedImage(true);
       toast.success('Imagem carregada! Configure e gere seu vídeo 🎬');
-      // Clear state to avoid re-triggering
-      window.history.replaceState({}, document.title);
+      // Clear state after loading to avoid re-triggering
+      setTimeout(() => {
+        window.history.replaceState({}, document.title);
+      }, 100);
     }
-  }, [location]);
+  }, [location, hasLoadedImage]);
 
   // Check if user has PRO plan
   useEffect(() => {

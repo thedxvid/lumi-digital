@@ -71,7 +71,9 @@ export const VideoConfigForm = ({
 
   // Update state when preloadedImage changes
   useEffect(() => {
+    console.log('📸 VideoConfigForm - Preloaded image:', preloadedImage?.substring(0, 50));
     if (preloadedImage) {
+      console.log('✅ Setting input images with preloaded image');
       setInputImages([preloadedImage]);
       setMode('image-to-video');
       setApiProvider('fal_kling_v25_image_to_video');
@@ -83,8 +85,12 @@ export const VideoConfigForm = ({
 
   // Update API provider when mode changes
   const handleModeChange = (newMode: VideoMode) => {
+    console.log('🔄 Mode changed to:', newMode);
     setMode(newMode);
-    setInputImages([]);
+    // Only clear images if switching away from image-to-video and no preloaded image
+    if (newMode !== 'image-to-video' || !preloadedImage) {
+      setInputImages([]);
+    }
     // Set default API for the mode
     const defaultAPI = VIDEO_APIS.find(api => api.mode === newMode);
     if (defaultAPI) {
@@ -152,6 +158,7 @@ export const VideoConfigForm = ({
               maxImages={maxImages}
               onImagesChange={setInputImages}
               disabled={loading}
+              initialImages={inputImages}
             />
           )}
 

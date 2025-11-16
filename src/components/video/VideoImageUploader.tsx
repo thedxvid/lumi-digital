@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
@@ -8,10 +8,25 @@ interface VideoImageUploaderProps {
   maxImages: 1 | 2;
   onImagesChange: (images: string[]) => void;
   disabled?: boolean;
+  initialImages?: string[];
 }
 
-export const VideoImageUploader = ({ maxImages, onImagesChange, disabled }: VideoImageUploaderProps) => {
-  const [images, setImages] = useState<string[]>([]);
+export const VideoImageUploader = ({ maxImages, onImagesChange, disabled, initialImages = [] }: VideoImageUploaderProps) => {
+  const [images, setImages] = useState<string[]>(initialImages);
+
+  // Sync with initialImages when they change
+  useEffect(() => {
+    console.log('🖼️ VideoImageUploader - Initial images changed:', initialImages.length);
+    if (initialImages.length > 0) {
+      console.log('✅ Setting images to:', initialImages);
+      setImages(initialImages);
+    }
+  }, [initialImages]);
+
+  // Notify parent when images change
+  useEffect(() => {
+    console.log('📤 VideoImageUploader - Images state changed:', images.length);
+  }, [images]);
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
