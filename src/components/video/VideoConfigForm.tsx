@@ -158,10 +158,14 @@ export const VideoConfigForm = ({
       return;
     }
 
+    // Detectar se Sora 2 está ativo para usar modo especial
+    const isSora2 = apiProvider === 'fal_sora2_image_to_video';
+    const enhanceMode = isSora2 ? 'enhance-sora' : 'enhance';
+
     setEnhancingPrompt(true);
     try {
       const { data, error } = await supabase.functions.invoke('suggest-safe-prompt', {
-        body: { prompt: prompt.trim(), mode: 'enhance' }
+        body: { prompt: prompt.trim(), mode: enhanceMode }
       });
 
       if (error) {
@@ -177,9 +181,10 @@ export const VideoConfigForm = ({
 
       if (data?.suggested) {
         setPrompt(data.suggested);
-        toast.success('Prompt melhorado! Traduzido para inglês e otimizado com técnicas cinematográficas.', {
-          duration: 5000
-        });
+        const message = isSora2 
+          ? 'Prompt otimizado para Sora 2! ✨' 
+          : 'Prompt melhorado! Traduzido para inglês e otimizado com técnicas cinematográficas.';
+        toast.success(message, { duration: 5000 });
       }
     } catch (error) {
       console.error('Error enhancing prompt:', error);
@@ -223,8 +228,29 @@ export const VideoConfigForm = ({
     ? prompt.trim().length >= 10
     : inputImages.length > 0 && (!selectedAPI?.requires_images || inputImages.length === selectedAPI.requires_images);
 
+  // Detectar se Sora 2 está ativo
+  const isSora2Active = apiProvider === 'fal_sora2_image_to_video';
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Sora 2 Warning */}
+      {isSora2Active && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg space-y-2">
+          <div className="flex items-start gap-2">
+            <Sparkles className="h-5 w-5 text-amber-500 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                Sora 2 - Filtros Rigorosos Ativos
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                O Sora 2 bloqueia prompts com marcas, produtos específicos e cores detalhadas de objetos.
+                Use o botão "Melhorar Prompt" para otimizar automaticamente! ✨
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card className="p-6">
         <div className="space-y-4">
           {/* Mode Selector */}
@@ -302,17 +328,21 @@ export const VideoConfigForm = ({
                   size="sm"
                   onClick={handleEnhancePrompt}
                   disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
-                  className="flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  data-enhance-prompt
+                  className={isSora2Active 
+                    ? "flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                    : "flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  }
                 >
                   {enhancingPrompt ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Melhorando...
+                      {isSora2Active ? 'Otimizando...' : 'Melhorando...'}
                     </>
                   ) : (
                     <>
                       <Wand2 className="h-4 w-4 mr-2" />
-                      Melhorar Prompt
+                      {isSora2Active ? 'Otimizar Sora 2' : 'Melhorar Prompt'}
                     </>
                   )}
                 </Button>

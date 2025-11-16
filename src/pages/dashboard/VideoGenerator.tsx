@@ -10,7 +10,7 @@ import { PlanUpgradeModal } from '@/components/video/PlanUpgradeModal';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 import { useSubscription } from '@/hooks/useSubscription';
-import { Video, History, AlertCircle, ShoppingCart } from 'lucide-react';
+import { Video, History, AlertCircle, ShoppingCart, Wand2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { VideoConfig, VideoHistoryItem } from '@/types/video';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -36,6 +36,11 @@ const VideoGenerator = () => {
   const [preloadedImage, setPreloadedImage] = useState<string | null>(null);
   const [initialMode, setInitialMode] = useState<'text-to-video' | 'image-to-video'>('text-to-video');
   const [hasLoadedImage, setHasLoadedImage] = useState(false);
+  const [policyViolation, setPolicyViolation] = useState<{
+    error: string;
+    prompt: string;
+    apiProvider: string;
+  } | null>(null);
 
   // Handle preloaded image from creative generator
   useEffect(() => {
@@ -61,6 +66,20 @@ const VideoGenerator = () => {
       setShowUpgradeModal(true);
     }
   }, [subscription, subscriptionLoading]);
+
+  // Listen for policy violation events
+  useEffect(() => {
+    const handlePolicyViolation = (event: CustomEvent) => {
+      console.log('📢 Policy violation event received:', event.detail);
+      setPolicyViolation(event.detail);
+    };
+
+    window.addEventListener('video-policy-violation', handlePolicyViolation as EventListener);
+    
+    return () => {
+      window.removeEventListener('video-policy-violation', handlePolicyViolation as EventListener);
+    };
+  }, []);
 
   // Show upgrade modal if not PRO
   if (showUpgradeModal) {
@@ -105,6 +124,34 @@ const VideoGenerator = () => {
           Comprar Créditos
         </Button>
       </div>
+
+      {/* Policy Violation Alert */}
+      {policyViolation && (
+        <Alert variant="destructive" className="border-red-500/50 bg-red-500/10">
+          <AlertCircle className="h-5 w-5" />
+          <AlertDescription className="space-y-2">
+            <p className="font-semibold">⚠️ Prompt Bloqueado</p>
+            <p className="text-sm">
+              {policyViolation.apiProvider === 'fal_sora2_image_to_video' 
+                ? 'Sora 2 detectou marcas, produtos ou cores específicas.'
+                : 'Conteúdo bloqueado pelos filtros.'
+              }
+            </p>
+            <div className="flex gap-2 mt-3">
+              <Button size="sm" variant="outline" onClick={() => setPolicyViolation(null)}>
+                Entendi
+              </Button>
+              <Button size="sm" onClick={() => {
+                setPolicyViolation(null);
+                document.querySelector<HTMLButtonElement>('[data-enhance-prompt]')?.click();
+              }}>
+                <Wand2 className="h-4 w-4 mr-2" />
+                Melhorar Agora
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Alert>
         <AlertCircle className="h-4 w-4" />

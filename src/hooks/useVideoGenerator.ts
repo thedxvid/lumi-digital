@@ -29,12 +29,26 @@ export const useVideoGenerator = () => {
       }
 
       if (functionData?.error) {
-        // Check if it's a content policy violation (user-friendly error)
+        // Verificar se é erro de violação de política de conteúdo
         if (functionData.error.includes('filtros de segurança') || 
             functionData.error.includes('conteúdo do prompt foi bloqueado')) {
-          toast.error(functionData.error, {
-            duration: 8000,
-            description: 'Use o botão "Sugerir Prompt Seguro" para reformular automaticamente.'
+          console.log('🚫 CONTENT POLICY VIOLATION DETECTED 🚫');
+          console.log('Error details:', functionData.error);
+          console.log('Prompt:', config.prompt?.substring(0, 100) + '...');
+          console.log('API Provider:', config.api_provider);
+          
+          // Disparar evento customizado para o componente capturar
+          window.dispatchEvent(new CustomEvent('video-policy-violation', {
+            detail: {
+              error: functionData.error,
+              prompt: config.prompt,
+              apiProvider: config.api_provider
+            }
+          }));
+          
+          toast.error('Prompt bloqueado pelos filtros de segurança', {
+            description: 'Use "Prompt Seguro" ou "Melhorar Prompt" para reformular',
+            duration: 8000
           });
           return null;
         }
