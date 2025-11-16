@@ -179,36 +179,56 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error('Fal.ai API error:', response.status, errorText);
       
+      // Handle rate limit
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
+      // Handle insufficient credits
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: 'Créditos insuficientes na conta Fal.ai.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
+      // Handle content policy violations
       if (response.status === 422) {
+        console.log('Checking for content policy violation...');
         try {
           const errorData = JSON.parse(errorText);
-          const isContentViolation = errorData.detail?.some((d: any) => d.type === 'content_policy_violation');
+          console.log('Parsed error data:', errorData);
+          
+          const isContentViolation = errorData.detail?.some((d: any) => {
+            console.log('Checking detail:', d);
+            return d.type === 'content_policy_violation';
+          });
+          
+          console.log('Is content violation:', isContentViolation);
+          
           if (isContentViolation) {
+            console.log('Returning content policy violation error with status 200');
             return new Response(
-              JSON.stringify({ error: 'O conteúdo do prompt foi bloqueado pelos filtros de segurança da API. Por favor, reformule sua solicitação com um texto diferente, evitando marcas, nomes de produtos ou conteúdo sensível.' }),
+              JSON.stringify({ 
+                error: 'O conteúdo do prompt foi bloqueado pelos filtros de segurança da API. Tente usar descrições mais genéricas, evitando: marcas comerciais (Rolex, Mercedes, etc), produtos específicos, ou conteúdo sensível. Exemplo: ao invés de "Rolex", use "relógio de pulso".'
+              }),
               { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
-        } catch (e) {
-          // If we can't parse the error, continue to generic error
+        } catch (parseError) {
+          console.error('Error parsing Fal.ai error response:', parseError);
         }
       }
       
-      throw new Error(`Fal.ai API error: ${response.status} - ${errorText}`);
+      // Generic error for other cases
+      console.error('Returning generic error');
+      return new Response(
+        JSON.stringify({ error: `Erro ao gerar vídeo: ${response.status}. Por favor, tente novamente.` }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();
