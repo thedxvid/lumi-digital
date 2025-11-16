@@ -63,6 +63,11 @@ serve(async (req) => {
         endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
         key: FAL_KEY,
         authPrefix: 'Key'
+      },
+      fal_sora2_image_to_video: {
+        endpoint: 'https://fal.run/fal-ai/sora-2/image-to-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
       }
     };
 
@@ -105,6 +110,27 @@ serve(async (req) => {
           duration: klingDuration,
           negative_prompt: negative_prompt || 'blur, distort, and low quality',
           cfg_scale: 0.5
+        };
+      } else if (api_provider === 'fal_sora2_image_to_video') {
+        // Sora 2 Image-to-Video requires 1 image
+        if (!input_images || input_images.length < 1) {
+          return new Response(
+            JSON.stringify({ error: 'Este modelo requer 1 imagem' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        const durationSeconds = parseInt(duration.replace('s', ''));
+        // Sora 2 supports 4, 8, or 12 seconds
+        const soraDuration = durationSeconds <= 4 ? 4 : durationSeconds <= 8 ? 8 : 12;
+        
+        requestBody = {
+          prompt: prompt || 'Generate a video from this image',
+          image_url: input_images[0],
+          duration: soraDuration,
+          resolution: resolution === '1080p' ? '720p' : '720p', // Sora 2 supports auto or 720p
+          aspect_ratio: aspect_ratio === '1:1' ? 'auto' : aspect_ratio, // Sora 2: auto, 9:16, 16:9
+          delete_video: true
         };
       } else {
         return new Response(
