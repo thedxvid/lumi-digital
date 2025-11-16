@@ -181,44 +181,14 @@ CRITICAL: This is a BASE IMAGE ONLY. Text will be overlaid programmatically late
 
     console.log('Base image generated successfully')
 
-    // STEP 3: Compose final creative with text overlay
-    let finalImage = baseImage
-    let description = data.choices?.[0]?.message?.content || 'Creative generated successfully'
-
-    if (copyData && config) {
-      console.log('Step 3: Composing final creative with text overlay...')
-      try {
-        const composeResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/compose-creative`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': req.headers.get('Authorization') || '',
-          },
-          body: JSON.stringify({ 
-            baseImage, 
-            copy: copyData,
-            config 
-          })
-        })
-
-        if (composeResponse.ok) {
-          const composeData = await composeResponse.json()
-          finalImage = composeData.image
-          description = composeData.description
-          console.log('Final creative composed successfully')
-        } else {
-          console.warn('Composition failed, returning base image')
-        }
-      } catch (e) {
-        console.warn('Composition error:', e, '- returning base image')
-      }
-    }
+    // Return base image only + suggested copy (if generated)
+    const description = data.choices?.[0]?.message?.content || 'Creative base generated successfully'
 
     return new Response(
       JSON.stringify({ 
-        generatedImage: finalImage,
-        description,
-        hybrid: !!copyData
+        baseImage,
+        suggestedCopy: copyData || null,
+        description
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

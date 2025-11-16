@@ -1,21 +1,41 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Share2, X, RefreshCw } from "lucide-react";
+import { Download, Share2, X, RefreshCw, Type } from "lucide-react";
 import { toast } from "sonner";
+import { TextOverlayForm, type TextOverlayConfig } from "./TextOverlayForm";
 
 interface CreativeResultModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   imageUrl: string;
   onRegenerate?: () => void;
+  suggestedCopy?: {
+    headline: string;
+    secondary: string;
+    cta: string;
+  };
+  onApplyText?: (config: TextOverlayConfig) => Promise<void>;
+  applyingText?: boolean;
 }
 
 export function CreativeResultModal({ 
   open, 
   onOpenChange, 
   imageUrl,
-  onRegenerate 
+  onRegenerate,
+  suggestedCopy,
+  onApplyText,
+  applyingText
 }: CreativeResultModalProps) {
+  const [showTextEditor, setShowTextEditor] = useState(false);
+
+  const handleApplyText = async (config: TextOverlayConfig) => {
+    if (onApplyText) {
+      await onApplyText(config);
+      setShowTextEditor(false);
+    }
+  };
   
   const handleDownload = async () => {
     try {
@@ -72,35 +92,56 @@ export function CreativeResultModal({
             />
           </div>
 
-          {/* Ações */}
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleDownload} className="flex-1">
-              <Download className="w-4 h-4 mr-2" />
-              Baixar
-            </Button>
-            <Button onClick={handleShare} variant="outline" className="flex-1">
-              <Share2 className="w-4 h-4 mr-2" />
-              Compartilhar
-            </Button>
-            {onRegenerate && (
-              <Button onClick={onRegenerate} variant="outline" className="flex-1">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Regenerar
-              </Button>
-            )}
-            <Button 
-              onClick={() => onOpenChange(false)} 
-              variant="secondary"
-              className="flex-1"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Fechar
-            </Button>
-          </div>
+          {/* Editor de Texto */}
+          {showTextEditor && onApplyText ? (
+            <TextOverlayForm 
+              suggestedCopy={suggestedCopy}
+              onApply={handleApplyText}
+              loading={applyingText}
+            />
+          ) : (
+            <>
+              {/* Ações */}
+              <div className="flex flex-wrap gap-2">
+                {onApplyText && (
+                  <Button 
+                    onClick={() => setShowTextEditor(true)} 
+                    className="flex-1"
+                    variant="default"
+                  >
+                    <Type className="w-4 h-4 mr-2" />
+                    Adicionar Texto
+                  </Button>
+                )}
+                <Button onClick={handleDownload} variant="outline" className="flex-1">
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar
+                </Button>
+                <Button onClick={handleShare} variant="outline" className="flex-1">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Compartilhar
+                </Button>
+                {onRegenerate && (
+                  <Button onClick={onRegenerate} variant="outline" className="flex-1">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Regenerar
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => onOpenChange(false)} 
+                  variant="secondary"
+                  className="flex-1"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Fechar
+                </Button>
+              </div>
 
-          <p className="text-sm text-muted-foreground text-center">
-            O criativo também foi salvo na aba "Resultados" para você acessar depois.
-          </p>
+              <p className="text-sm text-muted-foreground text-center">
+                O criativo também foi salvo na aba "Resultados" para você acessar depois.
+              </p>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

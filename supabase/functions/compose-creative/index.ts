@@ -65,19 +65,32 @@ serve(async (req) => {
     const height = canvas.height
     const padding = width * 0.05
 
-    // Configure text styles based on config
-    const headlineSize = Math.floor(width * 0.08)
-    const secondarySize = Math.floor(width * 0.04)
-    const ctaSize = Math.floor(width * 0.045)
+    // Extract customization options from config (with defaults)
+    const textPosition = config?.textPosition || 'top'
+    const textColor = config?.textColor || '#FFFFFF'
+    const fontSize = config?.fontSize || 'medium'
+    const shadowIntensity = config?.shadowIntensity ?? 10
 
+    // Configure text sizes based on fontSize setting
+    const fontSizeMultiplier = fontSize === 'small' ? 0.8 : fontSize === 'large' ? 1.3 : 1.0
+    const headlineSize = Math.floor(width * 0.08 * fontSizeMultiplier)
+    const secondarySize = Math.floor(width * 0.04 * fontSizeMultiplier)
+    const ctaSize = Math.floor(width * 0.045 * fontSizeMultiplier)
+
+    // Calculate vertical position based on textPosition
     let currentY = padding * 2
+    if (textPosition === 'center') {
+      currentY = height / 2 - (headlineSize * 2)
+    } else if (textPosition === 'bottom') {
+      currentY = height - padding * 8
+    }
 
     // Render Headline (Main Text)
     if (copy.headline) {
       ctx.font = `bold ${headlineSize}px Arial, sans-serif`
-      ctx.fillStyle = '#FFFFFF'
+      ctx.fillStyle = textColor
       ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
-      ctx.shadowBlur = 20
+      ctx.shadowBlur = shadowIntensity
       ctx.shadowOffsetX = 0
       ctx.shadowOffsetY = 4
       
@@ -95,8 +108,8 @@ serve(async (req) => {
     // Render Secondary Text
     if (copy.secondary) {
       ctx.font = `${secondarySize}px Arial, sans-serif`
-      ctx.fillStyle = '#FFFFFF'
-      ctx.shadowBlur = 10
+      ctx.fillStyle = textColor
+      ctx.shadowBlur = shadowIntensity * 0.5
       
       currentY = wrapText(
         ctx, 

@@ -13,7 +13,19 @@ export default function CreativeEngine() {
   const [config, setConfig] = useState<CreativeConfig | null>(null);
   const [generationMode, setGenerationMode] = useState<'with-image' | 'prompt-only'>('with-image');
   
-  const { generateCreative, loading, history, loadHistory, deleteHistoryItem, toggleFavorite, resultModalOpen, setResultModalOpen, generatedImageUrl } = useCreativeEngine();
+  const { 
+    generateCreative, 
+    applyTextToCreative,
+    loading, 
+    history, 
+    loadHistory, 
+    deleteHistoryItem, 
+    toggleFavorite, 
+    resultModalOpen, 
+    setResultModalOpen, 
+    generatedImageUrl,
+    suggestedCopy 
+  } = useCreativeEngine();
 
   useEffect(() => { loadHistory(); }, []);
 
@@ -73,7 +85,19 @@ export default function CreativeEngine() {
           <TabsContent value="results"><CreativeHistoryGallery history={history} onDelete={deleteHistoryItem} onToggleFavorite={toggleFavorite} /></TabsContent>
         </Tabs>
       </div>
-      <CreativeResultModal open={resultModalOpen} onOpenChange={setResultModalOpen} imageUrl={generatedImageUrl} onRegenerate={() => config && handleGenerate(config)} />
+      <CreativeResultModal 
+        open={resultModalOpen} 
+        onOpenChange={setResultModalOpen} 
+        imageUrl={generatedImageUrl} 
+        onRegenerate={() => config && handleGenerate(config)}
+        suggestedCopy={suggestedCopy}
+        onApplyText={async (textConfig) => {
+          if (generatedImageUrl) {
+            await applyTextToCreative(generatedImageUrl, textConfig);
+          }
+        }}
+        applyingText={loading}
+      />
     </>
   );
 }
