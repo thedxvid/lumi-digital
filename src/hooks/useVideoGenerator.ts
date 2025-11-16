@@ -29,6 +29,15 @@ export const useVideoGenerator = () => {
       }
 
       if (functionData?.error) {
+        // Check if it's a content policy violation (user-friendly error)
+        if (functionData.error.includes('filtros de segurança') || 
+            functionData.error.includes('conteúdo do prompt foi bloqueado')) {
+          toast.error(functionData.error, {
+            duration: 8000,
+            description: 'Use o botão "Sugerir Prompt Seguro" para reformular automaticamente.'
+          });
+          return null;
+        }
         throw new Error(functionData.error);
       }
 
