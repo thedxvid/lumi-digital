@@ -65,7 +65,7 @@ Retorne APENAS um objeto JSON no seguinte formato (sem markdown, sem explicaçõ
             content: copyPrompt
           }
         ],
-        temperature: 0.7,
+        // temperature: 1, // Using default temperature for this model
       })
     })
 

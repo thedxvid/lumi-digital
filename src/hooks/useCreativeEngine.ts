@@ -220,40 +220,11 @@ export function useCreativeEngine() {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('compose-creative', {
-        body: { 
-          baseImage,
-          copy: {
-            headline: textConfig.headline,
-            secondary: textConfig.secondary,
-            cta: textConfig.cta
-          },
-          config: {
-            textPosition: textConfig.textPosition,
-            textColor: textConfig.textColor,
-            fontSize: textConfig.fontSize,
-            shadowIntensity: textConfig.shadowIntensity
-          }
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) {
-        console.error('Error applying text:', error);
-        throw error;
-      }
-
-      if (data?.error) {
-        console.error('Error from compose-creative:', data.error);
-        toast.error(data.error);
-        return null;
-      }
-
-      if (!data?.image) {
-        throw new Error('Falha ao compor criativo com texto');
-      }
+      // Import the canvas composer utility
+      const { composeTextOnImage } = await import('@/utils/canvasTextComposer');
+      
+      // Compose text on image using frontend Canvas API (zero cost!)
+      const composedImage = await composeTextOnImage(baseImage, textConfig);
 
       // Save the final version to history
       const { error: insertError } = await supabase
@@ -262,7 +233,7 @@ export function useCreativeEngine() {
           user_id: session.user.id,
           original_images: [],
           prompt: 'Criativo com texto aplicado',
-          generated_image: data.image,
+          generated_image: composedImage,
           main_text: textConfig.headline,
           secondary_text: textConfig.secondary,
           call_to_action: textConfig.cta
@@ -275,12 +246,12 @@ export function useCreativeEngine() {
       toast.success('Texto aplicado com sucesso! 🎉');
       
       // Update the displayed image
-      setGeneratedImageUrl(data.image);
+      setGeneratedImageUrl(composedImage);
       
       // Refresh history
       await loadHistory();
 
-      return data.image;
+      return composedImage;
 
     } catch (error) {
       console.error('Error applying text to creative:', error);
