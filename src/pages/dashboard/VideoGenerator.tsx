@@ -132,7 +132,7 @@ const VideoGenerator = () => {
           <AlertDescription className="space-y-2">
             <p className="font-semibold">⚠️ Prompt Bloqueado</p>
             <p className="text-sm">
-              {policyViolation.apiProvider === 'fal_sora2_image_to_video' 
+              {(policyViolation.apiProvider === 'fal_sora2_image_to_video' || policyViolation.apiProvider === 'fal_sora2_text_to_video')
                 ? 'Sora 2 detectou marcas, produtos ou cores específicas.'
                 : 'Conteúdo bloqueado pelos filtros.'
               }
