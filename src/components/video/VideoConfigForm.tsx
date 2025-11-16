@@ -41,6 +41,17 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     mode: 'image-to-video',
     requires_images: 1,
     endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video'
+  },
+  {
+    id: 'fal_sora2_image_to_video',
+    name: 'fal_sora2_image_to_video',
+    display_name: 'Sora 2 by OpenAI (Imagem)',
+    cost_per_8s: 4.00,
+    description: 'Qualidade cinematográfica premium com áudio - Modelo da OpenAI',
+    provider: 'OpenAI',
+    mode: 'image-to-video',
+    requires_images: 1,
+    endpoint: 'https://fal.run/fal-ai/sora-2/image-to-video'
   }
 ];
 
