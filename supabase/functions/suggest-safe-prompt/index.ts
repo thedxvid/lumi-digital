@@ -14,11 +14,11 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, mode = 'safe' } = await req.json();
 
     if (!prompt || prompt.trim().length < 5) {
       return new Response(
-        JSON.stringify({ error: 'Prompt muito curto para reformular' }),
+        JSON.stringify({ error: 'Prompt muito curto para processar' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -30,20 +30,12 @@ serve(async (req) => {
       );
     }
 
-    console.log('Reformulando prompt:', prompt);
+    console.log(`Processing prompt in ${mode} mode:`, prompt);
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `Você é um assistente especializado em reformular prompts de geração de vídeo para remover conteúdo que pode ser bloqueado por filtros de segurança.
+    let systemPrompt = '';
+    
+    if (mode === 'safe') {
+      systemPrompt = `Você é um assistente especializado em reformular prompts de geração de vídeo para remover conteúdo que pode ser bloqueado por filtros de segurança.
 
 REGRAS IMPORTANTES:
 1. Remova todas as marcas comerciais (Rolex, Mercedes, Apple, etc.) e substitua por descrições genéricas
@@ -59,14 +51,63 @@ EXEMPLOS:
 - "tomando Coca-Cola" → "tomando um refrigerante"
 - "usando iPhone" → "usando um smartphone"
 
-Retorne APENAS o prompt reformulado, sem explicações adicionais.`
-          },
-          {
-            role: 'user',
-            content: `Reformule este prompt removendo marcas e conteúdo sensível:\n\n${prompt}`
+Retorne APENAS o prompt reformulado, sem explicações adicionais.`;
+    } else if (mode === 'enhance') {
+      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Sora 2, Kling, Veo). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
+
+DIRETRIZES OBRIGATÓRIAS:
+
+1. **TRADUZIR PARA INGLÊS** - Modelos funcionam MUITO melhor em inglês. Sempre traduza.
+
+2. **ESTRUTURA CINEMATOGRÁFICA:**
+   - Comece com enquadramento (Wide shot, Medium shot, Close-up, etc)
+   - Especifique ângulo de câmera (Eye level, Low angle, High angle, Bird's eye)
+   - Uma ação clara e específica por vídeo
+   - Um movimento de câmera claro (ou "static shot")
+
+3. **DETALHES VISUAIS:**
+   - Sujeito principal com 2-3 características visuais distintas
+   - 3-5 cores âncora específicas (ex: "deep azure blue, golden yellow, forest green")
+   - Qualidade e fonte de luz específica (ex: "soft morning sunlight through windows")
+
+4. **LINGUAGEM PRECISA:**
+   - Use verbos específicos: "sprints" ao invés de "moves quickly"
+   - Use substantivos concretos: "five-story apartment building" ao invés de "big building"
+   - Evite linguagem vaga: "beautiful", "nice", "good"
+
+5. **ESTILO/ESTÉTICA:**
+   - Estabeleça estilo no início (ex: "Cinematic, 35mm film", "Anime style", "Documentary realism")
+
+6. **FÍSICA REALISTA:**
+   - Descreva movimentos plausíveis que poderiam acontecer na duração do vídeo
+   - Evite múltiplas ações complexas
+
+FORMATO DE SAÍDA:
+Retorne APENAS o prompt melhorado em INGLÊS, estruturado e otimizado. Seja específico, cinematográfico e detalhado.
+
+EXEMPLO TRANSFORMAÇÃO:
+RUIM: "Um gato andando na rua"
+BOM: "Medium shot at eye level of a sleek orange tabby cat with white paws walking confidently down a cobblestone street. Soft afternoon sunlight casts long shadows. The cat's tail sways gently as it moves. Color palette: warm amber, grey stone, cream white. Static camera, 35mm film aesthetic, shallow depth of field."`;
+    }
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { 
+            role: 'user', 
+            content: mode === 'safe' 
+              ? `Reformule este prompt removendo marcas e conteúdo sensível:\n\n${prompt}`
+              : `Melhore este prompt seguindo as melhores práticas de geração de vídeo AI:\n\n${prompt}`
           }
         ],
-        max_tokens: 500,
+        max_tokens: 800,
         temperature: 0.7
       }),
     });
@@ -90,20 +131,21 @@ Retorne APENAS o prompt reformulado, sem explicações adicionais.`
       }
 
       return new Response(
-        JSON.stringify({ error: 'Erro ao reformular prompt. Tente novamente.' }),
+        JSON.stringify({ error: 'Erro ao processar prompt. Tente novamente.' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
-    const suggestedPrompt = data.choices[0].message.content.trim();
+    const processedPrompt = data.choices[0].message.content.trim();
 
-    console.log('Prompt reformulado:', suggestedPrompt);
+    console.log('Prompt processed:', processedPrompt);
 
     return new Response(
       JSON.stringify({ 
         original: prompt,
-        suggested: suggestedPrompt
+        suggested: processedPrompt,
+        mode
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

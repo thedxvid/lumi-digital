@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Wand2 } from 'lucide-react';
 import type { VideoConfig, VideoAPIConfig, VideoMode } from '@/types/video';
 import { VideoModeSelector } from './VideoModeSelector';
 import { VideoImageUploader } from './VideoImageUploader';
@@ -79,6 +79,7 @@ export const VideoConfigForm = ({
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
   const [suggestingPrompt, setSuggestingPrompt] = useState(false);
+  const [enhancingPrompt, setEnhancingPrompt] = useState(false);
   const [apiProvider, setApiProvider] = useState<string>(
     initialMode === 'image-to-video' ? 'fal_kling_v25_image_to_video' : 'fal_kling_v25_turbo'
   );
@@ -125,7 +126,7 @@ export const VideoConfigForm = ({
     setSuggestingPrompt(true);
     try {
       const { data, error } = await supabase.functions.invoke('suggest-safe-prompt', {
-        body: { prompt: prompt.trim() }
+        body: { prompt: prompt.trim(), mode: 'safe' }
       });
 
       if (error) {
@@ -148,6 +149,43 @@ export const VideoConfigForm = ({
       toast.error('Erro ao processar solicitação');
     } finally {
       setSuggestingPrompt(false);
+    }
+  };
+
+  const handleEnhancePrompt = async () => {
+    if (!prompt || prompt.trim().length < 5) {
+      toast.error('Digite um prompt primeiro para melhorá-lo');
+      return;
+    }
+
+    setEnhancingPrompt(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-safe-prompt', {
+        body: { prompt: prompt.trim(), mode: 'enhance' }
+      });
+
+      if (error) {
+        console.error('Error enhancing prompt:', error);
+        toast.error('Erro ao melhorar prompt');
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      if (data?.suggested) {
+        setPrompt(data.suggested);
+        toast.success('Prompt melhorado! Traduzido para inglês e otimizado com técnicas cinematográficas.', {
+          duration: 5000
+        });
+      }
+    } catch (error) {
+      console.error('Error enhancing prompt:', error);
+      toast.error('Erro ao processar solicitação');
+    } finally {
+      setEnhancingPrompt(false);
     }
   };
 
@@ -231,32 +269,54 @@ export const VideoConfigForm = ({
               className="min-h-[120px] resize-none"
               disabled={loading}
             />
-            <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center justify-between gap-2 mt-2">
               {mode === 'text-to-video' && (
                 <p className="text-xs text-muted-foreground">
                   {prompt.length} caracteres {prompt.length < 10 && `(faltam ${10 - prompt.length})`}
                 </p>
               )}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSuggestSafePrompt}
-                disabled={loading || suggestingPrompt || prompt.trim().length < 5}
-                className="ml-auto"
-              >
-                {suggestingPrompt ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Reformulando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Sugerir Prompt Seguro
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2 ml-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSuggestSafePrompt}
+                  disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
+                  className="flex-shrink-0"
+                >
+                  {suggestingPrompt ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Reformulando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Prompt Seguro
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={handleEnhancePrompt}
+                  disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
+                  className="flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                >
+                  {enhancingPrompt ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Melhorando...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      Melhorar Prompt
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
 
