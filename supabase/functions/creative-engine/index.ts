@@ -74,6 +74,39 @@ serve(async (req) => {
     // STEP 2: Generate base image WITHOUT text
     console.log('Step 2: Generating base image without text...')
     
+    // Get dimensions based on format
+    const formatDimensions: Record<string, string> = {
+      // Social Post
+      'square': '1080x1080',
+      'vertical': '1080x1350',
+      'horizontal': '1200x675',
+      // Story
+      'story-vertical': '1080x1920',
+      // Ad
+      'ad-square': '1200x1200',
+      'ad-horizontal': '1200x628',
+      'ad-vertical': '1080x1350',
+      // Banner
+      'banner-wide': '1920x1080',
+      'banner-ultra': '2560x1080',
+      'banner-custom': '1920x1080',
+      // Email
+      'email-standard': '600x800',
+      // Product
+      'product-square': '1000x1000',
+      'product-vertical': '1000x1333',
+      // Infographic
+      'infographic-vertical': '800x2000',
+      'infographic-horizontal': '2000x800',
+      // Free
+      'free-square': '1080x1080',
+      'free-custom': '1080x1080'
+    };
+
+    const dimensions = config?.format ? formatDimensions[config.format] || '1080x1080' : '1080x1080';
+    const [width, height] = dimensions.split('x').map(Number);
+    const aspectRatio = (width / height).toFixed(2);
+    
     let enhancedPrompt = prompt;
     
     if (config) {
@@ -83,8 +116,12 @@ IMPORTANT: Create a pure visual composition WITHOUT any text, words, or letters.
 
 YOU ARE CREATING: ${config.creativeType} creative
 FORMAT: ${config.format}
+DIMENSIONS: ${dimensions} pixels (Aspect Ratio ${aspectRatio}:1)
+${width > height ? 'ORIENTATION: Horizontal/Landscape' : width < height ? 'ORIENTATION: Vertical/Portrait' : 'ORIENTATION: Square'}
 
 COMPOSITION REQUIREMENTS:
+• Create image in EXACTLY ${dimensions} dimensions (${width}x${height} pixels)
+• Maintain ${aspectRatio}:1 aspect ratio precisely
 • Create a visually striking background/composition
 • Professional, polished visual result
 • Leave clear space for text overlay (will be added later)
@@ -96,7 +133,8 @@ ${config.customPrompt ? `ADDITIONAL DETAILS:\n${config.customPrompt}\n` : ''}
 ADDITIONAL CONTEXT:
 ${prompt}
 
-CRITICAL: This is a BASE IMAGE ONLY. Text will be overlaid programmatically later.`;
+CRITICAL: This is a BASE IMAGE ONLY. Text will be overlaid programmatically later.
+OUTPUT SIZE: ${width}x${height} pixels`;
     }
 
     // Prepare the message content with images

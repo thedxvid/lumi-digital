@@ -87,6 +87,22 @@ export function useCreativeEngine() {
         throw new Error('Nenhuma imagem foi gerada');
       }
 
+      // Resize image to exact dimensions if config provided
+      let finalImage = data.baseImage;
+      if (config?.format) {
+        const { resizeImage, getFormatDimensions } = await import('@/utils/imageResizer');
+        const dimensions = getFormatDimensions(config.format);
+        
+        try {
+          console.log(`Resizing image to ${dimensions.width}x${dimensions.height}...`);
+          finalImage = await resizeImage(data.baseImage, dimensions.width, dimensions.height);
+          console.log('Image resized successfully');
+        } catch (resizeError) {
+          console.error('Error resizing image, using original:', resizeError);
+          // Continue with original image if resize fails
+        }
+      }
+
       // Store suggested copy for later use
       if (data.suggestedCopy) {
         setSuggestedCopy(data.suggestedCopy);
@@ -99,7 +115,7 @@ export function useCreativeEngine() {
           user_id: session.user.id,
           original_images: images,
           prompt,
-          generated_image: data.baseImage,
+          generated_image: finalImage,
           creative_type: config?.creativeType,
           format: config?.format,
           config: config || {}
@@ -127,8 +143,8 @@ export function useCreativeEngine() {
 
       toast.success('Criativo base gerado com sucesso! 🎨');
       
-      // Set result for modal (base image)
-      setGeneratedImageUrl(data.baseImage);
+      // Set result for modal (resized base image)
+      setGeneratedImageUrl(finalImage);
       setResultModalOpen(true);
       
       // Refresh history
@@ -137,7 +153,7 @@ export function useCreativeEngine() {
       // Trigger a custom event to refresh usage limits across components
       window.dispatchEvent(new CustomEvent('usage-limits-updated'));
 
-      return data.baseImage;
+      return finalImage;
 
     } catch (error) {
       console.error('Error generating creative:', error);
