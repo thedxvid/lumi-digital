@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -47,18 +47,36 @@ const VIDEO_APIS: VideoAPIConfig[] = [
 interface VideoConfigFormProps {
   onGenerate: (config: VideoConfig) => void;
   loading: boolean;
+  preloadedImage?: string | null;
+  initialMode?: VideoMode;
 }
 
-export const VideoConfigForm = ({ onGenerate, loading }: VideoConfigFormProps) => {
-  const [mode, setMode] = useState<VideoMode>('text-to-video');
+export const VideoConfigForm = ({ 
+  onGenerate, 
+  loading, 
+  preloadedImage = null,
+  initialMode = 'text-to-video'
+}: VideoConfigFormProps) => {
+  const [mode, setMode] = useState<VideoMode>(initialMode);
   const [prompt, setPrompt] = useState('');
-  const [inputImages, setInputImages] = useState<string[]>([]);
+  const [inputImages, setInputImages] = useState<string[]>(preloadedImage ? [preloadedImage] : []);
   const [aspectRatio, setAspectRatio] = useState<'9:16' | '16:9' | '1:1'>('16:9');
   const [duration, setDuration] = useState<'4s' | '6s' | '8s'>('8s');
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
-  const [apiProvider, setApiProvider] = useState<string>('fal_kling_v25_turbo');
+  const [apiProvider, setApiProvider] = useState<string>(
+    initialMode === 'image-to-video' ? 'fal_kling_v25_image_to_video' : 'fal_kling_v25_turbo'
+  );
+
+  // Update state when preloadedImage changes
+  useEffect(() => {
+    if (preloadedImage) {
+      setInputImages([preloadedImage]);
+      setMode('image-to-video');
+      setApiProvider('fal_kling_v25_image_to_video');
+    }
+  }, [preloadedImage]);
 
   // Filter APIs based on mode
   const availableAPIs = VIDEO_APIS.filter(api => api.mode === mode);
