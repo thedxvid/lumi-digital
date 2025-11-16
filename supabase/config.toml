@@ -14,3 +14,12 @@ verify_jwt = true
 
 [functions.parse-pdf]
 verify_jwt = true
+
+[functions.creative-engine]
+verify_jwt = true
+
+[functions.generate-copy]
+verify_jwt = true
+
+[functions.compose-creative]
+verify_jwt = true
