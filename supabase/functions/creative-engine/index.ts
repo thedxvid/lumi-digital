@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     const { images, prompt, config } = await req.json()
 
-    console.log('Creative Engine request:', { 
+    console.log('Creative Engine request (Hybrid Mode):', { 
       imageCount: images?.length, 
       promptLength: prompt?.length,
       hasConfig: !!config
@@ -24,7 +24,6 @@ serve(async (req) => {
       throw new Error('Prompt is required and must be a string')
     }
 
-    // Images are now optional (can be empty for prompt-only mode)
     if (!images || !Array.isArray(images)) {
       throw new Error('Images must be an array (can be empty)')
     }
@@ -33,21 +32,54 @@ serve(async (req) => {
       throw new Error('Maximum 10 images allowed')
     }
 
-    // Get Lovable API key from environment variables
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
     if (!lovableApiKey) {
       throw new Error('Lovable API key not configured')
     }
 
-    // Build enhanced prompt with config if provided
+    // STEP 1: Generate copy using LLM (if config provided)
+    let copyData = null
+    if (config) {
+      console.log('Step 1: Generating copy with LLM...')
+      try {
+        const copyResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-copy`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': req.headers.get('Authorization') || '',
+          },
+          body: JSON.stringify({ config, customPrompt: prompt })
+        })
+
+        if (copyResponse.ok) {
+          copyData = await copyResponse.json()
+          console.log('Generated copy:', copyData)
+        } else {
+          console.warn('Copy generation failed, using config values')
+        }
+      } catch (e) {
+        console.warn('Copy generation error:', e)
+      }
+
+      // Fallback to config values if copy generation failed
+      if (!copyData) {
+        copyData = {
+          headline: config.mainText || '',
+          secondary: config.secondaryText || '',
+          cta: config.callToAction || ''
+        }
+      }
+    }
+
+    // STEP 2: Generate base image WITHOUT text
+    console.log('Step 2: Generating base image without text...')
+    
     let enhancedPrompt = prompt;
     
     if (config) {
-      enhancedPrompt = `🎨 CREATIVE DESIGN BRIEF - CRITICAL INSTRUCTIONS 🎨
+      enhancedPrompt = `🎨 VISUAL COMPOSITION ONLY - NO TEXT
 
-═══════════════════════════════════════════════════════
-⚠️ TOP PRIORITY: TEXT ACCURACY - NO EXCEPTIONS ⚠️
-═══════════════════════════════════════════════════════
+IMPORTANT: Create a pure visual composition WITHOUT any text, words, or letters.
 
 YOU ARE CREATING: ${config.creativeType} creative
 FORMAT: ${config.format}
@@ -58,94 +90,21 @@ AUDIENCE: ${config.targetAudience}
 VISUAL SPECIFICATIONS:
 → Style: ${config.visualStyle}
 → Color Palette: ${config.colorPalette}
-→ Typography: ${config.typography}
 → Tone: ${config.tone}
 
-═══════════════════════════════════════════════════════
-🔴 ABSOLUTE TEXT RENDERING REQUIREMENTS 🔴
-═══════════════════════════════════════════════════════
-
-MANDATORY RULES - FAILURE TO FOLLOW WILL BREAK THE CREATIVE:
-
-1. COPY TEXT EXACTLY - Character by character, including:
-   ✓ Portuguese accents: á é í ó ú â ê ô à ã õ
-   ✓ Cedilla: ç
-   ✓ ALL punctuation: ! ? . , : ; - " ' ( )
-   ✓ Spacing and line breaks EXACTLY as provided
-   ✓ Capital and lowercase letters EXACTLY as written
-
-2. DO NOT under ANY circumstance:
-   ✗ Fix grammar or spelling
-   ✗ Change word order
-   ✗ Add or remove words
-   ✗ Apply autocorrection
-   ✗ Translate anything
-   ✗ Substitute similar characters
-   ✗ "Improve" the text in any way
-
-3. TEXT MUST BE:
-   → Clearly readable (good contrast)
-   → Properly positioned on the design
-   → Well-spaced and legible
-   → Using the specified typography: ${config.typography}
-
-═══════════════════════════════════════════════════════
-📝 TEXT CONTENT TO RENDER EXACTLY AS WRITTEN
-═══════════════════════════════════════════════════════
-${config.mainText ? `
-▶ MAIN TEXT (Primary headline):
-"${config.mainText}"
-↳ Make this the MOST prominent text element
-↳ Large, bold, eye-catching
-↳ Character-by-character accuracy REQUIRED
-` : ''}
-${config.secondaryText ? `
-▶ SECONDARY TEXT (Supporting information):
-"${config.secondaryText}"
-↳ Medium size, readable
-↳ Supports the main message
-↳ Character-by-character accuracy REQUIRED
-` : ''}
-${config.callToAction ? `
-▶ CALL-TO-ACTION (CTA button/text):
-"${config.callToAction}"
-↳ Clear, actionable, prominent
-↳ Use contrasting colors
-↳ Character-by-character accuracy REQUIRED
-` : ''}
-
-═══════════════════════════════════════════════════════
-🎨 DESIGN EXECUTION GUIDELINES
-═══════════════════════════════════════════════════════
-
-LAYOUT:
-• Professional and visually striking
-• Follow ${config.creativeType} best practices
-• Optimized for ${config.format} format
-• Hierarchy: Main Text → Secondary Text → CTA
-
-COLOR:
-• Apply ${config.colorPalette} palette consistently
-• Ensure excellent text contrast (WCAG AA minimum)
-• Use colors to guide attention flow
-
-COMPOSITION:
+COMPOSITION REQUIREMENTS:
+• Create a visually striking background/composition
+• Use the specified color palette: ${config.colorPalette}
+• Apply the visual style: ${config.visualStyle}
+• Leave clear space for text overlay (will be added later)
+• Professional, polished visual result
 • Integrate provided images seamlessly
-• Create visual balance and harmony
-• Draw attention to key message areas
-• Professional, polished result
-
-BRAND CONSISTENCY:
-• Maintain ${config.tone} tone throughout
-• Suitable for ${config.objective} objective
-• Resonates with ${config.targetAudience}
-
-═══════════════════════════════════════════════════════
+• DO NOT include any text, letters, words, or typography
 
 ADDITIONAL CONTEXT:
 ${prompt}
 
-FINAL REMINDER: Render all text EXACTLY character-by-character as provided above. Text accuracy is non-negotiable.`;
+CRITICAL: This is a BASE IMAGE ONLY. Text will be overlaid programmatically later.`;
     }
 
     // Prepare the message content with images
@@ -210,26 +169,56 @@ FINAL REMINDER: Render all text EXACTLY character-by-character as provided above
     }
 
     const data = await response.json()
-    console.log('AI response received:', JSON.stringify(data, null, 2))
+    console.log('AI response received')
 
-    // Extract the generated image from the response
-    const generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url
+    // Extract the base image from the response
+    const baseImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url
 
-    if (!generatedImage) {
-      console.error('Failed to extract image. Response structure:', {
-        hasChoices: !!data.choices,
-        hasMessage: !!data.choices?.[0]?.message,
-        hasImages: !!data.choices?.[0]?.message?.images,
-        messageContent: data.choices?.[0]?.message?.content,
-        fullResponse: JSON.stringify(data)
-      })
-      throw new Error('No image generated by AI')
+    if (!baseImage) {
+      console.error('Failed to extract base image')
+      throw new Error('Failed to extract generated image from AI response')
+    }
+
+    console.log('Base image generated successfully')
+
+    // STEP 3: Compose final creative with text overlay
+    let finalImage = baseImage
+    let description = data.choices?.[0]?.message?.content || 'Creative generated successfully'
+
+    if (copyData && config) {
+      console.log('Step 3: Composing final creative with text overlay...')
+      try {
+        const composeResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/compose-creative`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': req.headers.get('Authorization') || '',
+          },
+          body: JSON.stringify({ 
+            baseImage, 
+            copy: copyData,
+            config 
+          })
+        })
+
+        if (composeResponse.ok) {
+          const composeData = await composeResponse.json()
+          finalImage = composeData.image
+          description = composeData.description
+          console.log('Final creative composed successfully')
+        } else {
+          console.warn('Composition failed, returning base image')
+        }
+      } catch (e) {
+        console.warn('Composition error:', e, '- returning base image')
+      }
     }
 
     return new Response(
       JSON.stringify({ 
-        generatedImage,
-        description: data.choices?.[0]?.message?.content || 'Criativo gerado com sucesso'
+        generatedImage: finalImage,
+        description,
+        hybrid: !!copyData
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
