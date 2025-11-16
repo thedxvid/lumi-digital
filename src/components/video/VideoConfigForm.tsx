@@ -9,6 +9,8 @@ import { Loader2, Sparkles } from 'lucide-react';
 import type { VideoConfig, VideoAPIConfig, VideoMode } from '@/types/video';
 import { VideoModeSelector } from './VideoModeSelector';
 import { VideoImageUploader } from './VideoImageUploader';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const VIDEO_APIS: VideoAPIConfig[] = [
   // Text-to-Video APIs
@@ -76,6 +78,7 @@ export const VideoConfigForm = ({
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
+  const [suggestingPrompt, setSuggestingPrompt] = useState(false);
   const [apiProvider, setApiProvider] = useState<string>(
     initialMode === 'image-to-video' ? 'fal_kling_v25_image_to_video' : 'fal_kling_v25_turbo'
   );
@@ -112,6 +115,41 @@ export const VideoConfigForm = ({
   // Get selected API config
   const selectedAPI = VIDEO_APIS.find(api => api.id === apiProvider);
   const maxImages = selectedAPI?.requires_images || 1;
+
+  const handleSuggestSafePrompt = async () => {
+    if (!prompt || prompt.trim().length < 5) {
+      toast.error('Digite um prompt primeiro para reformulá-lo');
+      return;
+    }
+
+    setSuggestingPrompt(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-safe-prompt', {
+        body: { prompt: prompt.trim() }
+      });
+
+      if (error) {
+        console.error('Error suggesting prompt:', error);
+        toast.error('Erro ao sugerir prompt alternativo');
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      if (data?.suggested) {
+        setPrompt(data.suggested);
+        toast.success('Prompt reformulado! Marcas e conteúdo sensível foram removidos.');
+      }
+    } catch (error) {
+      console.error('Error suggesting prompt:', error);
+      toast.error('Erro ao processar solicitação');
+    } finally {
+      setSuggestingPrompt(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,11 +231,33 @@ export const VideoConfigForm = ({
               className="min-h-[120px] resize-none"
               disabled={loading}
             />
-            {mode === 'text-to-video' && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {prompt.length} caracteres {prompt.length < 10 && `(faltam ${10 - prompt.length})`}
-              </p>
-            )}
+            <div className="flex items-center justify-between mt-2">
+              {mode === 'text-to-video' && (
+                <p className="text-xs text-muted-foreground">
+                  {prompt.length} caracteres {prompt.length < 10 && `(faltam ${10 - prompt.length})`}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSuggestSafePrompt}
+                disabled={loading || suggestingPrompt || prompt.trim().length < 5}
+                className="ml-auto"
+              >
+                {suggestingPrompt ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Reformulando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Sugerir Prompt Seguro
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* API Provider */}
