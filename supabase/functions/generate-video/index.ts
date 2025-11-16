@@ -199,8 +199,8 @@ serve(async (req) => {
           const isContentViolation = errorData.detail?.some((d: any) => d.type === 'content_policy_violation');
           if (isContentViolation) {
             return new Response(
-              JSON.stringify({ error: 'O conteúdo do prompt foi bloqueado pelos filtros de segurança. Por favor, reformule sua solicitação com um texto diferente.' }),
-              { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              JSON.stringify({ error: 'O conteúdo do prompt foi bloqueado pelos filtros de segurança da API. Por favor, reformule sua solicitação com um texto diferente, evitando marcas, nomes de produtos ou conteúdo sensível.' }),
+              { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
         } catch (e) {
