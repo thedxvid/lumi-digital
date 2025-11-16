@@ -83,23 +83,15 @@ IMPORTANT: Create a pure visual composition WITHOUT any text, words, or letters.
 
 YOU ARE CREATING: ${config.creativeType} creative
 FORMAT: ${config.format}
-OBJECTIVE: ${config.objective}
-TARGET MARKET: ${config.market}
-AUDIENCE: ${config.targetAudience}
-
-VISUAL SPECIFICATIONS:
-→ Style: ${config.visualStyle}
-→ Color Palette: ${config.colorPalette}
-→ Tone: ${config.tone}
 
 COMPOSITION REQUIREMENTS:
 • Create a visually striking background/composition
-• Use the specified color palette: ${config.colorPalette}
-• Apply the visual style: ${config.visualStyle}
-• Leave clear space for text overlay (will be added later)
 • Professional, polished visual result
-• Integrate provided images seamlessly
+• Leave clear space for text overlay (will be added later)
+• Integrate provided images seamlessly if any
 • DO NOT include any text, letters, words, or typography
+
+${config.customPrompt ? `ADDITIONAL DETAILS:\n${config.customPrompt}\n` : ''}
 
 ADDITIONAL CONTEXT:
 ${prompt}
