@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Download, RotateCcw, X } from 'lucide-react';
 import type { VideoConfig } from '@/types/video';
 import { VideoPlayer } from './VideoPlayer';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface VideoResultModalProps {
   open: boolean;
@@ -21,22 +23,35 @@ export const VideoResultModal = ({
   onRegenerate,
   loading = false,
 }: VideoResultModalProps) => {
+  const [downloading, setDownloading] = useState(false);
+
   const handleDownload = async () => {
     if (!videoUrl) return;
     
+    setDownloading(true);
     try {
-      const response = await fetch(videoUrl);
+      // Try to fetch and download
+      const response = await fetch(videoUrl, { mode: 'cors' });
+      if (!response.ok) throw new Error('Failed to fetch video');
+      
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = `video-${Date.now()}.mp4`;
+      a.download = `lumi-video-${Date.now()}.mp4`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success('Vídeo baixado com sucesso!');
     } catch (error) {
       console.error('Error downloading video:', error);
+      // Fallback: open in new tab
+      toast.info('Abrindo vídeo em nova aba para download...');
+      window.open(videoUrl, '_blank');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -98,10 +113,10 @@ export const VideoResultModal = ({
             <Button
               variant="outline"
               onClick={handleDownload}
-              disabled={!videoUrl}
+              disabled={!videoUrl || downloading}
             >
               <Download className="h-4 w-4 mr-2" />
-              Download
+              {downloading ? 'Baixando...' : 'Download'}
             </Button>
             <Button onClick={onClose}>
               <X className="h-4 w-4 mr-2" />
