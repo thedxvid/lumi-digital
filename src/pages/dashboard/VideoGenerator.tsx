@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,11 @@ import { Video, History, AlertCircle, ShoppingCart } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { VideoConfig, VideoHistoryItem } from '@/types/video';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 const VideoGenerator = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { subscription, loading: subscriptionLoading } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const {
@@ -31,6 +33,20 @@ const VideoGenerator = () => {
     toggleFavorite
   } = useVideoGenerator();
   const [fullscreenVideo, setFullscreenVideo] = useState<VideoHistoryItem | null>(null);
+  const [preloadedImage, setPreloadedImage] = useState<string | null>(null);
+  const [initialMode, setInitialMode] = useState<'text-to-video' | 'image-to-video'>('text-to-video');
+
+  // Handle preloaded image from creative generator
+  useEffect(() => {
+    const state = location.state as { preloadedImage?: string; mode?: 'image-to-video' } | null;
+    if (state?.preloadedImage) {
+      setPreloadedImage(state.preloadedImage);
+      setInitialMode(state.mode || 'image-to-video');
+      toast.success('Imagem carregada! Configure e gere seu vídeo 🎬');
+      // Clear state to avoid re-triggering
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Check if user has PRO plan
   useEffect(() => {
@@ -111,7 +127,12 @@ const VideoGenerator = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <VideoConfigForm onGenerate={handleGenerate} loading={loading} />
+            <VideoConfigForm 
+              onGenerate={handleGenerate} 
+              loading={loading}
+              preloadedImage={preloadedImage}
+              initialMode={initialMode}
+            />
             </CardContent>
           </Card>
 

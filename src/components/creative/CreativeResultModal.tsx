@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Share2, X, RefreshCw, Type } from "lucide-react";
+import { Download, Share2, X, RefreshCw, Type, Clapperboard } from "lucide-react";
 import { toast } from "sonner";
 import { TextOverlayForm, type TextOverlayConfig } from "./TextOverlayForm";
 
@@ -29,6 +30,18 @@ export function CreativeResultModal({
   applyingText
 }: CreativeResultModalProps) {
   const [showTextEditor, setShowTextEditor] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAnimateImage = () => {
+    // Navigate to video generator with image pre-loaded
+    navigate('/app/video-generator', {
+      state: { 
+        preloadedImage: imageUrl,
+        mode: 'image-to-video'
+      }
+    });
+    toast.success('Redirecionando para o gerador de vídeos...');
+  };
 
   const handleApplyText = async (config: TextOverlayConfig) => {
     if (onApplyText) {
@@ -101,18 +114,31 @@ export function CreativeResultModal({
             />
           ) : (
             <>
-              {/* Ações */}
-              <div className="flex flex-wrap gap-2">
+              {/* Ações Principais */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {onApplyText && (
                   <Button 
                     onClick={() => setShowTextEditor(true)} 
-                    className="flex-1"
                     variant="default"
+                    size="lg"
                   >
                     <Type className="w-4 h-4 mr-2" />
                     Adicionar Texto
                   </Button>
                 )}
+                <Button 
+                  onClick={handleAnimateImage}
+                  variant="default"
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  <Clapperboard className="w-4 h-4 mr-2" />
+                  Animar Imagem
+                </Button>
+              </div>
+
+              {/* Ações Secundárias */}
+              <div className="flex flex-wrap gap-2">
                 <Button onClick={handleDownload} variant="outline" className="flex-1">
                   <Download className="w-4 h-4 mr-2" />
                   Baixar
