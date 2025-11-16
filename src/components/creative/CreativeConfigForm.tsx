@@ -69,9 +69,10 @@ export function CreativeConfigForm({
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">Prompt Personalizado <Sparkles className="w-5 h-5" />
-                Prompt Personalizado (Opcional)
-              </CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              Prompt Personalizado
+            </CardTitle>
               <CardDescription>
                 Descreva exatamente como você quer o criativo visual. O texto será adicionado depois.
               </CardDescription>
