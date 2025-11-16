@@ -24,6 +24,16 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     mode: 'text-to-video'
   },
   {
+    id: 'fal_sora2_text_to_video',
+    name: 'fal_sora2_text_to_video',
+    display_name: 'Sora 2 by OpenAI (Text)',
+    cost_per_8s: 4.00,
+    description: 'Qualidade cinematográfica premium com áudio - Modelo da OpenAI',
+    provider: 'OpenAI',
+    mode: 'text-to-video',
+    endpoint: 'https://fal.run/fal-ai/sora-2/text-to-video'
+  },
+  {
     id: 'fal_veo31',
     name: 'fal_veo31',
     display_name: 'Veo 3.1 (Text)',
@@ -159,7 +169,7 @@ export const VideoConfigForm = ({
     }
 
     // Detectar se Sora 2 está ativo para usar modo especial
-    const isSora2 = apiProvider === 'fal_sora2_image_to_video';
+    const isSora2 = apiProvider === 'fal_sora2_image_to_video' || apiProvider === 'fal_sora2_text_to_video';
     const enhanceMode = isSora2 ? 'enhance-sora' : 'enhance';
 
     setEnhancingPrompt(true);
@@ -229,7 +239,7 @@ export const VideoConfigForm = ({
     : inputImages.length > 0 && (!selectedAPI?.requires_images || inputImages.length === selectedAPI.requires_images);
 
   // Detectar se Sora 2 está ativo
-  const isSora2Active = apiProvider === 'fal_sora2_image_to_video';
+  const isSora2Active = apiProvider === 'fal_sora2_image_to_video' || apiProvider === 'fal_sora2_text_to_video';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

@@ -53,6 +53,11 @@ serve(async (req) => {
         key: FAL_KEY,
         authPrefix: 'Key'
       },
+      fal_sora2_text_to_video: {
+        endpoint: 'https://fal.run/fal-ai/sora-2/text-to-video',
+        key: FAL_KEY,
+        authPrefix: 'Key'
+      },
       fal_veo31: {
         endpoint: 'https://fal.run/fal-ai/veo3.1',
         key: FAL_KEY,
@@ -149,6 +154,18 @@ serve(async (req) => {
         aspect_ratio,
         negative_prompt: negative_prompt || 'blur, distort, and low quality',
         cfg_scale: 0.5
+      };
+    } else if (api_provider === 'fal_sora2_text_to_video') {
+      // Sora 2 Text-to-Video configuration
+      const durationSeconds = parseInt(duration.replace('s', ''));
+      const soraDuration = durationSeconds <= 4 ? 4 : durationSeconds <= 8 ? 8 : 12;
+      
+      requestBody = {
+        prompt,
+        duration: soraDuration,
+        resolution: resolution === '1080p' ? '720p' : '720p', // Sora 2 supports only 720p
+        aspect_ratio: aspect_ratio === '1:1' ? '16:9' : aspect_ratio, // Sora 2: 9:16 or 16:9
+        delete_video: true
       };
     } else {
       // Veo 3.1 usa parâmetros padrão
