@@ -46,6 +46,7 @@ export function useCreativeEngine() {
   const [history, setHistory] = useState<CreativeHistoryItem[]>([]);
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [suggestedCopy, setSuggestedCopy] = useState<any>(null);
   const { session } = useAuth();
 
   const generateCreative = async (images: string[], prompt: string, config?: CreativeConfig): Promise<string | null> => {
@@ -90,18 +91,24 @@ export function useCreativeEngine() {
         return null;
       }
 
-      if (!data?.generatedImage) {
+      // The new response structure returns baseImage + suggestedCopy
+      if (!data?.baseImage) {
         throw new Error('Nenhuma imagem foi gerada');
       }
 
-      // Save to history
+      // Store suggested copy for later use
+      if (data.suggestedCopy) {
+        setSuggestedCopy(data.suggestedCopy);
+      }
+
+      // Save to history (base image without text)
       const { error: insertError } = await supabase
         .from('creative_history')
         .insert({
           user_id: session.user.id,
           original_images: images,
           prompt,
-          generated_image: data.generatedImage,
+          generated_image: data.baseImage,
           creative_type: config?.creativeType,
           format: config?.format,
           objective: config?.objective,
@@ -137,10 +144,10 @@ export function useCreativeEngine() {
         }
       }
 
-      toast.success('Criativo gerado com sucesso! 🎨');
+      toast.success('Criativo base gerado com sucesso! 🎨');
       
-      // Set result for modal
-      setGeneratedImageUrl(data.generatedImage);
+      // Set result for modal (base image)
+      setGeneratedImageUrl(data.baseImage);
       setResultModalOpen(true);
       
       // Refresh history
@@ -149,7 +156,7 @@ export function useCreativeEngine() {
       // Trigger a custom event to refresh usage limits across components
       window.dispatchEvent(new CustomEvent('usage-limits-updated'));
 
-      return data.generatedImage;
+      return data.baseImage;
 
     } catch (error) {
       console.error('Error generating creative:', error);
@@ -223,15 +230,97 @@ export function useCreativeEngine() {
     }
   };
 
+  const applyTextToCreative = async (baseImage: string, textConfig: any): Promise<string | null> => {
+    if (!session?.access_token) {
+      toast.error('Você precisa estar logado');
+      return null;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('compose-creative', {
+        body: { 
+          baseImage,
+          copy: {
+            headline: textConfig.headline,
+            secondary: textConfig.secondary,
+            cta: textConfig.cta
+          },
+          config: {
+            textPosition: textConfig.textPosition,
+            textColor: textConfig.textColor,
+            fontSize: textConfig.fontSize,
+            shadowIntensity: textConfig.shadowIntensity
+          }
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Error applying text:', error);
+        throw error;
+      }
+
+      if (data?.error) {
+        console.error('Error from compose-creative:', data.error);
+        toast.error(data.error);
+        return null;
+      }
+
+      if (!data?.image) {
+        throw new Error('Falha ao compor criativo com texto');
+      }
+
+      // Save the final version to history
+      const { error: insertError } = await supabase
+        .from('creative_history')
+        .insert({
+          user_id: session.user.id,
+          original_images: [],
+          prompt: 'Criativo com texto aplicado',
+          generated_image: data.image,
+          main_text: textConfig.headline,
+          secondary_text: textConfig.secondary,
+          call_to_action: textConfig.cta
+        });
+
+      if (insertError) {
+        console.error('Error saving to history:', insertError);
+      }
+
+      toast.success('Texto aplicado com sucesso! 🎉');
+      
+      // Update the displayed image
+      setGeneratedImageUrl(data.image);
+      
+      // Refresh history
+      await loadHistory();
+
+      return data.image;
+
+    } catch (error) {
+      console.error('Error applying text to creative:', error);
+      toast.error('Erro ao aplicar texto. Tente novamente.');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     history,
     generateCreative,
+    applyTextToCreative,
     loadHistory,
     deleteHistoryItem,
     toggleFavorite,
     resultModalOpen,
     setResultModalOpen,
     generatedImageUrl,
+    suggestedCopy,
   };
 }
