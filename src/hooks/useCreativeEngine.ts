@@ -29,16 +29,7 @@ export interface CreativeHistoryItem {
 export interface CreativeConfig {
   creativeType: string;
   format: string;
-  objective: string;
-  market?: string;
-  targetAudience?: string;
-  visualStyle: string;
-  colorPalette?: string;
-  typography: string;
-  mainText: string;
-  secondaryText: string;
-  callToAction: string;
-  tone: string;
+  customPrompt?: string;
 }
 
 export function useCreativeEngine() {
@@ -111,16 +102,6 @@ export function useCreativeEngine() {
           generated_image: data.baseImage,
           creative_type: config?.creativeType,
           format: config?.format,
-          objective: config?.objective,
-          market: config?.market,
-          target_audience: config?.targetAudience,
-          visual_style: config?.visualStyle,
-          color_palette: config?.colorPalette,
-          typography: config?.typography,
-          main_text: config?.mainText,
-          secondary_text: config?.secondaryText,
-          call_to_action: config?.callToAction,
-          tone: config?.tone,
           config: config || {}
         });
 

@@ -19,14 +19,7 @@ const presets: Preset[] = [
     config: {
       creativeType: 'story',
       format: 'story-vertical',
-      objective: 'promotional',
-      market: '🏋️ Fitness e Saúde',
-      targetAudience: 'adult',
-      visualStyle: 'vibrant',
-      colorPalette: 'warm',
-      typography: 'display',
-      tone: 'motivational',
-      callToAction: 'Garanta Agora'
+      customPrompt: 'Fundo vibrante com gradiente de laranja para vermelho, elementos energéticos, composição dinâmica com espaço destacado para texto motivacional, estilo moderno e impactante'
     }
   },
   {
@@ -37,14 +30,7 @@ const presets: Preset[] = [
     config: {
       creativeType: 'product',
       format: 'product-square',
-      objective: 'sales',
-      market: '👗 Moda e Vestuário',
-      targetAudience: 'young',
-      visualStyle: 'elegant',
-      colorPalette: 'pastel',
-      typography: 'serif',
-      tone: 'professional',
-      callToAction: 'Compre Agora'
+      customPrompt: 'Fundo clean e elegante em tons pastéis, composição sofisticada com espaço central amplo para produto, bordas sutis, estilo minimalista e profissional'
     }
   },
   {
@@ -55,14 +41,7 @@ const presets: Preset[] = [
     config: {
       creativeType: 'ad',
       format: 'ad-horizontal',
-      objective: 'awareness',
-      market: '💻 Tecnologia e Software',
-      targetAudience: 'professional',
-      visualStyle: 'modern',
-      colorPalette: 'cool',
-      typography: 'sans-serif',
-      tone: 'professional',
-      callToAction: 'Saiba Mais'
+      customPrompt: 'Fundo tecnológico com gradiente azul escuro, elementos geométricos modernos, grid sutil, composição limpa com espaço para destaque de texto, estilo corporativo e inovador'
     }
   },
   {
@@ -73,14 +52,7 @@ const presets: Preset[] = [
     config: {
       creativeType: 'social-post',
       format: 'square',
-      objective: 'engagement',
-      market: '🍔 Alimentação e Gastronomia',
-      targetAudience: 'adult',
-      visualStyle: 'bold',
-      colorPalette: 'vibrant',
-      typography: 'display',
-      tone: 'casual',
-      callToAction: 'Peça Já'
+      customPrompt: 'Fundo quente e apetitoso com cores vibrantes (amarelo, laranja, vermelho), textura sutil de madeira ou concreto, composição aconchegante com espaço central destacado, estilo casual e convidativo'
     }
   },
   {
@@ -91,14 +63,7 @@ const presets: Preset[] = [
     config: {
       creativeType: 'infographic',
       format: 'infographic-vertical',
-      objective: 'educational',
-      market: '🎓 Educação e Cursos',
-      targetAudience: 'professional',
-      visualStyle: 'professional',
-      colorPalette: 'neutral',
-      typography: 'sans-serif',
-      tone: 'educational',
-      callToAction: 'Aprenda Mais'
+      customPrompt: 'Fundo neutro e profissional (branco/cinza claro), elementos organizados verticalmente, ícones minimalistas, grade estruturada com seções bem definidas, estilo clean e didático'
     }
   },
   {
@@ -109,14 +74,7 @@ const presets: Preset[] = [
     config: {
       creativeType: 'story',
       format: 'story-vertical',
-      objective: 'sales',
-      market: '💄 Beleza e Estética',
-      targetAudience: 'adult',
-      visualStyle: 'elegant',
-      colorPalette: 'pastel',
-      typography: 'serif',
-      tone: 'persuasive',
-      callToAction: 'Agende Agora'
+      customPrompt: 'Fundo elegante e sofisticado com tons pastéis (rosa, nude, dourado), textura suave, elementos florais sutis, composição delicada com espaço central amplo, estilo feminino e luxuoso'
     }
   }
 ];
@@ -133,29 +91,20 @@ export function CreativePresetSelector({ onSelectPreset }: CreativePresetSelecto
         <CardDescription>Comece rápido com configurações pré-definidas</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {presets.map((preset) => (
-            <Card key={preset.id} className="cursor-pointer hover:border-primary transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{preset.icon}</span>
-                  <div>
-                    <CardTitle className="text-sm">{preset.name}</CardTitle>
-                    <CardDescription className="text-xs">{preset.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => onSelectPreset(preset.config)}
-                >
-                  Usar Template
-                </Button>
-              </CardContent>
-            </Card>
+            <Button
+              key={preset.id}
+              variant="outline"
+              className="h-auto flex-col items-start p-4 space-y-2"
+              onClick={() => onSelectPreset(preset.config)}
+            >
+              <div className="text-2xl">{preset.icon}</div>
+              <div className="text-left">
+                <div className="font-semibold">{preset.name}</div>
+                <div className="text-xs text-muted-foreground">{preset.description}</div>
+              </div>
+            </Button>
           ))}
         </div>
       </CardContent>
