@@ -129,10 +129,16 @@ export const useVideoGenerator = () => {
 
       console.log('🎬 Video URL received, starting preload:', videoUrl);
 
-      // Pré-carregar vídeo em background
-      await preloadVideo(videoUrl);
+      // Mudar status para ready IMEDIATAMENTE
+      setGeneratedVideoUrl(videoUrl);
+      setGenerationStatus('ready');
 
-      // Verificar se foi cancelado durante preload
+      // Pré-carregar vídeo em background (não bloqueante)
+      preloadVideo(videoUrl).catch(err => {
+        console.warn('⚠️ Video preload failed:', err);
+      });
+
+      // Verificar se foi cancelado
       if (abortControllerRef.current?.signal.aborted) {
         return null;
       }
@@ -187,8 +193,6 @@ export const useVideoGenerator = () => {
         }
       }
 
-      setGeneratedVideoUrl(videoUrl);
-      setGenerationStatus('ready');
       toast.success('Vídeo gerado com sucesso!');
       
       return videoUrl;
