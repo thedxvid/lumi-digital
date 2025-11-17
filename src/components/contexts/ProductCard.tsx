@@ -17,6 +17,7 @@ interface ProductCardProps {
     detailed_context?: string;
     created_at?: string;
     updated_at?: string;
+    image_url?: string;
   };
   onEdit: (product: any) => void;
   onDelete: (id: string) => void;
@@ -50,7 +51,17 @@ export function ProductCard({ product, onEdit, onDelete, onViewDetails, onDuplic
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex gap-3 flex-1 min-w-0">
-            <div className="text-4xl shrink-0">{product.icon}</div>
+            {product.image_url ? (
+              <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border">
+                <img 
+                  src={product.image_url} 
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="text-4xl shrink-0">{product.icon}</div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-lg truncate">{product.name}</CardTitle>

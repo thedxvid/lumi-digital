@@ -21,6 +21,7 @@ export interface UserContext {
   pdf_content?: string;
   pdf_filename?: string;
   user_role?: string;
+  image_url?: string;
 }
 
 interface CreateContextInput {
@@ -32,6 +33,7 @@ interface CreateContextInput {
   pdf_content?: string;
   pdf_filename?: string;
   user_role?: string;
+  image_url?: string;
 }
 
 const PRODUCT_CONFIG = {
@@ -113,6 +115,7 @@ export function useUserContexts() {
         pdf_content: input.pdf_content,
         pdf_filename: input.pdf_filename,
         user_role: input.user_role,
+        image_url: input.image_url,
       };
 
       const { data, error } = await supabase
@@ -142,6 +145,7 @@ export function useUserContexts() {
       if (input.pdf_content !== undefined) updates.pdf_content = input.pdf_content;
       if (input.pdf_filename !== undefined) updates.pdf_filename = input.pdf_filename;
       if (input.user_role !== undefined) updates.user_role = input.user_role;
+      if (input.image_url !== undefined) updates.image_url = input.image_url;
       
       // Se qualquer campo relevante mudou, regenerar o system_prompt
       if (input.context_type || input.name || input.description || input.detailed_context || input.pdf_content !== undefined || input.user_role !== undefined) {
@@ -155,6 +159,7 @@ export function useUserContexts() {
             pdf_content: input.pdf_content !== undefined ? input.pdf_content : existingContext.pdf_content,
             pdf_filename: input.pdf_filename !== undefined ? input.pdf_filename : existingContext.pdf_filename,
             user_role: input.user_role !== undefined ? input.user_role : existingContext.user_role,
+            image_url: input.image_url !== undefined ? input.image_url : existingContext.image_url,
           };
           updates.system_prompt = generateSystemPrompt(fullInput);
         }
