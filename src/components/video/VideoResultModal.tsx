@@ -67,14 +67,14 @@ export const VideoResultModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isGenerating ? '🎬 Gerando Vídeo...' : isReady ? 'Vídeo Gerado com Sucesso! 🎉' : 'Resultado do Vídeo'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 py-2">
           {/* Mostrar progresso enquanto está gerando */}
           {isGenerating && timeEstimate && (
             <VideoGenerationProgress 
