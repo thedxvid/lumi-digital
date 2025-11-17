@@ -19,6 +19,7 @@ interface ProductDetailModalProps {
     updated_at?: string;
     pdf_filename?: string;
     user_role?: string;
+    image_url?: string;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,7 +56,17 @@ export function ProductDetailModal({
       <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <span className="text-4xl">{product.icon}</span>
+            {product.image_url ? (
+              <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 border">
+                <img 
+                  src={product.image_url} 
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <span className="text-4xl">{product.icon}</span>
+            )}
             <div>
               <DialogTitle className="text-2xl">{product.name}</DialogTitle>
               <DialogDescription>{product.description}</DialogDescription>

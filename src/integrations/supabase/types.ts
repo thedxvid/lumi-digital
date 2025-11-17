@@ -225,6 +225,7 @@ export type Database = {
           entity_type: string | null
           icon: string
           id: string
+          image_url: string | null
           is_active: boolean
           name: string
           pdf_content: string | null
@@ -243,6 +244,7 @@ export type Database = {
           entity_type?: string | null
           icon?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name: string
           pdf_content?: string | null
@@ -261,6 +263,7 @@ export type Database = {
           entity_type?: string | null
           icon?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name?: string
           pdf_content?: string | null

@@ -18,6 +18,7 @@ interface UserContextFormProps {
     pdf_content?: string;
     pdf_filename?: string;
     user_role?: string;
+    image_url?: string;
   }) => Promise<void>;
   onCancel: () => void;
   initialData?: {
@@ -28,6 +29,7 @@ interface UserContextFormProps {
     pdf_content?: string;
     pdf_filename?: string;
     user_role?: string;
+    image_url?: string;
   };
 }
 
@@ -43,6 +45,9 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
   const [pdfContent, setPdfContent] = useState(initialData?.pdf_content || '');
   const [pdfFilename, setPdfFilename] = useState(initialData?.pdf_filename || '');
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,6 +94,57 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
     setPdfFilename('');
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    setImageFile(file);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      setImagePreview(publicUrl);
+      toast.success('Imagem carregada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      toast.error('Erro ao fazer upload da imagem');
+      setImageFile(null);
+      setImagePreview(null);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -107,6 +163,7 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
         pdf_content: pdfContent || undefined,
         pdf_filename: pdfFilename || undefined,
         user_role: userRole.trim() || undefined,
+        image_url: imagePreview || undefined,
       });
     } finally {
       setLoading(false);
@@ -212,19 +269,70 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="icon">Ícone (opcional)</Label>
-        <div className="flex gap-2 items-center">
-          <Input
-            id="icon"
-            placeholder={PRODUCT_ICON}
-            value={icon}
-            onChange={(e) => setIcon(e.target.value)}
-            maxLength={2}
-            className="w-20 text-center text-2xl"
-          />
-          <span className="text-sm text-muted-foreground">
-            Deixe vazio para usar o padrão: {PRODUCT_ICON}
-          </span>
+        <Label>Imagem ou Ícone</Label>
+        
+        {/* Upload de imagem */}
+        <div className="space-y-2">
+          {!imagePreview ? (
+            <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-accent/50 transition-colors">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="image-upload"
+                disabled={uploadingImage}
+              />
+              <label htmlFor="image-upload" className="cursor-pointer">
+                <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {uploadingImage ? 'Fazendo upload...' : 'Clique para fazer upload de uma imagem'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Máximo 5MB - JPG, PNG ou WEBP
+                </p>
+              </label>
+            </div>
+          ) : (
+            <div className="relative rounded-lg overflow-hidden border">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="w-full h-48 object-cover"
+              />
+              {!uploadingImage && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={removeImage}
+                  className="absolute top-2 right-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Ícone emoji (alternativa) */}
+        <div className="space-y-2">
+          <Label htmlFor="icon" className="text-sm text-muted-foreground">
+            Ou use um emoji (aparece quando não há imagem)
+          </Label>
+          <div className="flex gap-2 items-center">
+            <Input
+              id="icon"
+              placeholder={PRODUCT_ICON}
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              maxLength={2}
+              className="w-20 text-center text-2xl"
+            />
+            <span className="text-sm text-muted-foreground">
+              Deixe vazio para usar o padrão: {PRODUCT_ICON}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -234,7 +342,7 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
         </Button>
         <Button 
           type="submit" 
-          disabled={loading || uploadingPdf || !name.trim() || !description.trim()}
+          disabled={loading || uploadingPdf || uploadingImage || !name.trim() || !description.trim()}
           className="flex-1"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
