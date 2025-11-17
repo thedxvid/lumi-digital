@@ -90,9 +90,9 @@ export function CarouselImageUploader({ images, onImagesChange, maxImages }: Car
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Imagens Específicas para os Slides (Opcional)</CardTitle>
+        <CardTitle>Suas Fotos de Referência (Opcional)</CardTitle>
         <CardDescription>
-          Adicione imagens específicas que serão usadas nos slides do carrossel. A ordem importa!
+          Envie suas fotos para usar diretamente nos slides ou como referência para a IA gerar novas imagens mantendo sua identidade visual.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,9 @@ export interface SlideConfig {
   content: string;
   visualElements: string[];
   highlight?: string;
+  imageMode: 'upload' | 'generate' | 'generate-with-reference';
+  uploadedImageIndex: number | null;
+  visualInstruction: string;
 }
 
 export interface CarouselConfig {
@@ -47,17 +50,54 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
   const [customPrompt, setCustomPrompt] = useState('');
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [slides, setSlides] = useState<SlideConfig[]>([
-    { title: '', content: '', visualElements: [] },
-    { title: '', content: '', visualElements: [] },
-    { title: '', content: '', visualElements: [] },
+    { title: '', content: '', visualElements: [], imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
+    { title: '', content: '', visualElements: [], imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
+    { title: '', content: '', visualElements: [], imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
   ]);
+
+  // Ajustar número de slides quando imageCount mudar
+  useEffect(() => {
+    if (slides.length < imageCount) {
+      // Adicionar mais slides
+      const newSlides = [...slides];
+      while (newSlides.length < imageCount) {
+        newSlides.push({ 
+          title: '', 
+          content: '', 
+          visualElements: [], 
+          imageMode: 'generate', 
+          uploadedImageIndex: null, 
+          visualInstruction: '' 
+        });
+      }
+      setSlides(newSlides);
+    } else if (slides.length > imageCount) {
+      // Remover slides excedentes
+      setSlides(slides.slice(0, imageCount));
+    }
+  }, [imageCount]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onGenerate({ title, imageCount, theme, colorPalette, tone, callToAction, slides, generationMode, customPrompt, uploadedImages });
   };
 
-  const canGenerate = title.trim() !== '' && ((generationMode === 'config' && slides.every(s => s.title && s.content)) || (generationMode === 'prompt-only' && customPrompt.trim()));
+  const canGenerate = title.trim() !== '' && (
+    (generationMode === 'config' && slides.slice(0, imageCount).every(s => {
+      const hasBasicInfo = s.title && s.content;
+      if (!hasBasicInfo) return false;
+      
+      // Validar baseado no imageMode
+      if (s.imageMode === 'upload') {
+        return s.uploadedImageIndex !== null && uploadedImages[s.uploadedImageIndex];
+      }
+      if (s.imageMode === 'generate' || s.imageMode === 'generate-with-reference') {
+        return s.visualInstruction.trim() !== '';
+      }
+      return true;
+    })) || 
+    (generationMode === 'prompt-only' && customPrompt.trim())
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -82,9 +122,55 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
           </div>
         </CardContent>
       </Card>
-      {generationMode === 'prompt-only' && <Card><CardContent className="pt-6"><Textarea value={customPrompt} onChange={(e) => setCustomPrompt(e.target.value)} placeholder="Descreva o carrossel..." className="min-h-[200px]" /></CardContent></Card>}
-      {generationMode === 'config' && <>{slides.map((s, i) => <SlideConfigCard key={i} slideNumber={i+1} slide={s} onChange={(u) => { const n = [...slides]; n[i] = u; setSlides(n); }} disabled={false} />)}<CarouselImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={imageCount} /></>}
-      <Button type="submit" className="w-full" disabled={loading || !canGenerate}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Gerando...</> : <><Sparkles className="mr-2 h-4 w-4" />Gerar</>}</Button>
+      {generationMode === 'config' ? (
+        <>
+          <CarouselImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={10} />
+          {slides.slice(0, imageCount).map((slide, i) => (
+            <SlideConfigCard 
+              key={i} 
+              slideNumber={i + 1} 
+              slide={slide} 
+              onChange={(s) => {
+                const newSlides = [...slides];
+                newSlides[i] = s;
+                setSlides(newSlides);
+              }} 
+              disabled={loading}
+              uploadedImagesCount={uploadedImages.length}
+            />
+          ))}
+        </>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Prompt Personalizado</CardTitle>
+            <CardDescription>Descreva cada slide e como deve ser a imagem</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <CarouselImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={10} />
+            <Textarea 
+              value={customPrompt} 
+              onChange={(e) => setCustomPrompt(e.target.value)} 
+              placeholder="Ex: Quero 3 slides.&#10;Slide 1: Use minha foto. Frase motivacional sobre começar.&#10;Slide 2: Me coloque em Paris. Frase sobre sonhos.&#10;Slide 3: Fundo branco minimalista. Frase sobre conquistas."
+              className="min-h-[200px]" 
+              disabled={loading} 
+            />
+          </CardContent>
+        </Card>
+      )}
+      <Button type="submit" className="w-full" disabled={loading || !canGenerate}>
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Gerando...
+          </>
+        ) : (
+          <>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Gerar
+          </>
+        )}
+      </Button>
     </form>
   );
 }

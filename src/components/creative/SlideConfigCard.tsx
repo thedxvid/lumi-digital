@@ -1,10 +1,10 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ImageIcon, Sparkles, Edit } from 'lucide-react';
 import { useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { SlideConfig } from './CarouselConfigForm';
 
 interface SlideConfigCardProps {
@@ -12,25 +12,11 @@ interface SlideConfigCardProps {
   slide: SlideConfig;
   onChange: (slide: SlideConfig) => void;
   disabled: boolean;
+  uploadedImagesCount: number;
 }
 
-const visualElementOptions = [
-  { id: 'icons', label: 'Ícones' },
-  { id: 'charts', label: 'Gráficos' },
-  { id: 'photos', label: 'Fotos' },
-  { id: 'illustrations', label: 'Ilustrações' },
-];
-
-export function SlideConfigCard({ slideNumber, slide, onChange, disabled }: SlideConfigCardProps) {
+export function SlideConfigCard({ slideNumber, slide, onChange, disabled, uploadedImagesCount }: SlideConfigCardProps) {
   const [isOpen, setIsOpen] = useState(slideNumber === 1);
-
-  const handleVisualElementToggle = (elementId: string, checked: boolean) => {
-    const newElements = checked
-      ? [...slide.visualElements, elementId]
-      : slide.visualElements.filter(e => e !== elementId);
-    
-    onChange({ ...slide, visualElements: newElements });
-  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -61,52 +47,107 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled }: Slid
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`slide-${slideNumber}-content`}>Descrição/Conteúdo *</Label>
+              <Label htmlFor={`slide-${slideNumber}-content`}>Texto do Slide *</Label>
               <Textarea
                 id={`slide-${slideNumber}-content`}
-                placeholder="Descreva o que deve aparecer neste slide..."
+                placeholder="O texto/frase que aparecerá no slide..."
                 value={slide.content}
                 onChange={(e) => onChange({ ...slide, content: e.target.value })}
                 disabled={disabled}
-                className="min-h-[100px] resize-none"
+                className="min-h-[80px] resize-none"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Elementos Visuais</Label>
-              <div className="grid grid-cols-2 gap-3 min-w-0">
-                {visualElementOptions.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`slide-${slideNumber}-${option.id}`}
-                      checked={slide.visualElements.includes(option.id)}
-                      onCheckedChange={(checked) => 
-                        handleVisualElementToggle(option.id, checked as boolean)
-                      }
-                      disabled={disabled}
-                    />
-                    <Label
-                      htmlFor={`slide-${slideNumber}-${option.id}`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {option.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`slide-${slideNumber}-highlight`}>
-                Destaque Especial (Opcional)
+            <div className="space-y-3 pt-2 border-t border-border">
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" />
+                Como Gerar a Imagem deste Slide
               </Label>
-              <Input
-                id={`slide-${slideNumber}-highlight`}
-                placeholder="Texto ou elemento para destacar"
-                value={slide.highlight || ''}
-                onChange={(e) => onChange({ ...slide, highlight: e.target.value })}
+              
+              <Select 
+                value={slide.imageMode} 
+                onValueChange={(value: any) => onChange({ ...slide, imageMode: value })}
                 disabled={disabled}
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="generate">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Gerar nova imagem com IA</span>
+                    </div>
+                  </SelectItem>
+                  {uploadedImagesCount > 0 && (
+                    <>
+                      <SelectItem value="upload">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4" />
+                          <span>Usar uma foto que enviei</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="generate-with-reference">
+                        <div className="flex items-center gap-2">
+                          <Edit className="w-4 h-4" />
+                          <span>Gerar usando minhas fotos de referência</span>
+                        </div>
+                      </SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+
+              {slide.imageMode === 'upload' && uploadedImagesCount > 0 && (
+                <div className="space-y-2">
+                  <Label>Qual foto usar?</Label>
+                  <Select 
+                    value={slide.uploadedImageIndex?.toString() || ''} 
+                    onValueChange={(value) => onChange({ ...slide, uploadedImageIndex: parseInt(value) })}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma foto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: uploadedImagesCount }).map((_, i) => (
+                        <SelectItem key={i} value={i.toString()}>
+                          Foto {i + 1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor={`slide-${slideNumber}-visual`}>
+                  {slide.imageMode === 'upload' 
+                    ? 'Efeitos/Ajustes (opcional)' 
+                    : slide.imageMode === 'generate-with-reference'
+                    ? 'Como devo me mostrar nesta imagem? *'
+                    : 'Como deve ser a imagem? *'}
+                </Label>
+                <Textarea
+                  id={`slide-${slideNumber}-visual`}
+                  placeholder={
+                    slide.imageMode === 'upload' 
+                      ? 'Ex: adicione um filtro vintage, ajuste o brilho...' 
+                      : slide.imageMode === 'generate-with-reference'
+                      ? 'Ex: me coloque em Paris na frente da Torre Eiffel, com fundo desfocado...'
+                      : 'Ex: fundo branco liso e minimalista, com elementos geométricos sutis...'
+                  }
+                  value={slide.visualInstruction}
+                  onChange={(e) => onChange({ ...slide, visualInstruction: e.target.value })}
+                  disabled={disabled}
+                  className="min-h-[80px] resize-none"
+                />
+                {slide.imageMode === 'generate-with-reference' && (
+                  <p className="text-xs text-muted-foreground">
+                    A IA usará suas fotos enviadas como referência para manter sua identidade visual
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </CollapsibleContent>

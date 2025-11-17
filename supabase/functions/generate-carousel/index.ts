@@ -11,6 +11,9 @@ interface SlideConfig {
   content: string;
   visualElements: string[];
   highlight?: string;
+  imageMode: 'upload' | 'generate' | 'generate-with-reference';
+  uploadedImageIndex: number | null;
+  visualInstruction: string;
 }
 
 interface GenerateCarouselRequest {
@@ -127,143 +130,135 @@ serve(async (req) => {
     const images: { url: string; description: string }[] = [];
 
     for (let i = 0; i < imageCount; i++) {
-      let slidePrompt: string;
-      
-      // Se for modo prompt-only, usa o customPrompt diretamente com indicação do slide
-      if (generationMode === 'prompt-only') {
-        slidePrompt = `
+      const slide = slides[i];
+      console.log(`Processing slide ${i + 1}/${imageCount}...`, {
+        imageMode: slide.imageMode,
+        uploadedImageIndex: slide.uploadedImageIndex,
+        hasVisualInstruction: !!slide.visualInstruction
+      });
+
+      let imageUrl: string;
+      let description: string;
+
+      // Se o modo for 'upload', usar diretamente a imagem enviada
+      if (slide.imageMode === 'upload' && slide.uploadedImageIndex !== null && uploadedImages[slide.uploadedImageIndex]) {
+        console.log(`Using uploaded image ${slide.uploadedImageIndex} for slide ${i + 1}`);
+        imageUrl = uploadedImages[slide.uploadedImageIndex];
+        description = slide.content || `Slide ${i + 1}`;
+      } else {
+        // Gerar imagem com IA
+        let slidePrompt: string;
+        const messageContent: any[] = [];
+
+        if (slide.imageMode === 'generate-with-reference') {
+          // Gerar usando fotos de referência (manter identidade visual)
+          slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
-CAROUSEL TITLE: "${title}"
+VISUAL INSTRUCTION: ${slide.visualInstruction}
 
-USER REQUEST:
-${customPrompt}
+TEXT FOR SLIDE: "${slide.content}"
+
+THEME: ${themeDescriptions[theme] || theme}
+COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
+
+CRITICAL INSTRUCTIONS:
+- Use the reference images provided to maintain the person's visual identity
+- Keep the person's face, hair, body type, and overall appearance identical to the reference photos
+- DO NOT change or replace the person
+- Apply the visual transformation/scenario requested while preserving identity
+- Make it look natural and realistic
+- Square aspect ratio (1:1) for Instagram carousel
+          `.trim();
+
+          messageContent.push({
+            type: "text",
+            text: slidePrompt
+          });
+
+          // Adicionar todas as fotos de referência
+          uploadedImages.forEach((img) => {
+            messageContent.push({
+              type: "image_url",
+              image_url: { url: img }
+            });
+          });
+        } else {
+          // Gerar imagem do zero (sem referência)
+          slidePrompt = `
+🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
+
+VISUAL INSTRUCTION: ${slide.visualInstruction}
+
+TEXT FOR SLIDE: "${slide.content}"
 
 THEME: ${themeDescriptions[theme] || theme}
 COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
 TONE: ${toneDescriptions[tone] || tone}
-${callToAction ? `CALL TO ACTION: "${callToAction}"` : ''}
 
 INSTRUCTIONS:
-Create slide ${i + 1} of ${imageCount} based on the user's request above.
-- Follow the theme, color palette, and tone specified
-- Make it cohesive with the overall carousel concept
-- Ensure text is clear and readable
-- Use professional design
-${uploadedImages[i] ? '- Use the provided image as reference/background' : ''}
+- Create a visually appealing carousel slide
+- Follow the visual instructions precisely
+- Make text clear and readable
+- Square aspect ratio (1:1) for Instagram carousel
+- Follow the theme and color palette specified
+${i === imageCount - 1 && callToAction ? `- This is the FINAL slide, include call to action: "${callToAction}"` : ''}
+          `.trim();
 
-${i === imageCount - 1 && callToAction ? `This is the FINAL slide - include the call to action: "${callToAction}"` : ''}
-      `.trim();
-      } else {
-        // Modo config: usa a configuração detalhada do slide
-        const slide = slides[i];
-        
-        const visualElementsText = slide.visualElements.length > 0 
-          ? `Include visual elements: ${slide.visualElements.join(", ")}.`
-          : "";
-        
-        const highlightText = slide.highlight 
-          ? `Highlight this text prominently: "${slide.highlight}".`
-          : "";
-        
-        const ctaText = callToAction 
-          ? `Include call-to-action button: "${callToAction}".`
-          : "";
-
-        slidePrompt = `Create a ${themeDescriptions[theme] || "modern"} carousel slide image (slide ${i + 1} of ${imageCount}) with ${paletteDescriptions[colorPalette] || "vibrant colors"}.
-
-Title: "${slide.title}"
-Content: ${slide.content}
-${visualElementsText}
-${highlightText}
-${ctaText}
-
-Style: ${themeDescriptions[theme] || "modern"}
-Tone: ${toneDescriptions[tone] || "professional"}
-Make it visually appealing for Instagram carousel format, square aspect ratio (1:1), ${theme} aesthetic.
-${uploadedImages[i] ? '- Use the provided image as reference/background' : ''}
-${i === imageCount - 1 && callToAction ? `FINAL SLIDE - Include this CTA: "${callToAction}"` : ''}
-      `.trim();
-      }
-
-      console.log(`Generating slide ${i + 1}/${imageCount}...`);
-
-      // Prepara o conteúdo da mensagem
-      const messageContent: any[] = [
-        {
-          type: "text",
-          text: slidePrompt
+          messageContent.push({
+            type: "text",
+            text: slidePrompt
+          });
         }
-      ];
 
-      // Se houver imagem específica para este slide, adiciona
-      if (uploadedImages[i]) {
-        messageContent.push({
-          type: "image_url",
-          image_url: {
-            url: uploadedImages[i]
-          }
+        console.log(`Calling AI to generate image for slide ${i + 1}...`);
+
+        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image-preview",
+            messages: [
+              {
+                role: "user",
+                content: messageContent,
+              },
+            ],
+            modalities: ["image", "text"],
+          }),
         });
-      }
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
-          messages: [
-            {
-              role: "user",
-              content: messageContent,
-            },
-          ],
-          modalities: ["image", "text"],
-        }),
-      });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`AI API error for slide ${i + 1}:`, response.status, errorText);
+          
+          if (response.status === 429) {
+            throw new Error("Rate limit exceeded. Please try again in a few moments.");
+          }
+          if (response.status === 402) {
+            throw new Error("Insufficient credits. Please add credits to your Lovable AI workspace.");
+          }
+          
+          throw new Error(`Failed to generate image for slide ${i + 1}: ${response.status} ${errorText}`);
+        }
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          return new Response(
-            JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        if (response.status === 402) {
-          return new Response(
-            JSON.stringify({ error: "Insufficient credits. Please add credits to continue." }),
-            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
+        const data = await response.json();
         
-        const errorText = await response.text();
-        console.error(`AI API error for image ${i}:`, response.status, errorText);
-        throw new Error(`Failed to generate image ${i}: ${response.status}`);
-      }
+        imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        description = data.choices?.[0]?.message?.content || slide.content || `Slide ${i + 1}`;
 
-      const data = await response.json();
-      console.log(`Response structure for image ${i}:`, JSON.stringify({
-        hasChoices: !!data.choices,
-        choicesLength: data.choices?.length,
-        hasMessage: !!data.choices?.[0]?.message,
-        hasImages: !!data.choices?.[0]?.message?.images,
-        imagesLength: data.choices?.[0]?.message?.images?.length,
-        hasImageUrl: !!data.choices?.[0]?.message?.images?.[0]?.image_url,
-        hasUrl: !!data.choices?.[0]?.message?.images?.[0]?.image_url?.url
-      }));
+        if (!imageUrl) {
+          console.error(`No image URL for slide ${i + 1}:`, JSON.stringify(data, null, 2));
+          throw new Error(`No image URL returned for slide ${i + 1}`);
+        }
 
-      const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      const description = data.choices?.[0]?.message?.content || `Imagem ${i}`;
-
-      if (!imageUrl) {
-        console.error(`Full response data for image ${i}:`, JSON.stringify(data, null, 2));
-        throw new Error(`No image URL returned for image ${i}. Response structure was unexpected.`);
+        console.log(`✅ Generated image for slide ${i + 1} successfully`);
       }
 
       images.push({ url: imageUrl, description });
-      console.log(`✅ Generated image ${i + 1}/${imageCount} successfully`);
       
       // Add small delay between requests to avoid rate limiting
       if (i < imageCount - 1) {
