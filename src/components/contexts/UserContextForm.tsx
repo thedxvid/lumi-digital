@@ -121,7 +121,7 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
           placeholder="Ex: Curso de SEO Avançado, E-book de Tráfego Pago"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          maxLength={100}
+          maxLength={200}
           required
         />
       </div>
@@ -133,8 +133,8 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
           placeholder="Descreva seu produto, público-alvo e principais benefícios. Exemplo: 'Curso online com 40 aulas sobre SEO técnico e content marketing, voltado para empreendedores digitais iniciantes que querem aumentar o tráfego orgânico.'"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          rows={6}
-          maxLength={1000}
+          rows={8}
+          maxLength={5000}
           required
         />
       </div>
@@ -146,8 +146,8 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
           placeholder="Descreva quem você é, sua experiência e contexto. Ex: 'Sou empreendedor digital há 5 anos, trabalho com infoprodutos na área de saúde e bem-estar...'"
           value={userRole}
           onChange={(e) => setUserRole(e.target.value)}
-          rows={4}
-          maxLength={500}
+          rows={6}
+          maxLength={2000}
         />
         <p className="text-xs text-muted-foreground">
           A IA usará essas informações para personalizar as respostas baseadas no seu contexto
