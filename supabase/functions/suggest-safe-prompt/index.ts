@@ -53,7 +53,7 @@ EXEMPLOS:
 
 Retorne APENAS o prompt reformulado, sem explicações adicionais.`;
     } else if (mode === 'enhance') {
-      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Sora 2, Kling, Veo). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
+      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Sora 2, Kling). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
 
 DIRETRIZES OBRIGATÓRIAS:
 

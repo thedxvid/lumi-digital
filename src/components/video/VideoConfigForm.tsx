@@ -33,15 +33,6 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     mode: 'text-to-video',
     endpoint: 'https://fal.run/fal-ai/sora-2/text-to-video'
   },
-  {
-    id: 'fal_veo31',
-    name: 'fal_veo31',
-    display_name: 'Veo 3.1 (Text)',
-    cost_per_8s: 3.20,
-    description: 'Máxima qualidade - Plano Pro Advanced',
-    provider: 'Google',
-    mode: 'text-to-video'
-  },
   // Image-to-Video APIs
   {
     id: 'fal_kling_v25_image_to_video',
@@ -300,7 +291,7 @@ export const VideoConfigForm = ({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={mode === 'text-to-video' 
-                ? "Ex: Uma entrevista de rua em Nova York. Diálogo de exemplo:\nApresentador: 'Você ouviu a notícia?'\nPessoa: 'Sim! O Veo 3.1 está disponível. Incrível!'"
+                ? "Ex: Uma entrevista de rua em Nova York. Diálogo de exemplo:\nApresentador: 'Você ouviu a notícia?'\nPessoa: 'Sim! O Sora 2 está disponível. Incrível!'"
                 : "Ex: Zoom lento na imagem, movimento suave da câmera da esquerda para direita"}
               className="min-h-[120px] resize-none"
               disabled={loading}
