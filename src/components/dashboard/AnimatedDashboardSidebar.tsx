@@ -184,7 +184,7 @@ export function AnimatedDashboardSidebar() {
                       <div className="flex items-center gap-2">
                         <Sparkles className="text-foreground h-5 w-5 flex-shrink-0" />
                         <span className="text-sm text-foreground font-medium">
-                          Produção de Conteúdo
+                          Painel Criativo
                         </span>
                       </div>
                       <ChevronDown
