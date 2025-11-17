@@ -11,6 +11,7 @@ export const useVideoGenerator = () => {
   const [history, setHistory] = useState<VideoHistoryItem[]>([]);
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [currentConfig, setCurrentConfig] = useState<VideoConfig | null>(null);
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus>('idle');
   const [timeEstimate, setTimeEstimate] = useState<TimeEstimate | null>(null);
@@ -121,7 +122,7 @@ export const useVideoGenerator = () => {
       }
 
       const videoUrl = functionData?.video?.url;
-      const thumbnailUrl = functionData?.video?.thumbnail_url;
+      const thumbnailUrlFromApi = functionData?.video?.thumbnail_url;
       
       if (!videoUrl) {
         throw new Error('URL do vídeo não retornada pela API');
@@ -131,6 +132,7 @@ export const useVideoGenerator = () => {
 
       // Mudar status para ready IMEDIATAMENTE
       setGeneratedVideoUrl(videoUrl);
+      setThumbnailUrl(thumbnailUrlFromApi || null);
       setGenerationStatus('ready');
 
       // Pré-carregar vídeo em background (não bloqueante)
@@ -158,7 +160,7 @@ export const useVideoGenerator = () => {
             user_id: user.id,
             prompt: config.prompt,
             video_url: videoUrl,
-            thumbnail_url: thumbnailUrl,
+            thumbnail_url: thumbnailUrlFromApi,
             aspect_ratio: config.aspect_ratio,
             duration: config.duration,
             resolution: config.resolution,
@@ -170,11 +172,17 @@ export const useVideoGenerator = () => {
 
         if (insertError) {
           console.error('Error saving to history:', insertError);
+          toast.error('Erro ao salvar no histórico: ' + insertError.message);
         } else if (newVideo) {
-          console.log('Successfully saved to history');
+          console.log('Successfully saved to history:', newVideo);
           
           // Add new video to the beginning of history (incremental loading)
-          setHistory(prev => [newVideo, ...prev]);
+          setHistory(prev => {
+            console.log('Updating history. Previous length:', prev.length);
+            const updated = [newVideo, ...prev];
+            console.log('New history length:', updated.length);
+            return updated;
+          });
           
           // Increment video usage counter
           const { error: limitError } = await supabase.functions.invoke('check-limits', {
@@ -216,6 +224,7 @@ export const useVideoGenerator = () => {
 
   const loadHistory = async (page = 0, limit = 15) => {
     try {
+      console.log('🔄 Loading history, page:', page, 'limit:', limit);
       const { data, error } = await supabase
         .from('video_history')
         .select('*')
@@ -223,12 +232,17 @@ export const useVideoGenerator = () => {
         .range(page * limit, (page + 1) * limit - 1);
 
       if (error) {
-        console.error('Error loading history:', error);
+        console.error('❌ Error loading history:', error);
         toast.error('Erro ao carregar histórico');
         return;
       }
 
-      setHistory(prev => page === 0 ? (data || []) : [...prev, ...(data || [])]);
+      console.log('✅ History loaded:', data?.length || 0, 'videos');
+      setHistory(prev => {
+        const updated = page === 0 ? (data || []) : [...prev, ...(data || [])];
+        console.log('📊 History state updated. Total videos:', updated.length);
+        return updated;
+      });
     } catch (error) {
       console.error('Error loading history:', error);
     }
@@ -278,6 +292,7 @@ export const useVideoGenerator = () => {
     resultModalOpen,
     setResultModalOpen,
     generatedVideoUrl,
+    thumbnailUrl,
     currentConfig,
     generationStatus,
     timeEstimate,
