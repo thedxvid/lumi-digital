@@ -79,6 +79,61 @@ export const useVideoGenerator = () => {
     // Criar AbortController para cancelamento
     abortControllerRef.current = new AbortController();
 
+    // Verificar limites específicos ANTES de gerar
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: userLimits } = await supabase
+        .from('usage_limits')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (userLimits) {
+        const isSora = config.api_provider?.includes('sora');
+        const isKling = config.api_provider?.includes('kling');
+        
+        const soraAvailable = (userLimits.sora_text_videos_lifetime_limit || 0) - (userLimits.sora_text_videos_lifetime_used || 0);
+        const klingAvailable = (userLimits.kling_image_videos_lifetime_limit || 0) - (userLimits.kling_image_videos_lifetime_used || 0);
+        const extraCredits = (userLimits.video_credits || 0) - (userLimits.video_credits_used || 0);
+        
+        // Verificar se tem créditos para o tipo específico
+        if (isSora && soraAvailable === 0 && extraCredits === 0) {
+          console.log('No Sora credits available');
+          window.dispatchEvent(new CustomEvent('video-limit-reached', {
+            detail: { videoType: 'sora', remainingCredits: extraCredits }
+          }));
+          setLoading(false);
+          setGenerationStatus('idle');
+          setResultModalOpen(false);
+          return null;
+        }
+        
+        if (isKling && klingAvailable === 0 && extraCredits === 0) {
+          console.log('No Kling credits available');
+          window.dispatchEvent(new CustomEvent('video-limit-reached', {
+            detail: { videoType: 'kling', remainingCredits: extraCredits }
+          }));
+          setLoading(false);
+          setGenerationStatus('idle');
+          setResultModalOpen(false);
+          return null;
+        }
+        
+        console.log('Credits check passed:', {
+          isSora,
+          isKling,
+          soraAvailable,
+          klingAvailable,
+          extraCredits
+        });
+      }
+    } catch (checkError) {
+      console.error('Error checking limits:', checkError);
+      // Continue even if check fails to avoid blocking legitimate users
+    }
+
     try {
       const { data: functionData, error: functionError } = await supabase.functions.invoke('generate-video', {
         body: config
