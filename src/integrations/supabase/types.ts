@@ -717,11 +717,15 @@ export type Database = {
           creative_images_monthly_limit: number
           creative_images_monthly_used: number
           id: string
+          kling_image_videos_lifetime_limit: number | null
+          kling_image_videos_lifetime_used: number | null
           last_daily_reset: string
           last_monthly_reset: string
           plan_type: string
           profile_analysis_daily_limit: number
           profile_analysis_daily_used: number
+          sora_text_videos_lifetime_limit: number | null
+          sora_text_videos_lifetime_used: number | null
           updated_at: string | null
           user_id: string
           video_credits: number
@@ -738,11 +742,15 @@ export type Database = {
           creative_images_monthly_limit?: number
           creative_images_monthly_used?: number
           id?: string
+          kling_image_videos_lifetime_limit?: number | null
+          kling_image_videos_lifetime_used?: number | null
           last_daily_reset?: string
           last_monthly_reset?: string
           plan_type: string
           profile_analysis_daily_limit?: number
           profile_analysis_daily_used?: number
+          sora_text_videos_lifetime_limit?: number | null
+          sora_text_videos_lifetime_used?: number | null
           updated_at?: string | null
           user_id: string
           video_credits?: number
@@ -759,11 +767,15 @@ export type Database = {
           creative_images_monthly_limit?: number
           creative_images_monthly_used?: number
           id?: string
+          kling_image_videos_lifetime_limit?: number | null
+          kling_image_videos_lifetime_used?: number | null
           last_daily_reset?: string
           last_monthly_reset?: string
           plan_type?: string
           profile_analysis_daily_limit?: number
           profile_analysis_daily_used?: number
+          sora_text_videos_lifetime_limit?: number | null
+          sora_text_videos_lifetime_used?: number | null
           updated_at?: string | null
           user_id?: string
           video_credits?: number
@@ -1116,10 +1128,6 @@ export type Database = {
         Returns: string
       }
       get_user_streak: { Args: { _user_id: string }; Returns: number }
-      get_video_model_for_plan: {
-        Args: { p_plan_type: string }
-        Returns: string
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
