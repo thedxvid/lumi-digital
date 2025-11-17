@@ -67,7 +67,7 @@ export const useVideoGenerator = () => {
       
       console.log('Saving to history with config:', {
         api_provider: config.api_provider,
-        api_used_value: config.api_provider || 'fal_veo3_fast'
+        api_used_value: config.api_provider || 'fal_kling_v25_turbo'
       });
       
       if (user) {

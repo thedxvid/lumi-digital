@@ -58,11 +58,6 @@ serve(async (req) => {
         key: FAL_KEY,
         authPrefix: 'Key'
       },
-      fal_veo31: {
-        endpoint: 'https://fal.run/fal-ai/veo3.1',
-        key: FAL_KEY,
-        authPrefix: 'Key'
-      },
       // Image-to-Video APIs
       fal_kling_v25_image_to_video: {
         endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
@@ -168,7 +163,7 @@ serve(async (req) => {
         delete_video: true
       };
     } else {
-      // Veo 3.1 usa parâmetros padrão
+      // Outras APIs usam parâmetros padrão
       requestBody = {
         prompt,
         aspect_ratio,

@@ -47,16 +47,16 @@ const VideoCard = ({ item, onDelete, onToggleFavorite, onViewFullscreen }: {
 
   const getAPIDisplayName = (apiName?: string) => {
     switch (apiName) {
-      case 'fal_veo3_fast':
-        return 'Veo 3 Fast';
-      case 'fal_veo31':
-        return 'Veo 3.1';
-      case 'fal_hunyuan':
-        return 'Hunyuan';
-      case 'fal_wan_fast':
-        return 'Wan Fast';
+      case 'fal_sora2_text_to_video':
+        return 'Sora 2 by OpenAI';
+      case 'fal_kling_v25_text_to_video':
+        return 'Kling v2.5';
+      case 'fal_sora2_image_to_video':
+        return 'Sora 2 (Image)';
+      case 'fal_kling_v25_image_to_video':
+        return 'Kling v2.5 (Image)';
       default:
-        return apiName || 'Veo 3 Fast';
+        return apiName || 'Sora 2';
     }
   };
 
