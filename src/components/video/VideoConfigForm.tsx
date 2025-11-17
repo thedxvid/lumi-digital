@@ -19,7 +19,7 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     name: 'fal_kling_v25_turbo',
     display_name: 'Kling v2.5 Turbo Pro',
     cost_per_8s: 0.60,
-    description: 'Movimento fluido e visual cinematográfico',
+    description: 'Movimento fluido e visual cinematográfico (sem áudio)',
     provider: 'Kling AI',
     mode: 'text-to-video'
   },
@@ -39,7 +39,7 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     name: 'fal_kling_v25_image_to_video',
     display_name: 'Kling v2.5 Turbo Pro (Imagem)',
     cost_per_8s: 0.60,
-    description: 'Gera vídeo a partir de 1 imagem',
+    description: 'Gera vídeo a partir de 1 imagem (sem áudio)',
     provider: 'Kling AI',
     mode: 'image-to-video',
     requires_images: 1,
