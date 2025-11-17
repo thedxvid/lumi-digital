@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, Trash2, Heart, Play, Clock, Maximize2, Zap, AlertCircle } from 'lucide-react';
+import { Download, Trash2, Heart, Play, Clock, Maximize2, Zap, AlertCircle, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { VideoHistoryItem } from '@/types/video';
@@ -35,10 +35,12 @@ const VideoCard = ({ item, onDelete, onToggleFavorite, onViewFullscreen }: {
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const entry = useIntersectionObserver(cardRef, {
-    threshold: 0.1,
-    freezeOnceVisible: false,
+    threshold: 0.25,
+    rootMargin: '100px',
+    freezeOnceVisible: true,
   });
 
   const isVisible = !!entry?.isIntersecting;

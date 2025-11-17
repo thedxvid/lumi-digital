@@ -117,18 +117,17 @@ export default defineConfig(({ mode }) => ({
           },
           {
             // Cache de vídeos da fal.media (gerados pela Lumi)
-            urlPattern: /^https:\/\/.*\.fal\.media\/.*\.mp4$/i,
+            urlPattern: /^https:\/\/.*\.fal\.media\/.*\.(mp4|webm)$/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'lumi-videos-cache',
+              cacheName: 'video-cache',
               expiration: {
-                maxEntries: 50, // Máximo de 50 vídeos no cache
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 dias
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
               },
               cacheableResponse: {
                 statuses: [0, 200]
               },
-              // Range requests support para streaming de vídeo
               rangeRequests: true
             }
           }

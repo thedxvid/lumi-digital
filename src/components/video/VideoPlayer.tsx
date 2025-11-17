@@ -65,7 +65,8 @@ export const VideoPlayer = ({
         poster={poster || src + '#t=0.1'}
         controls={controls}
         autoPlay={autoPlay}
-        preload="metadata"
+        playsInline
+        preload="none"
         className={className}
       />
       

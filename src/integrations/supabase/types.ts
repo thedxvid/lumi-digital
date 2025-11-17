@@ -926,6 +926,7 @@ export type Database = {
           prompt: string
           resolution: string | null
           tags: string[] | null
+          thumbnail_url: string | null
           updated_at: string
           user_id: string
           video_url: string
@@ -941,6 +942,7 @@ export type Database = {
           prompt: string
           resolution?: string | null
           tags?: string[] | null
+          thumbnail_url?: string | null
           updated_at?: string
           user_id: string
           video_url: string
@@ -956,6 +958,7 @@ export type Database = {
           prompt?: string
           resolution?: string | null
           tags?: string[] | null
+          thumbnail_url?: string | null
           updated_at?: string
           user_id?: string
           video_url?: string
