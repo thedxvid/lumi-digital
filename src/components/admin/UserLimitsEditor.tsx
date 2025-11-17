@@ -17,6 +17,10 @@ interface UsageLimits {
   carousels_monthly_limit: number;
   videos_monthly_limit: number;
   video_credits: number;
+  sora_text_videos_lifetime_limit: number;
+  sora_text_videos_lifetime_used: number;
+  kling_image_videos_lifetime_limit: number;
+  kling_image_videos_lifetime_used: number;
 }
 
 interface UserLimitsEditorProps {
@@ -72,6 +76,10 @@ export const UserLimitsEditor = ({ userId, userName, isOpen, onClose, onSuccess 
           carousels_monthly_limit: limits.carousels_monthly_limit,
           videos_monthly_limit: limits.videos_monthly_limit,
           video_credits: limits.video_credits,
+          sora_text_videos_lifetime_limit: limits.sora_text_videos_lifetime_limit,
+          sora_text_videos_lifetime_used: limits.sora_text_videos_lifetime_used,
+          kling_image_videos_lifetime_limit: limits.kling_image_videos_lifetime_limit,
+          kling_image_videos_lifetime_used: limits.kling_image_videos_lifetime_used,
         })
         .eq('user_id', userId);
 
@@ -113,8 +121,6 @@ export const UserLimitsEditor = ({ userId, userName, isOpen, onClose, onSuccess 
                 <SelectContent>
                   <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="basic">Básico</SelectItem>
-                  <SelectItem value="pro">PRO</SelectItem>
-                  <SelectItem value="pro_advanced">PRO Advanced</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -183,24 +189,66 @@ export const UserLimitsEditor = ({ userId, userName, isOpen, onClose, onSuccess 
             {/* Vídeos */}
             <div>
               <h3 className="font-semibold mb-3">Vídeos</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Vídeos Mensais</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={limits.videos_monthly_limit}
-                    onChange={(e) => setLimits({ ...limits, videos_monthly_limit: parseInt(e.target.value) || 0 })}
-                  />
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>🎥 Sora - Limite Lifetime</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={limits.sora_text_videos_lifetime_limit}
+                      onChange={(e) => setLimits({ ...limits, sora_text_videos_lifetime_limit: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div>
+                    <Label>🎥 Sora - Usado Lifetime</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={limits.sora_text_videos_lifetime_used}
+                      onChange={(e) => setLimits({ ...limits, sora_text_videos_lifetime_used: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>Créditos Extras de Vídeo</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={limits.video_credits}
-                    onChange={(e) => setLimits({ ...limits, video_credits: parseInt(e.target.value) || 0 })}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>🎬 Kling - Limite Lifetime</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={limits.kling_image_videos_lifetime_limit}
+                      onChange={(e) => setLimits({ ...limits, kling_image_videos_lifetime_limit: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div>
+                    <Label>🎬 Kling - Usado Lifetime</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={limits.kling_image_videos_lifetime_used}
+                      onChange={(e) => setLimits({ ...limits, kling_image_videos_lifetime_used: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Vídeos Mensais (antigo)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={limits.videos_monthly_limit}
+                      onChange={(e) => setLimits({ ...limits, videos_monthly_limit: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div>
+                    <Label>⚡ Créditos Extras</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={limits.video_credits}
+                      onChange={(e) => setLimits({ ...limits, video_credits: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
