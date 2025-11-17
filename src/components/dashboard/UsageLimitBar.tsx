@@ -32,18 +32,14 @@ export function UsageLimitBar() {
       limit: limits.profile_analysis_daily_limit,
       color: 'text-blue-600',
     },
-  ];
-
-  // Adiciona vídeos se for PRO
-  if (subscription?.plan_type === 'pro') {
-    features.push({
+    {
       icon: Film,
       name: 'Vídeos',
-      used: limits.videos_monthly_used,
-      limit: limits.videos_monthly_limit + limits.video_credits - limits.video_credits_used,
+      used: (limits.sora_text_videos_lifetime_used || 0) + (limits.kling_image_videos_lifetime_used || 0) + limits.video_credits_used,
+      limit: (limits.sora_text_videos_lifetime_limit || 2) + (limits.kling_image_videos_lifetime_limit || 1) + limits.video_credits,
       color: 'text-green-600',
-    });
-  }
+    },
+  ];
 
   const getStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-red-500';
@@ -208,18 +204,15 @@ export function MobileUsageLimitBar() {
       color: 'text-blue-600',
       resetInfo: getNextDailyReset(),
     },
-  ];
-
-  if (subscription?.plan_type === 'pro') {
-    features.push({
+    {
       icon: Film,
       name: 'Vídeos',
-      used: limits.videos_monthly_used,
-      limit: limits.videos_monthly_limit + limits.video_credits - limits.video_credits_used,
+      used: (limits.sora_text_videos_lifetime_used || 0) + (limits.kling_image_videos_lifetime_used || 0) + limits.video_credits_used,
+      limit: (limits.sora_text_videos_lifetime_limit || 2) + (limits.kling_image_videos_lifetime_limit || 1) + limits.video_credits,
       color: 'text-green-600',
-      resetInfo: getNextMonthlyReset(),
-    });
-  }
+      resetInfo: 'Vitalício',
+    },
+  ];
 
   const getStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-red-500';

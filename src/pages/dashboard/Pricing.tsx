@@ -14,13 +14,13 @@ export default function Pricing() {
   const { createSubscription, subscription, loading } = useSubscription();
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
-  const handleSubscribe = async (planType: 'basic' | 'pro') => {
+  const handleSubscribe = async (planType: 'basic') => {
     setProcessingPlan(planType);
     
     // TODO: Integrate with payment gateway (Stripe/Kiwify)
     toast.info('Integração de pagamento em desenvolvimento');
     
-    const success = await createSubscription(planType as 'basic' | 'pro', duration);
+    const success = await createSubscription(planType, duration);
     
     if (success) {
       toast.success('Plano ativado! (Demo mode)');
@@ -67,7 +67,6 @@ export default function Pricing() {
           const price = plan.prices[duration];
           const pricePerMonth = getPricePerMonth(price, duration);
           const savings = duration > 1 ? getSavingsPercentage(plan.prices[1], price, duration) : 0;
-          const isProPlan = plan.type === 'pro';
           const isCurrentPlan = subscription?.plan_type === plan.type;
 
           // Skip free plan from rendering
@@ -76,21 +75,19 @@ export default function Pricing() {
           return (
             <Card 
               key={plan.type}
-              className={`relative ${isProPlan ? 'border-primary shadow-lg shadow-primary/20' : ''}`}
+              className="relative border-primary shadow-lg shadow-primary/20"
             >
-              {isProPlan && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-gradient-to-r from-primary to-primary/60">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    Mais Popular
-                  </Badge>
-                </div>
-              )}
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <Badge className="bg-gradient-to-r from-primary to-primary/60">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Recomendado
+                </Badge>
+              </div>
 
               <CardHeader>
                 <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                   <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
-                  {isProPlan && <Zap className="w-6 h-6 text-primary" />}
+                  <Zap className="w-6 h-6 text-primary" />
                 </div>
                 <CardDescription>{plan.description}</CardDescription>
                 
@@ -126,8 +123,8 @@ export default function Pricing() {
                 <Button
                   className="w-full"
                   size="lg"
-                  variant={isProPlan ? 'default' : 'outline'}
-                  onClick={() => handleSubscribe(plan.type as 'basic' | 'pro')}
+                  variant="default"
+                  onClick={() => handleSubscribe('basic')}
                   disabled={isCurrentPlan || processingPlan === plan.type}
                 >
                   {isCurrentPlan ? 'Plano Atual' : processingPlan === plan.type ? 'Processando...' : 'Assinar Agora'}

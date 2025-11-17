@@ -154,12 +154,15 @@ export const useUsageLimits = () => {
         return (limits.creative_images_daily_used / limits.creative_images_daily_limit) * 100;
       case 'profile_analysis':
         return (limits.profile_analysis_daily_used / limits.profile_analysis_daily_limit) * 100;
-      case 'carousels':
-        return (limits.carousels_monthly_used / limits.carousels_monthly_limit) * 100;
-      case 'videos':
-        const totalLimit = limits.videos_monthly_limit + limits.video_credits;
-        const totalUsed = limits.videos_monthly_used + limits.video_credits_used;
-        return totalLimit > 0 ? (totalUsed / totalLimit) * 100 : 0;
+    case 'videos_sora_text':
+      const soraTotal = limits.sora_text_videos_lifetime_limit + limits.video_credits;
+      const soraUsed = limits.sora_text_videos_lifetime_used + limits.video_credits_used;
+      return soraTotal > 0 ? (soraUsed / soraTotal) * 100 : 0;
+      
+    case 'videos_kling_image':
+      const klingTotal = limits.kling_image_videos_lifetime_limit + limits.video_credits;
+      const klingUsed = limits.kling_image_videos_lifetime_used + limits.video_credits_used;
+      return klingTotal > 0 ? (klingUsed / klingTotal) * 100 : 0;
       default:
         return 0;
     }

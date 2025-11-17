@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { useSubscription } from '@/hooks/useSubscription';
-import { videoAddons, videoAddonsAdvanced } from '@/data/pricingPlans';
+import { videoAddons } from '@/data/pricingPlans';
 import { toast } from 'sonner';
 import type { VideoAddonType } from '@/types/subscription';
 
@@ -15,16 +15,6 @@ export default function VideoAddons() {
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
   const handlePurchase = async (packageType: VideoAddonType) => {
-    if (!subscription?.plan_type || (subscription.plan_type !== 'pro' && subscription.plan_type !== 'pro_advanced')) {
-      toast.error('Pacotes de vídeo disponíveis apenas para assinantes PRO e PRO Advanced', {
-        action: {
-          label: 'Ver Planos',
-          onClick: () => window.location.href = '/app/pricing'
-        }
-      });
-      return;
-    }
-
     setPurchasing(packageType);
     
     // Sistema de pagamento será integrado em breve
@@ -36,12 +26,7 @@ export default function VideoAddons() {
     setPurchasing(null);
   };
 
-  const isProUser = subscription?.plan_type === 'pro';
-  const isProAdvancedUser = subscription?.plan_type === 'pro_advanced';
-  const hasVideoAccess = isProUser || isProAdvancedUser;
-
-  // Select packages based on user plan
-  const availablePackages = isProAdvancedUser ? videoAddonsAdvanced : videoAddons;
+  const availablePackages = videoAddons;
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -50,96 +35,42 @@ export default function VideoAddons() {
           Pacotes Extras de Vídeos
         </h1>
         <p className="text-muted-foreground text-lg mb-4">
-          {isProAdvancedUser 
-            ? 'Gere mais vídeos com Veo 3.1 - máxima qualidade cinematográfica' 
-            : 'Precisa gerar mais vídeos este mês? Compre créditos extras!'}
+          Precisa gerar mais vídeos? Compre créditos extras e use em Sora 2 ou Kling v2.5!
         </p>
-        
-        {!hasVideoAccess && (
-          <div className="mb-6">
-            <Badge variant="destructive" className="mb-4 text-base py-2 px-4">
-              Disponível apenas para assinantes PRO e PRO Advanced
-            </Badge>
-            <div>
-              <Button onClick={() => window.location.href = '/app/pricing'} size="lg">
-                Ver Planos Disponíveis
-              </Button>
-            </div>
-          </div>
-        )}
 
-        {limits && hasVideoAccess && (() => {
-          const videoUsed = limits.videos_monthly_used + limits.video_credits_used;
-          const videoTotal = limits.videos_monthly_limit + limits.video_credits;
-          const videoPercentage = videoTotal > 0 ? (videoUsed / videoTotal) * 100 : 0;
+        {limits && (() => {
+          const soraUsed = limits.sora_text_videos_lifetime_used || 0;
+          const soraTotal = limits.sora_text_videos_lifetime_limit || 2;
+          const klingUsed = limits.kling_image_videos_lifetime_used || 0;
+          const klingTotal = limits.kling_image_videos_lifetime_limit || 1;
+          const extraCredits = limits.video_credits - limits.video_credits_used;
           
           return (
             <div className="max-w-md mx-auto p-4 bg-muted rounded-lg border-2 border-primary/50">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium">Seus créditos de vídeo:</p>
-                {videoPercentage >= 80 && (
-                  <Badge variant="destructive" className="animate-pulse">
-                    {videoPercentage >= 90 ? '🔴 Crítico' : '⚠️ Atenção'}
-                  </Badge>
+              <p className="text-sm font-medium mb-2">Seus créditos de vídeo:</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>🎥 Sora (text-to-video):</span>
+                  <span className="font-semibold">{soraTotal - soraUsed}/{soraTotal} grátis</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>🎬 Kling (image-to-video):</span>
+                  <span className="font-semibold">{klingTotal - klingUsed}/{klingTotal} grátis</span>
+                </div>
+                {extraCredits > 0 && (
+                  <div className="flex justify-between text-sm pt-2 border-t">
+                    <span>⚡ Créditos Extras:</span>
+                    <span className="font-semibold text-primary">{extraCredits}</span>
+                  </div>
                 )}
               </div>
-              <div className="flex justify-center gap-4 text-lg font-semibold mb-2">
-                <span>📅 Mensais: {limits.videos_monthly_limit - limits.videos_monthly_used}/{limits.videos_monthly_limit}</span>
-                <span className="text-primary">⚡ Extras: {limits.video_credits - limits.video_credits_used}/{limits.video_credits}</span>
-              </div>
-              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full transition-all ${
-                    videoPercentage >= 90 ? 'bg-red-500' : 
-                    videoPercentage >= 80 ? 'bg-yellow-500' : 
-                    'bg-primary'
-                  }`}
-                  style={{ width: `${Math.min(videoPercentage, 100)}%` }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                {videoPercentage.toFixed(1)}% utilizado
-              </p>
-              {isProAdvancedUser && (
-                <Badge variant="secondary" className="mt-3 w-full justify-center">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Veo 3.1 Premium
-                </Badge>
-              )}
             </div>
           );
         })()}
       </div>
 
-      {hasVideoAccess && (
-        <>
-          {/* Plan Info Banner */}
-          <div className="max-w-5xl mx-auto mb-8 p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">
-                  {isProAdvancedUser ? '💎 Plano PRO Advanced' : '⭐ Plano PRO'}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {isProAdvancedUser 
-                    ? 'Vídeos com Veo 3.1 do Google - Qualidade cinematográfica máxima'
-                    : 'Vídeos com Kling v2.5 Turbo - Movimento fluido e visual cinematográfico'}
-                </p>
-              </div>
-              {!isProAdvancedUser && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => window.location.href = '/app/pricing'}
-                >
-                  Fazer Upgrade para Advanced
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {availablePackages.map((addon, index) => {
+      <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        {availablePackages.map((addon, index) => {
               const pricePerVideo = (addon.price / addon.credits).toFixed(2);
               const isPopular = index === 1; // Middle package is most popular
               const isUrgent = limits && ((limits.videos_monthly_used + limits.video_credits_used) / (limits.videos_monthly_limit + limits.video_credits)) >= 0.8;
@@ -273,22 +204,17 @@ export default function VideoAddons() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">
-                    {isProAdvancedUser 
-                      ? 'Qual a diferença do Veo 3.1?' 
-                      : 'E se eu quiser qualidade premium?'}
-                  </CardTitle>
+                  <CardTitle className="text-lg">E se eu quiser mais vídeos?</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  {isProAdvancedUser 
-                    ? 'O Veo 3.1 do Google oferece a mais alta qualidade cinematográfica disponível, com controle criativo avançado e resolução Ultra HD.'
-                    : 'Faça upgrade para o Plano PRO Advanced e tenha acesso ao Veo 3.1 do Google - a mais alta qualidade cinematográfica disponível.'}
+                  Simples! Compre mais pacotes de créditos quando precisar. Sem compromisso, sem mensalidade extra.
                 </CardContent>
               </Card>
             </div>
           </div>
-        </>
-      )}
+        </div>
     </div>
   );
 }
+
+export default VideoAddons;
