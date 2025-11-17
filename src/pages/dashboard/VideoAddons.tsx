@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Video, ShoppingCart, Check, Sparkles } from 'lucide-react';
+import { Video, ShoppingCart, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,6 @@ export default function VideoAddons() {
   const handlePurchase = async (packageType: VideoAddonType) => {
     setPurchasing(packageType);
     
-    // Sistema de pagamento será integrado em breve
     toast.info('Sistema de pagamento em desenvolvimento', {
       description: 'Entre em contato com o suporte para adquirir créditos extras.',
       duration: 5000
@@ -71,150 +70,124 @@ export default function VideoAddons() {
 
       <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {availablePackages.map((addon, index) => {
-              const pricePerVideo = (addon.price / addon.credits).toFixed(2);
-              const isPopular = index === 1; // Middle package is most popular
-              const isUrgent = limits && ((limits.videos_monthly_used + limits.video_credits_used) / (limits.videos_monthly_limit + limits.video_credits)) >= 0.8;
+          const pricePerVideo = (addon.price / addon.credits).toFixed(2);
+          const isPopular = index === 2;
 
-              return (
-                <Card key={addon.type} className={`relative ${isPopular ? 'border-primary shadow-lg scale-105' : ''}`}>
+          return (
+            <Card key={addon.type} className={`relative ${isPopular ? 'border-primary shadow-lg scale-105' : ''}`}>
+              {isPopular && (
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
+                  Mais Popular
+                </Badge>
+              )}
+
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <Video className="h-8 w-8 text-primary" />
+                  <Badge variant="secondary" className="text-xs">
+                    R$ {pricePerVideo}/vídeo
+                  </Badge>
+                </div>
+                <CardTitle className="text-2xl">{addon.name}</CardTitle>
+                <CardDescription>{addon.description}</CardDescription>
+              </CardHeader>
+
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary mb-2">
+                      R$ {addon.price.toFixed(2)}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {addon.credits} créditos de vídeo
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-primary" />
+                      <span className="text-sm">{addon.credits} vídeos extras</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-primary" />
+                      <span className="text-sm">Sora 2 e Kling v2.5</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-primary" />
+                      <span className="text-sm">Créditos não expiram</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-primary" />
+                      <span className="text-sm">Use quando precisar</span>
+                    </div>
+                  </div>
+
                   {isPopular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                      Mais Popular
+                    <Badge variant="secondary" className="w-full justify-center">
+                      Melhor custo-benefício
                     </Badge>
                   )}
-                  
-                  {isUrgent && index === 0 && (
-                    <Badge className="absolute -top-3 right-4 bg-yellow-500 animate-pulse">
-                      ⚠️ Quase esgotado!
-                    </Badge>
-                  )}
+                </div>
+              </CardContent>
 
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <Video className="w-8 h-8 text-primary" />
-                      {isProAdvancedUser && (
-                        <Badge variant="secondary">
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          Premium
-                        </Badge>
-                      )}
-                    </div>
-                    <CardTitle>{addon.name}</CardTitle>
-                    <CardDescription>{addon.description}</CardDescription>
-                  </CardHeader>
+              <CardFooter>
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  variant={isPopular ? "default" : "outline"}
+                  onClick={() => handlePurchase(addon.type)}
+                  disabled={purchasing === addon.type}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {purchasing === addon.type ? 'Processando...' : 'Comprar Agora'}
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
+      </div>
 
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="text-3xl font-bold mb-1">
-                          R$ {addon.price.toFixed(2)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          R$ {pricePerVideo} por vídeo
-                        </div>
-                      </div>
+      <div className="max-w-5xl mx-auto mt-16">
+        <h2 className="text-2xl font-bold mb-6 text-center">Perguntas Frequentes</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Como funcionam os créditos extras?</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Os créditos extras são adicionados ao seu saldo e podem ser usados quando seus vídeos grátis acabarem. 
+              Cada vídeo gerado (Sora ou Kling) consome 1 crédito.
+            </CardContent>
+          </Card>
 
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-primary" />
-                          <span className="text-sm">{addon.credits} vídeos extras</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-primary" />
-                          <span className="text-sm">
-                            {isProAdvancedUser ? 'Veo 3.1 (até 8s, Ultra HD)' : 'Kling v2.5 (até 10s, Full HD)'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-primary" />
-                          <span className="text-sm">Créditos válidos por 30 dias</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-primary" />
-                          <span className="text-sm">Processamento prioritário</span>
-                        </div>
-                      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Os créditos expiram?</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Não! Os créditos comprados não expiram. Use-os quando precisar, sem pressa.
+            </CardContent>
+          </Card>
 
-                      {isPopular && (
-                        <Badge variant="secondary" className="w-full justify-center">
-                          Melhor custo-benefício
-                        </Badge>
-                      )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Posso acumular pacotes?</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Sim! Você pode comprar múltiplos pacotes e seus créditos serão somados.
+            </CardContent>
+          </Card>
 
-                      {index === 2 && (
-                        <Badge variant="outline" className="w-full justify-center">
-                          {isProAdvancedUser 
-                            ? 'Economia de R$ 130 vs. individual'
-                            : 'Economia de R$ 49 vs. 3x +10'}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-
-                  <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      variant={isPopular ? "default" : "outline"}
-                      onClick={() => handlePurchase(addon.type)}
-                      disabled={purchasing === addon.type}
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      {purchasing === addon.type ? 'Processando...' : 'Comprar Agora'}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* FAQ Section */}
-          <div className="max-w-5xl mx-auto mt-16">
-            <h2 className="text-2xl font-bold mb-6 text-center">Perguntas Frequentes</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Como funcionam os créditos extras?</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Os créditos extras são adicionados aos seus créditos mensais e podem ser usados quando seus vídeos mensais acabarem. 
-                  {isProAdvancedUser 
-                    ? ' Cada vídeo gerado com Veo 3.1 consome 1 crédito.'
-                    : ' Cada vídeo gerado com Kling v2.5 consome 1 crédito.'}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Os créditos expiram?</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Sim, os créditos extras comprados expiram após 30 dias da data de compra. Use-os antes do vencimento!
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Posso acumular pacotes?</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Sim! Você pode comprar múltiplos pacotes e seus créditos serão somados. Ideal para projetos que exigem grande volume.
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">E se eu quiser mais vídeos?</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                  Simples! Compre mais pacotes de créditos quando precisar. Sem compromisso, sem mensalidade extra.
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">E se eu quiser mais vídeos?</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Simples! Compre mais pacotes quando precisar. Sem compromisso, sem mensalidade extra.
+            </CardContent>
+          </Card>
         </div>
+      </div>
     </div>
   );
 }
-
-export default VideoAddons;
