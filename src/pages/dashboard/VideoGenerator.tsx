@@ -27,9 +27,12 @@ const VideoGenerator = () => {
     setResultModalOpen,
     generatedVideoUrl,
     currentConfig,
+    generationStatus,
+    timeEstimate,
     generateVideo,
     deleteHistoryItem,
-    toggleFavorite
+    toggleFavorite,
+    cancelGeneration
   } = useVideoGenerator();
   const [fullscreenVideo, setFullscreenVideo] = useState<VideoHistoryItem | null>(null);
   const [preloadedImage, setPreloadedImage] = useState<string | null>(null);
@@ -217,7 +220,17 @@ const VideoGenerator = () => {
         </TabsContent>
       </Tabs>
 
-      <VideoResultModal open={resultModalOpen} onClose={() => setResultModalOpen(false)} videoUrl={generatedVideoUrl} config={currentConfig} onRegenerate={handleRegenerate} loading={loading} />
+      <VideoResultModal 
+        open={resultModalOpen} 
+        onClose={() => setResultModalOpen(false)} 
+        videoUrl={generatedVideoUrl} 
+        config={currentConfig} 
+        onRegenerate={handleRegenerate} 
+        loading={loading}
+        generationStatus={generationStatus}
+        timeEstimate={timeEstimate}
+        onCancel={cancelGeneration}
+      />
 
       <Dialog open={!!fullscreenVideo} onOpenChange={() => setFullscreenVideo(null)}>
         <DialogContent className="max-w-6xl">

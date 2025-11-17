@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { VideoHistoryItem, VideoConfig } from '@/types/video';
+import { getVideoGenerationEstimate, type TimeEstimate } from '@/utils/videoTimeEstimator';
+
+type GenerationStatus = 'idle' | 'generating' | 'ready' | 'error';
 
 export const useVideoGenerator = () => {
   const [loading, setLoading] = useState(false);
@@ -9,19 +12,81 @@ export const useVideoGenerator = () => {
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
   const [currentConfig, setCurrentConfig] = useState<VideoConfig | null>(null);
+  const [generationStatus, setGenerationStatus] = useState<GenerationStatus>('idle');
+  const [timeEstimate, setTimeEstimate] = useState<TimeEstimate | null>(null);
+  const [preloadedVideo, setPreloadedVideo] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const videoPreloadRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     loadHistory();
   }, []);
 
+  const preloadVideo = (url: string) => {
+    return new Promise<void>((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.src = url;
+      
+      const handleCanPlay = () => {
+        console.log('✅ Video preloaded successfully');
+        setPreloadedVideo(url);
+        videoPreloadRef.current = video;
+        resolve();
+      };
+
+      const handleError = () => {
+        console.warn('⚠️ Video preload failed, but continuing...');
+        resolve(); // Continue anyway
+      };
+
+      video.addEventListener('canplaythrough', handleCanPlay, { once: true });
+      video.addEventListener('error', handleError, { once: true });
+      
+      video.load();
+    });
+  };
+
+  const cancelGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setGenerationStatus('idle');
+    setLoading(false);
+    setResultModalOpen(false);
+    toast.info('Geração cancelada');
+  };
+
   const generateVideo = async (config: VideoConfig): Promise<string | null> => {
-    setLoading(true);
+    // Abrir modal IMEDIATAMENTE com estado de geração
     setCurrentConfig(config);
+    setGenerationStatus('generating');
+    setPreloadedVideo(null);
+    
+    // Calcular estimativa de tempo
+    const estimate = getVideoGenerationEstimate(
+      config.api_provider || 'fal_kling_v25_turbo',
+      config.duration
+    );
+    setTimeEstimate(estimate);
+    
+    // Abrir modal antes de começar
+    setResultModalOpen(true);
+    setLoading(true);
+
+    // Criar AbortController para cancelamento
+    abortControllerRef.current = new AbortController();
 
     try {
       const { data: functionData, error: functionError } = await supabase.functions.invoke('generate-video', {
         body: config
       });
+
+      // Verificar se foi cancelado
+      if (abortControllerRef.current?.signal.aborted) {
+        return null;
+      }
 
       if (functionError) {
         console.error('Function error:', functionError);
@@ -60,6 +125,16 @@ export const useVideoGenerator = () => {
       
       if (!videoUrl) {
         throw new Error('URL do vídeo não retornada pela API');
+      }
+
+      console.log('🎬 Video URL received, starting preload:', videoUrl);
+
+      // Pré-carregar vídeo em background
+      await preloadVideo(videoUrl);
+
+      // Verificar se foi cancelado durante preload
+      if (abortControllerRef.current?.signal.aborted) {
+        return null;
       }
 
       // Save to history
@@ -113,17 +188,25 @@ export const useVideoGenerator = () => {
       }
 
       setGeneratedVideoUrl(videoUrl);
-      setResultModalOpen(true);
+      setGenerationStatus('ready');
       toast.success('Vídeo gerado com sucesso!');
       
       return videoUrl;
     } catch (error) {
       console.error('Error generating video:', error);
+      
+      // Não mostrar erro se foi cancelado
+      if (abortControllerRef.current?.signal.aborted) {
+        return null;
+      }
+      
+      setGenerationStatus('error');
       const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar vídeo';
       toast.error(errorMessage);
       return null;
     } finally {
       setLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -192,9 +275,13 @@ export const useVideoGenerator = () => {
     setResultModalOpen,
     generatedVideoUrl,
     currentConfig,
+    generationStatus,
+    timeEstimate,
+    preloadedVideo,
     generateVideo,
     loadHistory,
     deleteHistoryItem,
     toggleFavorite,
+    cancelGeneration,
   };
 };

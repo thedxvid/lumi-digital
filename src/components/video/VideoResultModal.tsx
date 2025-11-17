@@ -5,6 +5,8 @@ import type { VideoConfig } from '@/types/video';
 import { VideoPlayer } from './VideoPlayer';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { VideoGenerationProgress } from './VideoGenerationProgress';
+import type { TimeEstimate } from '@/utils/videoTimeEstimator';
 
 interface VideoResultModalProps {
   open: boolean;
@@ -13,6 +15,9 @@ interface VideoResultModalProps {
   config: VideoConfig | null;
   onRegenerate?: () => void;
   loading?: boolean;
+  generationStatus?: 'idle' | 'generating' | 'ready' | 'error';
+  timeEstimate?: TimeEstimate | null;
+  onCancel?: () => void;
 }
 
 export const VideoResultModal = ({
@@ -22,8 +27,13 @@ export const VideoResultModal = ({
   config,
   onRegenerate,
   loading = false,
+  generationStatus = 'idle',
+  timeEstimate,
+  onCancel
 }: VideoResultModalProps) => {
   const [downloading, setDownloading] = useState(false);
+  const isGenerating = generationStatus === 'generating';
+  const isReady = generationStatus === 'ready';
 
   const handleDownload = async () => {
     if (!videoUrl) return;
@@ -59,26 +69,36 @@ export const VideoResultModal = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Vídeo Gerado com Sucesso! 🎉</DialogTitle>
+          <DialogTitle>
+            {isGenerating ? '🎬 Gerando Vídeo...' : isReady ? 'Vídeo Gerado com Sucesso! 🎉' : 'Resultado do Vídeo'}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {videoUrl && (
-            <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+          {/* Mostrar progresso enquanto está gerando */}
+          {isGenerating && timeEstimate && (
+            <VideoGenerationProgress 
+              estimate={timeEstimate}
+              aspectRatio={config?.aspect_ratio}
+              onCancel={onCancel}
+            />
+          )}
+
+          {/* Mostrar vídeo quando estiver pronto */}
+          {isReady && videoUrl && (
+            <div className="aspect-video bg-muted rounded-lg overflow-hidden animate-in fade-in duration-500">
               <VideoPlayer
                 src={videoUrl}
                 controls
-                autoPlay={false}
+                autoPlay={true}
                 className="w-full h-full object-contain"
-                onLoadStart={() => console.log('🎬 VideoResultModal: Video started loading', videoUrl)}
-                onCanPlay={() => console.log('✅ VideoResultModal: Video can play')}
-                onError={() => console.error('❌ VideoResultModal: Video error', videoUrl)}
               />
             </div>
           )}
 
-          {config && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          {/* Configuração - mostrar apenas quando pronto */}
+          {isReady && config && (
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2 animate-in fade-in duration-500">
               <h4 className="font-semibold text-sm">Configurações utilizadas:</h4>
               <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                 <div>
@@ -102,8 +122,9 @@ export const VideoResultModal = ({
             </div>
           )}
 
+          {/* Botões */}
           <div className="flex gap-2 justify-end">
-            {onRegenerate && (
+            {isReady && onRegenerate && (
               <Button
                 variant="outline"
                 onClick={onRegenerate}
@@ -113,17 +134,24 @@ export const VideoResultModal = ({
                 Gerar Novamente
               </Button>
             )}
+            
+            {isReady && videoUrl && (
+              <Button
+                variant="outline"
+                onClick={handleDownload}
+                disabled={downloading}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {downloading ? 'Baixando...' : 'Download'}
+              </Button>
+            )}
+
             <Button
-              variant="outline"
-              onClick={handleDownload}
-              disabled={!videoUrl || downloading}
+              variant={isGenerating ? "destructive" : "default"}
+              onClick={isGenerating ? onCancel : onClose}
             >
-              <Download className="h-4 w-4 mr-2" />
-              {downloading ? 'Baixando...' : 'Download'}
-            </Button>
-            <Button onClick={onClose}>
               <X className="h-4 w-4 mr-2" />
-              Fechar
+              {isGenerating ? 'Cancelar' : 'Fechar'}
             </Button>
           </div>
         </div>
