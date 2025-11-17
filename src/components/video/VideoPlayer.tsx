@@ -30,32 +30,55 @@ export const VideoPlayer = ({
     const video = videoRef.current;
     if (!video) return;
 
+    // Reset states when src changes
+    setLoading(true);
+    setError(false);
+
     const handleLoadStart = () => {
+      console.log('🎬 Video loadstart event');
       setLoading(true);
       onLoadStart?.();
     };
     
     const handleCanPlay = () => {
+      console.log('✅ Video canplay event');
       setLoading(false);
       onCanPlay?.();
     };
     
-    const handleError = () => {
+    const handleError = (e: Event) => {
+      console.error('❌ Video error event:', e);
       setLoading(false);
       setError(true);
       onError?.();
     };
 
+    const handleLoadedMetadata = () => {
+      console.log('📊 Video metadata loaded');
+    };
+
     video.addEventListener('loadstart', handleLoadStart);
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('error', handleError);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    // Timeout para detectar se o vídeo não carregar
+    const timeout = setTimeout(() => {
+      if (loading && !error) {
+        console.warn('⏱️ Video loading timeout - forcing load');
+        // Try to force load
+        video.load();
+      }
+    }, 5000);
 
     return () => {
+      clearTimeout(timeout);
       video.removeEventListener('loadstart', handleLoadStart);
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('error', handleError);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [onLoadStart, onCanPlay, onError]);
+  }, [src, onLoadStart, onCanPlay, onError]);
 
   return (
     <div className="relative w-full h-full">
@@ -66,7 +89,8 @@ export const VideoPlayer = ({
         controls={controls}
         autoPlay={autoPlay}
         playsInline
-        preload="none"
+        preload="metadata"
+        crossOrigin="anonymous"
         className={className}
       />
       
