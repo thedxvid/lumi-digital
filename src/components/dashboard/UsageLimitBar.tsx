@@ -147,30 +147,16 @@ export function UsageLimitBar() {
         })}
       </TooltipProvider>
 
-      {/* Botão de Comprar Créditos - só aparece para PRO */}
-      {subscription?.plan_type === 'pro' && (
-        <Button 
-          size="sm" 
-          variant="default"
-          className="h-7 text-xs px-3 bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm"
-          onClick={() => navigate('/app/video-addons')}
-        >
-          <ShoppingCart className="h-3 w-3 mr-1" />
-          Comprar Créditos
-        </Button>
-      )}
-
-      {/* Botão de Upgrade - só aparece se não for PRO OU se atingir 80% */}
-      {(subscription?.plan_type !== 'pro' || shouldShowUpgrade) && (
-        <Button 
-          size="sm" 
-          variant="outline" 
-          className="h-7 text-xs px-3 border-lumi-gold/50 text-lumi-gold hover:bg-lumi-gold/10 hover:text-lumi-gold-dark"
-          onClick={handleUpgrade}
-        >
-          ⚡ Upgrade
-        </Button>
-      )}
+      {/* Botão de Comprar Créditos */}
+      <Button 
+        size="sm" 
+        variant="default"
+        className="h-7 text-xs px-3 bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm"
+        onClick={() => navigate('/app/video-addons')}
+      >
+        <ShoppingCart className="h-3 w-3 mr-1" />
+        Comprar Créditos
+      </Button>
     </div>
   );
 }
@@ -311,30 +297,16 @@ export function MobileUsageLimitBar() {
             
             {/* Botões de ação */}
             <div className="flex flex-col gap-2 pt-2">
-              {subscription?.plan_type === 'pro' && (
-                <Button 
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => {
-                    setShowDetails(false);
-                    navigate('/app/video-addons');
-                  }}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Comprar Créditos de Vídeo
-                </Button>
-              )}
-              
-              {subscription?.plan_type !== 'pro' && (
-                <Button 
-                  className="w-full bg-gradient-to-r from-lumi-gold to-lumi-gold-dark"
-                  onClick={() => {
-                    setShowDetails(false);
-                    navigate('/app/pricing');
-                  }}
-                >
-                  ⚡ Fazer Upgrade para PRO
-                </Button>
-              )}
+              <Button 
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  setShowDetails(false);
+                  navigate('/app/video-addons');
+                }}
+              >
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Comprar Créditos de Vídeo
+              </Button>
             </div>
           </div>
         </DialogContent>

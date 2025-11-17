@@ -38,6 +38,10 @@ export interface UsageLimits {
   videos_monthly_used: number;
   video_credits: number;
   video_credits_used: number;
+  sora_text_videos_lifetime_limit: number;
+  sora_text_videos_lifetime_used: number;
+  kling_image_videos_lifetime_limit: number;
+  kling_image_videos_lifetime_used: number;
   last_daily_reset: string;
   last_monthly_reset: string;
   created_at: string;
@@ -80,6 +84,6 @@ export interface VideoAddonConfig {
   credits: number;
   price: number;
   name: string;
-  planType: 'pro' | 'pro_advanced';
+  planType: 'basic';
   description?: string;
 }
