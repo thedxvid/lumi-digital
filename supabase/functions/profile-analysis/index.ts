@@ -92,96 +92,124 @@ Analise profundamente a imagem do perfil anexada e forneça uma análise COMPLET
 ✓ Plano de ação priorizado
 
 **TAREFA:**
-Analise profundamente este perfil na imagem anexada e forneça insights acionáveis seguindo EXATAMENTE esta estrutura JSON (não adicione explicações fora do JSON):
+Analise profundamente este perfil na imagem anexada e forneça insights acionáveis estruturados.`;
 
-{
-  "resumo_executivo": "Resumo geral em 2-3 parágrafos sobre a situação atual do perfil",
-  "pontuacao_geral": 75,
-  "analise_visual": {
-    "foto_perfil": "Análise da foto de perfil com sugestões específicas",
-    "bio": "Análise da bio com sugestões específicas",
-    "destaques": "Análise dos destaques com sugestões específicas",
-    "elementos_visuais": "Análise geral dos elementos visuais"
-  },
-  "analise_conteudo": {
-    "qualidade": "Análise da qualidade do conteúdo visível",
-    "frequencia": "Análise da aparente frequência de postagem",
-    "variedade": "Análise da variedade de conteúdo",
-    "engajamento_potencial": "Análise do potencial de engajamento"
-  },
-  "analise_comunicacao": {
-    "tom_voz": "Análise do tom de voz utilizado",
-    "consistencia": "Análise da consistência da comunicação",
-    "alinhamento_publico": "Análise do alinhamento com o público-alvo",
-    "diferenciacao": "Análise da diferenciação no mercado"
-  },
-  "pontos_fortes": [
-    "Ponto forte 1 com explicação detalhada",
-    "Ponto forte 2 com explicação detalhada",
-    "Ponto forte 3 com explicação detalhada"
-  ],
-  "pontos_cegos": [
-    {
-      "titulo": "Primeiro ponto cego identificado",
-      "descricao": "Explicação detalhada do porque isso é um problema",
-      "impacto": "alto",
-      "solucao": "Como corrigir especificamente este problema"
-    },
-    {
-      "titulo": "Segundo ponto cego identificado",
-      "descricao": "Explicação detalhada do porque isso é um problema",
-      "impacto": "medio",
-      "solucao": "Como corrigir especificamente este problema"
-    }
-  ],
-  "recomendacoes_prioritarias": [
-    {
-      "prioridade": 1,
-      "acao": "Ação específica e acionável",
-      "justificativa": "Por que fazer isso agora",
-      "impacto_esperado": "Resultado concreto esperado",
-      "tempo_implementacao": "1-2 dias"
-    },
-    {
-      "prioridade": 2,
-      "acao": "Segunda ação específica e acionável",
-      "justificativa": "Por que fazer isso",
-      "impacto_esperado": "Resultado concreto esperado",
-      "tempo_implementacao": "3-5 dias"
-    }
-  ],
-  "plano_acao_30_dias": {
-    "semana_1": [
-      "Ação específica para semana 1",
-      "Outra ação para semana 1",
-      "Mais uma ação para semana 1"
-    ],
-    "semana_2": [
-      "Ação específica para semana 2",
-      "Outra ação para semana 2"
-    ],
-    "semana_3": [
-      "Ação específica para semana 3",
-      "Outra ação para semana 3"
-    ],
-    "semana_4": [
-      "Ação específica para semana 4",
-      "Outra ação para semana 4"
-    ]
-  },
-  "benchmarks": {
-    "o_que_falta": [
-      "Elemento comum no nicho que está ausente",
-      "Outro elemento que falta"
-    ],
-    "tendencias": [
-      "Tendência do nicho que pode ser aproveitada",
-      "Outra tendência relevante"
-    ]
-  }
-}
-
-IMPORTANTE: Retorne APENAS o JSON, sem texto adicional antes ou depois.`;
+    // Definição da estrutura de resposta usando tool calling
+    const analysisSchema = {
+      type: "function",
+      function: {
+        name: "profile_analysis",
+        description: "Retorna análise completa e estruturada do perfil de redes sociais",
+        parameters: {
+          type: "object",
+          properties: {
+            resumo_executivo: {
+              type: "string",
+              description: "Resumo geral em 2-3 parágrafos sobre a situação atual do perfil"
+            },
+            pontuacao_geral: {
+              type: "number",
+              description: "Pontuação de 0 a 100 do perfil"
+            },
+            analise_visual: {
+              type: "object",
+              properties: {
+                foto_perfil: { type: "string", description: "Análise da foto de perfil com sugestões específicas" },
+                bio: { type: "string", description: "Análise da bio com sugestões específicas" },
+                destaques: { type: "string", description: "Análise dos destaques com sugestões específicas" },
+                elementos_visuais: { type: "string", description: "Análise geral dos elementos visuais" }
+              },
+              required: ["foto_perfil", "bio", "destaques", "elementos_visuais"]
+            },
+            analise_conteudo: {
+              type: "object",
+              properties: {
+                qualidade: { type: "string", description: "Análise da qualidade do conteúdo visível" },
+                frequencia: { type: "string", description: "Análise da aparente frequência de postagem" },
+                variedade: { type: "string", description: "Análise da variedade de conteúdo" },
+                engajamento_potencial: { type: "string", description: "Análise do potencial de engajamento" }
+              },
+              required: ["qualidade", "frequencia", "variedade", "engajamento_potencial"]
+            },
+            analise_comunicacao: {
+              type: "object",
+              properties: {
+                tom_voz: { type: "string", description: "Análise do tom de voz utilizado" },
+                consistencia: { type: "string", description: "Análise da consistência da comunicação" },
+                alinhamento_publico: { type: "string", description: "Análise do alinhamento com o público-alvo" },
+                diferenciacao: { type: "string", description: "Análise da diferenciação no mercado" }
+              },
+              required: ["tom_voz", "consistencia", "alinhamento_publico", "diferenciacao"]
+            },
+            pontos_fortes: {
+              type: "array",
+              items: { type: "string" },
+              description: "Lista de 3-5 pontos fortes com explicação detalhada"
+            },
+            pontos_cegos: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  titulo: { type: "string" },
+                  descricao: { type: "string" },
+                  impacto: { type: "string", enum: ["baixo", "medio", "alto"] },
+                  solucao: { type: "string" }
+                },
+                required: ["titulo", "descricao", "impacto", "solucao"]
+              },
+              description: "Lista de pontos cegos identificados"
+            },
+            recomendacoes_prioritarias: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  prioridade: { type: "number" },
+                  acao: { type: "string" },
+                  justificativa: { type: "string" },
+                  impacto_esperado: { type: "string" },
+                  tempo_implementacao: { type: "string" }
+                },
+                required: ["prioridade", "acao", "justificativa", "impacto_esperado", "tempo_implementacao"]
+              },
+              description: "Lista de recomendações priorizadas"
+            },
+            plano_acao_30_dias: {
+              type: "object",
+              properties: {
+                semana_1: { type: "array", items: { type: "string" } },
+                semana_2: { type: "array", items: { type: "string" } },
+                semana_3: { type: "array", items: { type: "string" } },
+                semana_4: { type: "array", items: { type: "string" } }
+              },
+              required: ["semana_1", "semana_2", "semana_3", "semana_4"]
+            },
+            benchmarks: {
+              type: "object",
+              properties: {
+                o_que_falta: { type: "array", items: { type: "string" } },
+                tendencias: { type: "array", items: { type: "string" } }
+              },
+              required: ["o_que_falta", "tendencias"]
+            }
+          },
+          required: [
+            "resumo_executivo", 
+            "pontuacao_geral", 
+            "analise_visual", 
+            "analise_conteudo", 
+            "analise_comunicacao", 
+            "pontos_fortes", 
+            "pontos_cegos", 
+            "recomendacoes_prioritarias", 
+            "plano_acao_30_dias", 
+            "benchmarks"
+          ],
+          additionalProperties: false
+        }
+      }
+    };
 
     console.log('🤖 Chamando Lovable AI...');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -205,6 +233,8 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional antes ou depois.`;
             ]
           }
         ],
+        tools: [analysisSchema],
+        tool_choice: { type: "function", function: { name: "profile_analysis" } },
         max_tokens: 4000
       })
     });
@@ -233,15 +263,15 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional antes ou depois.`;
     const result = await response.json();
     console.log('✅ Resposta recebida da IA');
 
-    let analysisText = result.choices[0].message.content;
-    
-    // Extrair JSON da resposta (caso venha com texto adicional)
-    const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      analysisText = jsonMatch[0];
+    // Extrair resultado do tool call
+    const toolCall = result.choices[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
+      console.error('❌ Estrutura de resposta inesperada:', JSON.stringify(result, null, 2));
+      throw new Error('IA não retornou análise estruturada. Tente novamente.');
     }
 
-    const analysisResult = JSON.parse(analysisText);
+    console.log('📦 Tool call recebido:', toolCall.function.name);
+    const analysisResult = JSON.parse(toolCall.function.arguments);
     console.log('✅ Análise processada com sucesso');
 
     return new Response(
