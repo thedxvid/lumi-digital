@@ -19,6 +19,23 @@ export function useProfileAnalysis() {
 
     setLoading(true);
     try {
+      // Check limits before analyzing
+      console.log('🔍 Checking limits...');
+      const { data: limitsCheck, error: limitsError } = await supabase.functions.invoke('check-limits', {
+        body: { feature: 'profile_analysis', increment: false }
+      });
+
+      if (limitsError) {
+        console.error('❌ Limits check error:', limitsError);
+        toast.error('Erro ao verificar limites');
+        return null;
+      }
+
+      if (!limitsCheck?.allowed) {
+        toast.error(limitsCheck?.reason || 'Limite de análises atingido');
+        return null;
+      }
+
       console.log('📤 Enviando requisição de análise...');
       const { data, error } = await supabase.functions.invoke('profile-analysis', {
         body: input,
@@ -38,6 +55,12 @@ export function useProfileAnalysis() {
       
       // Auto-salvar no histórico
       await saveToHistory(input, data);
+      
+      // Increment usage after successful analysis
+      console.log('📊 Incrementando contador de uso...');
+      await supabase.functions.invoke('check-limits', {
+        body: { feature: 'profile_analysis', increment: true }
+      });
       
       toast.success('Análise concluída!');
       return data;
