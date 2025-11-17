@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import type { UsageLimits, VideoAddonType } from '@/types/subscription';
 import { allVideoAddons } from '@/data/pricingPlans';
 
-type FeatureType = 'creative_images' | 'profile_analysis' | 'carousels' | 'videos';
+type FeatureType = 'creative_images' | 'profile_analysis' | 'carousels' | 'videos_sora_text' | 'videos_kling_image';
 
 export const useUsageLimits = () => {
   const [limits, setLimits] = useState<UsageLimits | null>(null);

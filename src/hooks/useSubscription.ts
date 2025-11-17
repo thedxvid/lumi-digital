@@ -114,14 +114,6 @@ export const useSubscription = () => {
           carousels_monthly_limit: 3,
           videos_monthly_limit: 0,
         };
-      case 'pro':
-        return {
-          creative_images_daily_limit: 30,
-          creative_images_monthly_limit: 900,
-          profile_analysis_daily_limit: 10,
-          carousels_monthly_limit: 10,
-          videos_monthly_limit: 15,
-        };
       default:
         return {
           creative_images_daily_limit: 0,

@@ -1,4 +1,4 @@
-export type PlanType = 'free' | 'basic' | 'pro' | 'pro_advanced';
+export type PlanType = 'free' | 'basic';
 export type DurationMonths = 1 | 3 | 6;
 export type VideoAddonType = 
   | 'plus_10' 
