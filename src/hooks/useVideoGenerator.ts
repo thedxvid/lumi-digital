@@ -56,6 +56,7 @@ export const useVideoGenerator = () => {
       }
 
       const videoUrl = functionData?.video?.url;
+      const thumbnailUrl = functionData?.video?.thumbnail_url;
       
       if (!videoUrl) {
         throw new Error('URL do vídeo não retornada pela API');
@@ -70,23 +71,29 @@ export const useVideoGenerator = () => {
       });
       
       if (user) {
-        const { error: insertError } = await supabase
+        const { data: newVideo, error: insertError } = await supabase
           .from('video_history')
           .insert({
             user_id: user.id,
             prompt: config.prompt,
             video_url: videoUrl,
+            thumbnail_url: thumbnailUrl,
             aspect_ratio: config.aspect_ratio,
             duration: config.duration,
             resolution: config.resolution,
             has_audio: config.generate_audio,
             api_used: config.api_provider || 'fal_kling_v25_turbo',
-          });
+          })
+          .select()
+          .single();
 
         if (insertError) {
           console.error('Error saving to history:', insertError);
-        } else {
+        } else if (newVideo) {
           console.log('Successfully saved to history');
+          
+          // Add new video to the beginning of history (incremental loading)
+          setHistory(prev => [newVideo, ...prev]);
           
           // Increment video usage counter
           const { error: limitError } = await supabase.functions.invoke('check-limits', {
@@ -99,8 +106,6 @@ export const useVideoGenerator = () => {
           if (limitError) {
             console.error('Error incrementing usage:', limitError);
           }
-          
-          await loadHistory();
           
           // Trigger a custom event to refresh usage limits across components
           window.dispatchEvent(new CustomEvent('usage-limits-updated'));
@@ -122,12 +127,13 @@ export const useVideoGenerator = () => {
     }
   };
 
-  const loadHistory = async () => {
+  const loadHistory = async (page = 0, limit = 15) => {
     try {
       const { data, error } = await supabase
         .from('video_history')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1);
 
       if (error) {
         console.error('Error loading history:', error);
@@ -135,7 +141,7 @@ export const useVideoGenerator = () => {
         return;
       }
 
-      setHistory(data || []);
+      setHistory(prev => page === 0 ? (data || []) : [...prev, ...(data || [])]);
     } catch (error) {
       console.error('Error loading history:', error);
     }

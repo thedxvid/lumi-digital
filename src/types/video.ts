@@ -26,6 +26,7 @@ export interface VideoHistoryItem {
   user_id: string;
   prompt: string;
   video_url: string;
+  thumbnail_url?: string;
   aspect_ratio?: string;
   duration?: string;
   resolution?: string;

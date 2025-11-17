@@ -251,9 +251,16 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Video generated successfully:', data.video?.url);
 
+    // Generate thumbnail URL from video (frame at 0.5s)
+    const videoUrl = data.video?.url;
+    const thumbnailUrl = videoUrl ? videoUrl + '#t=0.5' : null;
+
     return new Response(
       JSON.stringify({ 
-        video: data.video,
+        video: {
+          ...data.video,
+          thumbnail_url: thumbnailUrl
+        },
         message: 'Vídeo gerado com sucesso!' 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
