@@ -45,9 +45,10 @@ export default function UsageDashboard() {
   const features: Array<{
     icon: any;
     name: string;
-    type: 'creative_images' | 'profile_analysis' | 'carousels' | 'videos';
+    type: 'creative_images' | 'profile_analysis' | 'carousels' | 'videos_sora_text' | 'videos_kling_image';
     daily?: { used: number; limit: number };
     monthly?: { used: number; limit: number };
+    lifetime?: { used: number; limit: number };
     color: string;
   }> = [
     {
@@ -84,20 +85,27 @@ export default function UsageDashboard() {
       },
       color: 'text-green-500',
     },
-  ];
-
-  if (subscription.plan_type === 'pro') {
-    features.push({
+    {
       icon: Video,
-      name: 'Vídeos',
-      type: 'videos',
-      monthly: {
-        used: limits.videos_monthly_used + limits.video_credits_used,
-        limit: limits.videos_monthly_limit + limits.video_credits,
+      name: 'Vídeos Sora (text-to-video)',
+      type: 'videos_sora_text',
+      lifetime: {
+        used: limits.sora_text_videos_lifetime_used,
+        limit: limits.sora_text_videos_lifetime_limit,
       },
       color: 'text-red-500',
-    });
-  }
+    },
+    {
+      icon: Video,
+      name: 'Vídeos Kling (image-to-video)',
+      type: 'videos_kling_image',
+      lifetime: {
+        used: limits.kling_image_videos_lifetime_used,
+        limit: limits.kling_image_videos_lifetime_limit,
+      },
+      color: 'text-orange-500',
+    },
+  ];
 
   const getStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'text-destructive';
@@ -111,7 +119,7 @@ export default function UsageDashboard() {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold">Uso do Plano</h2>
           <p className="text-muted-foreground">
-            Plano {subscription.plan_type === 'pro' ? 'PRO' : 'Básico'}
+            Plano Básico
           </p>
         </div>
         <Badge variant="outline" className="text-sm">
@@ -167,7 +175,22 @@ export default function UsageDashboard() {
                   </div>
                 )}
 
-                {feature.type === 'videos' && limits.video_credits > 0 && (
+                {feature.lifetime && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Grátis (vitalício):</span>
+                      <span className="font-medium">{feature.lifetime.used} de {feature.lifetime.limit}</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary rounded-full transition-all"
+                        style={{ width: `${(feature.lifetime.used / feature.lifetime.limit) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {limits.video_credits > 0 && (feature.type === 'videos_sora_text' || feature.type === 'videos_kling_image') && (
                   <div className="pt-2 border-t">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Créditos Extras</span>
@@ -193,12 +216,9 @@ export default function UsageDashboard() {
       </div>
 
       <div className="flex gap-4 justify-center">
-        <Button variant="outline" onClick={() => window.location.href = '/app/pricing'}>
-          Fazer Upgrade
-        </Button>
-        {subscription.plan_type === 'pro' && (
-          <Button variant="outline" onClick={() => window.location.href = '/app/video-addons'}>
-            Comprar Mais Vídeos
+        {limits.video_credits > 0 && (
+          <Button onClick={() => window.location.href = '/app/video-addons'}>
+            Comprar Créditos Extras
           </Button>
         )}
       </div>

@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { VideoConfigForm } from '@/components/video/VideoConfigForm';
 import { VideoHistoryGallery } from '@/components/video/VideoHistoryGallery';
 import { VideoResultModal } from '@/components/video/VideoResultModal';
-import { PlanUpgradeModal } from '@/components/video/PlanUpgradeModal';
+import { CreditsExhaustedModal } from '@/components/video/CreditsExhaustedModal';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { Video, History, AlertCircle, ShoppingCart, Wand2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { VideoConfig, VideoHistoryItem } from '@/types/video';
@@ -19,8 +19,7 @@ import { toast } from 'sonner';
 const VideoGenerator = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { subscription, loading: subscriptionLoading } = useSubscription();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { limits } = useUsageLimits();
   const {
     loading,
     history,
@@ -41,6 +40,11 @@ const VideoGenerator = () => {
     prompt: string;
     apiProvider: string;
   } | null>(null);
+  const [creditsExhausted, setCreditsExhausted] = useState<{
+    show: boolean;
+    videoType: 'sora' | 'kling';
+    remainingCredits: number;
+  } | null>(null);
 
   // Handle preloaded image from creative generator
   useEffect(() => {
@@ -60,12 +64,23 @@ const VideoGenerator = () => {
     }
   }, [location, hasLoadedImage]);
 
-  // Check if user has PRO plan
+  // Listen for video limit reached
   useEffect(() => {
-    if (!subscriptionLoading && subscription?.plan_type !== 'pro') {
-      setShowUpgradeModal(true);
-    }
-  }, [subscription, subscriptionLoading]);
+    const handleLimitReached = (event: CustomEvent) => {
+      const { videoType, remainingCredits } = event.detail;
+      setCreditsExhausted({
+        show: true,
+        videoType,
+        remainingCredits: remainingCredits || 0
+      });
+    };
+
+    window.addEventListener('video-limit-reached', handleLimitReached as EventListener);
+    
+    return () => {
+      window.removeEventListener('video-limit-reached', handleLimitReached as EventListener);
+    };
+  }, []);
 
   // Listen for policy violation events
   useEffect(() => {
@@ -81,25 +96,6 @@ const VideoGenerator = () => {
     };
   }, []);
 
-  // Show upgrade modal if not PRO
-  if (showUpgradeModal) {
-    return (
-      <div className="relative">
-        <div className="blur-sm pointer-events-none select-none">
-          <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-            <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Gerador de Vídeos</h1>
-              <p className="text-muted-foreground">Crie vídeos profissionais com IA</p>
-            </div>
-            <Card className="p-6">
-              <div className="h-96 bg-muted/50 rounded-lg" />
-            </Card>
-          </div>
-        </div>
-        <PlanUpgradeModal open={showUpgradeModal} />
-      </div>
-    );
-  }
 
   const handleGenerate = async (config: VideoConfig) => {
     await generateVideo(config);
