@@ -136,10 +136,10 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={8}
-          maxLength={5000}
+          maxLength={15000}
           required
         />
-        <CharacterCounter current={description.length} max={5000} />
+        <CharacterCounter current={description.length} max={15000} />
       </div>
 
       <div className="space-y-2">
