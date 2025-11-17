@@ -70,6 +70,9 @@ export const VideoResultModal = ({
                 controls
                 autoPlay={false}
                 className="w-full h-full object-contain"
+                onLoadStart={() => console.log('🎬 VideoResultModal: Video started loading', videoUrl)}
+                onCanPlay={() => console.log('✅ VideoResultModal: Video can play')}
+                onError={() => console.error('❌ VideoResultModal: Video error', videoUrl)}
               />
             </div>
           )}
