@@ -71,6 +71,23 @@ export function useCarousel() {
         return null;
       }
 
+      // Check limits before generating
+      console.log('🔍 Checking limits...');
+      const { data: limitsCheck, error: limitsError } = await supabase.functions.invoke('check-limits', {
+        body: { feature: 'carousels', increment: false }
+      });
+
+      if (limitsError) {
+        console.error('❌ Limits check error:', limitsError);
+        toast.error('Erro ao verificar limites');
+        return null;
+      }
+
+      if (!limitsCheck?.allowed) {
+        toast.error(limitsCheck?.reason || 'Limite de carrosséis atingido');
+        return null;
+      }
+
       toast.info(`Gerando ${config.imageCount} slides para seu carrossel...`, {
         duration: 5000,
       });
@@ -85,8 +102,16 @@ export function useCarousel() {
       if (error) throw error;
 
       if (!data?.success) {
+        console.error('❌ Generation failed:', data?.error);
         throw new Error(data?.error || 'Erro ao gerar carrossel');
       }
+
+      console.log('✅ Carousel generated successfully');
+      
+      // Increment usage after successful generation
+      await supabase.functions.invoke('check-limits', {
+        body: { feature: 'carousels', increment: true }
+      });
 
       toast.success('Carrossel gerado com sucesso! 🎨');
       await loadHistory();
