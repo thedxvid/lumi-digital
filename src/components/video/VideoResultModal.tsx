@@ -18,6 +18,7 @@ interface VideoResultModalProps {
   generationStatus?: 'idle' | 'generating' | 'ready' | 'error';
   timeEstimate?: TimeEstimate | null;
   onCancel?: () => void;
+  thumbnailUrl?: string | null;
 }
 
 export const VideoResultModal = ({
@@ -29,7 +30,8 @@ export const VideoResultModal = ({
   loading = false,
   generationStatus = 'idle',
   timeEstimate,
-  onCancel
+  onCancel,
+  thumbnailUrl
 }: VideoResultModalProps) => {
   const [downloading, setDownloading] = useState(false);
   const isGenerating = generationStatus === 'generating';
@@ -67,7 +69,7 @@ export const VideoResultModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${isGenerating ? 'max-w-2xl' : 'max-w-4xl'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle>
             {isGenerating ? '🎬 Gerando Vídeo...' : isReady ? 'Vídeo Gerado com Sucesso! 🎉' : 'Resultado do Vídeo'}
@@ -81,6 +83,7 @@ export const VideoResultModal = ({
               estimate={timeEstimate}
               aspectRatio={config?.aspect_ratio}
               onCancel={onCancel}
+              thumbnailUrl={thumbnailUrl}
             />
           )}
 

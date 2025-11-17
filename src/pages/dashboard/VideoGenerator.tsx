@@ -26,6 +26,7 @@ const VideoGenerator = () => {
     resultModalOpen,
     setResultModalOpen,
     generatedVideoUrl,
+    thumbnailUrl,
     currentConfig,
     generationStatus,
     timeEstimate,
@@ -230,6 +231,7 @@ const VideoGenerator = () => {
         generationStatus={generationStatus}
         timeEstimate={timeEstimate}
         onCancel={cancelGeneration}
+        thumbnailUrl={thumbnailUrl}
       />
 
       <Dialog open={!!fullscreenVideo} onOpenChange={() => setFullscreenVideo(null)}>

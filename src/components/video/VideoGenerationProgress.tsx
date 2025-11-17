@@ -7,12 +7,14 @@ interface VideoGenerationProgressProps {
   estimate: TimeEstimate;
   aspectRatio?: string;
   onCancel?: () => void;
+  thumbnailUrl?: string | null;
 }
 
 export const VideoGenerationProgress = ({ 
   estimate, 
   aspectRatio = '16:9',
-  onCancel 
+  onCancel,
+  thumbnailUrl 
 }: VideoGenerationProgressProps) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -41,9 +43,18 @@ export const VideoGenerationProgress = ({
 
   return (
     <div className="w-full space-y-6">
-      {/* Preview/Skeleton */}
-      <div className={`relative w-full ${aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] || 'aspect-video'} bg-gradient-to-br from-primary/10 via-background to-secondary/10 rounded-lg overflow-hidden min-h-[300px] md:min-h-[400px]`}>
-        <div className="absolute inset-0 flex items-center justify-center">
+      {/* Preview/Skeleton com Thumbnail */}
+      <div className={`relative w-full ${aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] || 'aspect-video'} bg-gradient-to-br from-primary/10 via-background to-secondary/10 rounded-lg overflow-hidden`}>
+        {/* Mostrar thumbnail se disponível */}
+        {thumbnailUrl && (
+          <img 
+            src={thumbnailUrl} 
+            alt="Video thumbnail" 
+            className="absolute inset-0 w-full h-full object-cover opacity-50"
+          />
+        )}
+        
+        <div className="absolute inset-0 flex items-center justify-center bg-background/30 backdrop-blur-sm">
           <div className="text-center space-y-4">
             <div className="relative">
               <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto" />
