@@ -26,13 +26,13 @@ export const CreditsExhaustedModal = ({
 
   const videoInfo = videoType === 'sora' 
     ? {
-        title: 'Vídeos Sora (Text-to-Video) Esgotados',
-        description: 'Você usou seus 2 vídeos grátis do Sora 2',
+        title: 'Vídeos Sora Esgotados',
+        description: 'Você usou seus 2 vídeos grátis do Sora 2 (text-to-video + image-to-video)',
         icon: '🎥'
       }
     : {
-        title: 'Vídeo Kling (Image-to-Video) Esgotado',
-        description: 'Você usou seu 1 vídeo grátis do Kling v2.5',
+        title: 'Vídeo Kling Esgotado',
+        description: 'Você usou seu 1 vídeo grátis do Kling v2.5 (text-to-video + image-to-video)',
         icon: '🎬'
       };
 
@@ -66,7 +66,7 @@ export const CreditsExhaustedModal = ({
             <div className="space-y-2">
               {[
                 'Pacotes a partir de R$ 59,90',
-                'Use em Sora 2 ou Kling v2.5',
+                'Créditos unificados: use em qualquer API (Sora ou Kling)',
                 'Créditos não expiram',
                 'Sem mensalidade extra',
                 'Compre apenas quando precisar'

@@ -125,33 +125,25 @@ serve(async (req) => {
         break;
 
       case 'videos':
-        // Check if user has PRO plan
-        if (limits.plan_type !== 'pro') {
-          allowed = false;
-          reason = 'Geração de vídeos disponível apenas no Plano PRO';
-          requiresUpgrade = true;
-          limitInfo = { limit: 0, used: 0, remaining: 0 };
-          break;
-        }
-
-        // Check monthly limit or video credits
-        const monthlyVideosAllowed = limits.videos_monthly_used < limits.videos_monthly_limit;
-        const creditsAllowed = limits.video_credits_used < limits.video_credits;
+        // Verificar limites lifetime gratuitos + créditos extras comprados
+        const totalSoraAvailable = (limits.sora_text_videos_lifetime_limit || 0) - (limits.sora_text_videos_lifetime_used || 0);
+        const totalKlingAvailable = (limits.kling_image_videos_lifetime_limit || 0) - (limits.kling_image_videos_lifetime_used || 0);
+        const extraCreditsAvailable = (limits.video_credits || 0) - (limits.video_credits_used || 0);
         
-        allowed = monthlyVideosAllowed || creditsAllowed;
+        // Usuário pode gerar vídeo se tiver QUALQUER crédito disponível
+        const hasAnyCredits = totalSoraAvailable > 0 || totalKlingAvailable > 0 || extraCreditsAvailable > 0;
+        
+        allowed = hasAnyCredits;
         
         if (!allowed) {
-          reason = 'Limite mensal de vídeos atingido. Considere comprar um pacote extra!';
-          requiresUpgrade = false; // Can buy add-on instead
+          reason = 'Você usou todos os seus vídeos grátis! Compre créditos extras para continuar gerando.';
+          requiresUpgrade = false; // Direcionar para compra de addons
         }
         
         limitInfo = {
-          limit: limits.videos_monthly_limit + limits.video_credits,
-          used: limits.videos_monthly_used + limits.video_credits_used,
-          remaining: Math.max(0, 
-            (limits.videos_monthly_limit - limits.videos_monthly_used) +
-            (limits.video_credits - limits.video_credits_used)
-          )
+          limit: (limits.sora_text_videos_lifetime_limit || 0) + (limits.kling_image_videos_lifetime_limit || 0) + (limits.video_credits || 0),
+          used: (limits.sora_text_videos_lifetime_used || 0) + (limits.kling_image_videos_lifetime_used || 0) + (limits.video_credits_used || 0),
+          remaining: totalSoraAvailable + totalKlingAvailable + extraCreditsAvailable
         };
         break;
     }

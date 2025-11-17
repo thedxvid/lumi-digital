@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const FAL_KEY = Deno.env.get('FAL_KEY');
 
@@ -245,6 +246,65 @@ serve(async (req) => {
 
     const data = await response.json();
     console.log('Video generated successfully:', data.video?.url);
+
+    // Decrementar lifetime limits ou créditos extras baseado na API usada
+    try {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader) {
+        const { data: { user } } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
+        
+        if (user) {
+          const { data: limits } = await supabaseClient
+            .from('usage_limits')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (limits) {
+            const updates: Record<string, number> = {};
+            
+            // Sora Text-to-Video ou Image-to-Video
+            if (api_provider.includes('sora')) {
+              if ((limits.sora_text_videos_lifetime_used || 0) < (limits.sora_text_videos_lifetime_limit || 0)) {
+                updates.sora_text_videos_lifetime_used = (limits.sora_text_videos_lifetime_used || 0) + 1;
+                console.log('Using Sora lifetime credit');
+              } else if ((limits.video_credits_used || 0) < (limits.video_credits || 0)) {
+                updates.video_credits_used = (limits.video_credits_used || 0) + 1;
+                console.log('Using extra video credit for Sora');
+              }
+            }
+            
+            // Kling Text-to-Video ou Image-to-Video
+            if (api_provider.includes('kling')) {
+              if ((limits.kling_image_videos_lifetime_used || 0) < (limits.kling_image_videos_lifetime_limit || 0)) {
+                updates.kling_image_videos_lifetime_used = (limits.kling_image_videos_lifetime_used || 0) + 1;
+                console.log('Using Kling lifetime credit');
+              } else if ((limits.video_credits_used || 0) < (limits.video_credits || 0)) {
+                updates.video_credits_used = (limits.video_credits_used || 0) + 1;
+                console.log('Using extra video credit for Kling');
+              }
+            }
+            
+            if (Object.keys(updates).length > 0) {
+              await supabaseClient
+                .from('usage_limits')
+                .update(updates)
+                .eq('user_id', user.id);
+                
+              console.log('Usage limits updated:', updates);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating usage limits:', error);
+      // Não falhar a requisição se a atualização de limites falhar
+    }
 
     // Generate thumbnail URL from video (frame at 0.5s)
     const videoUrl = data.video?.url;
