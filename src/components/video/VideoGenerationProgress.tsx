@@ -42,7 +42,7 @@ export const VideoGenerationProgress = ({
   return (
     <div className="w-full space-y-6">
       {/* Preview/Skeleton */}
-      <div className={`relative w-full ${aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] || 'aspect-video'} bg-gradient-to-br from-primary/10 via-background to-secondary/10 rounded-lg overflow-hidden`}>
+      <div className={`relative w-full ${aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] || 'aspect-video'} bg-gradient-to-br from-primary/10 via-background to-secondary/10 rounded-lg overflow-hidden min-h-[300px] md:min-h-[400px]`}>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center space-y-4">
             <div className="relative">
