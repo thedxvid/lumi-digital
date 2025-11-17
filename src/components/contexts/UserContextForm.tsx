@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { CharacterCounter } from '@/components/ui/character-counter';
 import { Loader2, Upload, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -124,6 +125,7 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
           maxLength={200}
           required
         />
+        <CharacterCounter current={name.length} max={200} />
       </div>
 
       <div className="space-y-2">
@@ -137,6 +139,7 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
           maxLength={5000}
           required
         />
+        <CharacterCounter current={description.length} max={5000} />
       </div>
 
       <div className="space-y-2">
@@ -149,9 +152,12 @@ export function UserContextForm({ onSubmit, onCancel, initialData }: UserContext
           rows={6}
           maxLength={2000}
         />
-        <p className="text-xs text-muted-foreground">
-          A IA usará essas informações para personalizar as respostas baseadas no seu contexto
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            A IA usará essas informações para personalizar as respostas baseadas no seu contexto
+          </p>
+          <CharacterCounter current={userRole.length} max={2000} />
+        </div>
       </div>
 
       <div className="space-y-2">
