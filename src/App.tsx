@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import Auth from '@/pages/Auth';
+import ResetPassword from '@/pages/ResetPassword';
 import LandingPage from '@/pages/LandingPage';
 import Install from '@/pages/Install';
 import Chat from '@/pages/dashboard/Chat';
@@ -37,6 +38,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/install" element={<Install />} />
 
           {/* App Routes - Requires Authentication */}
