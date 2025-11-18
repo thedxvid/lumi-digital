@@ -165,18 +165,20 @@ const Auth = () => {
       </Button>
 
       <SignInPage
-      title={
-        <span className="font-bold text-foreground">
-          Entrar na <span className="text-foreground">LUMI</span>
-        </span>
-      }
-      description="Acesse sua conta e continue transformando seu conhecimento em renda"
-      heroComponent={HeroComponent}
-      testimonials={testimonials}
-      onSignIn={handleSignIn}
-      onGoogleSignIn={handleGoogleSignIn}
-      onResetPassword={handleResetPassword}
-      onCreateAccount={handleCreateAccount}
+        title={
+          <span className="font-bold text-foreground">
+            Entrar na <span className="text-foreground">LUMI</span>
+          </span>
+        }
+        description="Acesse sua conta e continue transformando seu conhecimento em renda"
+        logoSrc="/lovable-uploads/6b34a50f-dd26-4cb2-aac7-e17de61a6471.png"
+        footerText="Desenvolvido com 💜 por LUMI"
+        heroComponent={HeroComponent}
+        testimonials={testimonials}
+        onSubmit={handleSignIn}
+        onResetPassword={handleResetPassword}
+        hideSignUp={true}
+        hideGoogleSignIn={true}
       />
     </div>
   );

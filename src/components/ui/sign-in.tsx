@@ -27,10 +27,15 @@ interface SignInPageProps {
   heroImageSrc?: string;
   heroComponent?: React.ReactNode;
   testimonials?: Testimonial[];
-  onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSignUp?: (event: React.FormEvent<HTMLFormElement>) => void;
   onGoogleSignIn?: () => void;
   onResetPassword?: () => void;
   onCreateAccount?: () => void;
+  logoSrc?: string;
+  footerText?: string;
+  hideSignUp?: boolean;
+  hideGoogleSignIn?: boolean;
 }
 
 // --- SUB-COMPONENTS ---
@@ -60,10 +65,15 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   heroImageSrc,
   heroComponent,
   testimonials = [],
-  onSignIn,
+  onSubmit,
+  onSignUp,
   onGoogleSignIn,
   onResetPassword,
   onCreateAccount,
+  logoSrc,
+  footerText,
+  hideSignUp = false,
+  hideGoogleSignIn = false,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -72,11 +82,17 @@ export const SignInPage: React.FC<SignInPageProps> = ({
       {/* Left column: sign-in form */}
       <section className="flex-1 flex items-center justify-center p-8 pt-20 md:pt-8">
         <div className="w-full max-w-md">
+          {logoSrc && (
+            <div className="mb-8 animate-element">
+              <img src={logoSrc} alt="Logo" className="h-12 object-contain" />
+            </div>
+          )}
+          
           <div className="flex flex-col gap-6">
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
             <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
 
-            <form className="space-y-5" onSubmit={onSignIn}>
+            <form className="space-y-5" onSubmit={onSubmit}>
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-muted-foreground">Email</label>
                 <GlassInputWrapper>
@@ -101,7 +117,9 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   <input type="checkbox" name="rememberMe" className="w-4 h-4 rounded border-border" />
                   <span className="text-foreground/90">Manter conectado</span>
                 </label>
-                <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline text-foreground transition-colors">Esqueceu a senha?</a>
+                {onResetPassword && (
+                  <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword(); }} className="hover:underline text-foreground transition-colors">Esqueceu a senha?</a>
+                )}
               </div>
 
               <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-lumi-gold py-4 font-medium text-background hover:bg-lumi-gold-dark transition-colors">
@@ -109,19 +127,31 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               </button>
             </form>
 
-            <div className="animate-element animate-delay-700 relative flex items-center justify-center">
-              <span className="w-full border-t border-border"></span>
-              <span className="px-4 text-sm text-muted-foreground bg-background absolute">Ou continue com</span>
-            </div>
+            {!hideGoogleSignIn && onGoogleSignIn && (
+              <>
+                <div className="animate-element animate-delay-700 relative flex items-center justify-center">
+                  <span className="w-full border-t border-border"></span>
+                  <span className="px-4 text-sm text-muted-foreground bg-background absolute">Ou continue com</span>
+                </div>
 
-            <button onClick={onGoogleSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
-              <GoogleIcon />
-              Continuar com Google
-            </button>
+                <button onClick={onGoogleSignIn} className="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+                  <GoogleIcon />
+                  Continuar com Google
+                </button>
+              </>
+            )}
 
-            <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
-              Novo por aqui? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="text-foreground hover:underline transition-colors">Criar Conta</a>
-            </p>
+            {!hideSignUp && onCreateAccount && (
+              <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
+                Novo por aqui? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount(); }} className="text-foreground hover:underline transition-colors">Criar Conta</a>
+              </p>
+            )}
+
+            {footerText && (
+              <p className="text-center text-xs text-muted-foreground mt-8">
+                {footerText}
+              </p>
+            )}
           </div>
         </div>
       </section>
