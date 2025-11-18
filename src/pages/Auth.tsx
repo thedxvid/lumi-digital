@@ -83,7 +83,7 @@ const Auth = () => {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://applumi.com/auth',
+      redirectTo: 'https://applumi.com/reset-password',
     });
     
     if (error) {
