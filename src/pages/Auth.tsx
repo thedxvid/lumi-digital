@@ -6,6 +6,7 @@ import { FallingPattern } from '@/components/ui/falling-pattern';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -72,8 +73,25 @@ const Auth = () => {
     toast.info('Login com Google em breve!');
   };
 
-  const handleResetPassword = () => {
-    toast.info('Recuperação de senha em breve!');
+  const handleResetPassword = async () => {
+    const email = prompt('Digite seu email para recuperar a senha:');
+    if (!email) return;
+    
+    if (!email.includes('@')) {
+      toast.error('Email inválido');
+      return;
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://applumi.com/auth',
+    });
+    
+    if (error) {
+      toast.error('Erro ao enviar email de recuperação');
+      console.error(error);
+    } else {
+      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+    }
   };
 
   const handleCreateAccount = () => {
