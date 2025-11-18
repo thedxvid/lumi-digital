@@ -63,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
                 </div>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${Deno.env.get('VITE_SUPABASE_URL') || 'https://app.lumi.com'}/auth" 
+                  <a href="https://applumi.com/auth" 
                      style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);">
                     Acessar Plataforma 🚀
                   </a>

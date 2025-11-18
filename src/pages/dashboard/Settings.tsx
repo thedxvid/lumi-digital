@@ -96,7 +96,31 @@ const DashboardSettings = () => {
               />
             </div>
           </div>
-          <Button>Salvar Alterações</Button>
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Senha Atual</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              placeholder="Digite sua senha atual"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">Nova Senha</Label>
+            <Input
+              id="newPassword"
+              type="password"
+              placeholder="Digite sua nova senha"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirme sua nova senha"
+            />
+          </div>
+          <Button>Alterar Senha</Button>
         </CardContent>
       </Card>
 
