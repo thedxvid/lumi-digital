@@ -73,25 +73,8 @@ const Auth = () => {
     toast.info('Login com Google em breve!');
   };
 
-  const handleResetPassword = async () => {
-    const email = prompt('Digite seu email para recuperar a senha:');
-    if (!email) return;
-    
-    if (!email.includes('@')) {
-      toast.error('Email inválido');
-      return;
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://applumi.com/reset-password',
-    });
-    
-    if (error) {
-      toast.error('Erro ao enviar email de recuperação');
-      console.error(error);
-    } else {
-      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
-    }
+  const handleResetPassword = () => {
+    navigate('/forgot-password');
   };
 
   const handleCreateAccount = () => {
