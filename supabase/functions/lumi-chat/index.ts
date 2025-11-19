@@ -33,6 +33,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Buscar produtos padrões (VA e Z10) que devem ser conhecidos por todos os agentes
+    const { data: defaultProducts } = await supabase
+      .from('custom_agents')
+      .select('system_prompt, name')
+      .eq('entity_type', 'product')
+      .is('created_by', null)
+      .eq('is_active', true);
+
+    // Criar contexto base com os produtos padrões
+    let baseProductsContext = '';
+    if (defaultProducts && defaultProducts.length > 0) {
+      baseProductsContext = '\n\n---\n\n📦 PRODUTOS PRINCIPAIS QUE VOCÊ DEVE CONHECER:\n\n';
+      defaultProducts.forEach(product => {
+        baseProductsContext += `${product.system_prompt}\n\n---\n\n`;
+      });
+      console.log(`📦 Contexto base carregado com ${defaultProducts.length} produto(s) padrão`);
+    }
+
     const { message, conversationHistory = [], images = [], agentId, productId } = await req.json() as ChatRequest;
 
     if (!message || typeof message !== 'string') {
@@ -352,19 +370,22 @@ Este é um sistema de agentes especializados em marketing digital e empreendedor
       }
     }
 
+    // SEMPRE adiciona o contexto base dos produtos padrões (VA e Z10)
+    systemPrompt += baseProductsContext;
 
-    // If productId is provided, fetch product context and add to system prompt
+    // Se um produto personalizado foi selecionado, adiciona seu contexto AO INVÉS DE SUBSTITUIR
     if (productId) {
-      const { data: product, error: productError } = await supabase
+      const { data: customProduct, error: productError } = await supabase
         .from('custom_agents')
         .select('system_prompt, name')
         .eq('id', productId)
+        .eq('entity_type', 'product')
         .single();
 
-      if (!productError && product) {
-        console.log('Usando contexto do produto:', product.name);
-        // Adiciona o contexto do produto ao system prompt
-        systemPrompt = `${systemPrompt}\n\n---\n\n${product.system_prompt}`;
+      if (!productError && customProduct) {
+        console.log('Adicionando contexto adicional do produto:', customProduct.name);
+        // Adiciona o contexto do produto personalizado EM ADIÇÃO ao contexto base
+        systemPrompt += `\n\n---\n\n📦 CONTEXTO ADICIONAL DO PRODUTO:\n\n${customProduct.system_prompt}`;
       }
     }
 

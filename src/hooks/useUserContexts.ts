@@ -79,12 +79,12 @@ export function useUserContexts() {
         return;
       }
 
-      // Buscar produtos do usuário E produtos padrões (created_by IS NULL)
+      // Buscar APENAS produtos do usuário (produtos padrões são carregados automaticamente pelo backend)
       const { data, error } = await supabase
         .from('custom_agents' as any)
         .select('*')
         .eq('entity_type', 'product')
-        .or(`created_by.eq.${user.id},created_by.is.null`)
+        .eq('created_by', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

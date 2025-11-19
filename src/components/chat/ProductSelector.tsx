@@ -62,9 +62,14 @@ export function ProductSelector({ selectedProductId, onProductChange }: ProductS
         </SelectContent>
       </Select>
       
+      {!selectedProductId && products.length === 0 && (
+        <p className="text-xs text-muted-foreground">
+          Crie um contexto personalizado para adicionar informações específicas
+        </p>
+      )}
       {selectedProductId && (
         <p className="text-xs text-muted-foreground">
-          A Lumi usará o contexto deste produto nas respostas
+          A Lumi usará este contexto adicional nas respostas
         </p>
       )}
     </div>
