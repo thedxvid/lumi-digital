@@ -162,13 +162,23 @@ TEXT FOR SLIDE: "${slide.content}"
 THEME: ${themeDescriptions[theme] || theme}
 COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
 
-CRITICAL INSTRUCTIONS:
+CRITICAL DESIGN REQUIREMENTS:
+- Use MODERN, PROFESSIONAL, MINIMALIST FONTS (avoid simple/basic fonts)
+- Font should be clean, readable, and visually appealing
+- Ensure PERFECT SPELLING AND GRAMMAR in all text
+- Text should be clear, well-positioned, and easy to read
+- Professional visual aesthetic throughout
 - Use the reference images provided to maintain the person's visual identity
 - Keep the person's face, hair, body type, and overall appearance identical to the reference photos
 - DO NOT change or replace the person
 - Apply the visual transformation/scenario requested while preserving identity
 - Make it look natural and realistic
 - Square aspect ratio (1:1) for Instagram carousel
+
+IMPORTANT: 
+- Double-check all text for spelling and grammar
+- Use high-quality, refined typography
+- Maintain visual consistency with professional standards
           `.trim();
 
           messageContent.push({
@@ -196,13 +206,20 @@ THEME: ${themeDescriptions[theme] || theme}
 COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
 TONE: ${toneDescriptions[tone] || tone}
 
-INSTRUCTIONS:
-- Create a visually appealing carousel slide
-- Follow the visual instructions precisely
-- Make text clear and readable
+CRITICAL DESIGN REQUIREMENTS:
+- Use MODERN, PROFESSIONAL, MINIMALIST FONTS (avoid simple/basic fonts)
+- Font should be clean, readable, and visually appealing
+- Ensure PERFECT SPELLING AND GRAMMAR in all text
+- Text should be clear, well-positioned, and easy to read
+- Professional visual aesthetic throughout
 - Square aspect ratio (1:1) for Instagram carousel
 - Follow the theme and color palette specified
 ${i === imageCount - 1 && callToAction ? `- This is the FINAL slide, include call to action: "${callToAction}"` : ''}
+
+IMPORTANT: 
+- Double-check all text for spelling and grammar
+- Use high-quality, refined typography
+- Maintain visual consistency with professional standards
           `.trim();
 
           messageContent.push({
