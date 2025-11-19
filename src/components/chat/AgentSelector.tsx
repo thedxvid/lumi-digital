@@ -13,7 +13,7 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
   const { agents, getAgentById } = useAgents();
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-4">
+    <div className="w-full max-w-md mx-auto mb-4">
       <h3 className="text-sm font-medium text-muted-foreground mb-2 px-1">
         Escolha seu agente especialista:
       </h3>
@@ -34,8 +34,8 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
                   onClick={() => onAgentChange(agent.id)}
                   className={cn(
                     // Layout compacto
-                    "w-full min-h-[56px] py-2.5 px-3",
-                    "flex items-center gap-2.5",
+                    "w-full min-h-[52px] py-2 px-2.5",
+                    "flex items-center gap-2",
                     // Visual flat
                     "transition-colors duration-150",
                     "touch-manipulation",
@@ -51,7 +51,7 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
                   <img 
                     src={agent.icon} 
                     alt={agent.name}
-                    className="flex-shrink-0 w-8 h-8 rounded-full object-cover border-2"
+                    className="flex-shrink-0 w-7 h-7 rounded-full object-cover border-2"
                     style={{ borderColor: agent.color }}
                     onError={(e) => {
                       const target = e.currentTarget;
@@ -62,7 +62,7 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
                   
                   {/* Conteúdo textual compacto */}
                   <div className="flex-1 text-left min-w-0">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-1.5">
                       <h4 className="font-medium text-sm text-foreground truncate">
                         {agent.name}
                       </h4>
@@ -70,18 +70,20 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
                       {/* Check indicator sutil */}
                       {isSelected && (
                         <Check 
-                          className="w-4 h-4 text-foreground/60 flex-shrink-0" 
+                          className="w-3.5 h-3.5 text-foreground/60 flex-shrink-0" 
                           aria-hidden="true"
                         />
                       )}
                     </div>
                     
-                    {/* Descrição truncada em 1 linha */}
+                    {/* Descrição truncada - máximo 50 caracteres */}
                     <p 
-                      className="text-xs text-muted-foreground line-clamp-1 leading-tight"
+                      className="text-[11px] text-muted-foreground line-clamp-1 leading-tight"
                       title={agent.description}
                     >
-                      {agent.description}
+                      {agent.description.length > 50 
+                        ? `${agent.description.substring(0, 50)}...` 
+                        : agent.description}
                     </p>
                   </div>
                 </button>
