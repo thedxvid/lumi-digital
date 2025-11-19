@@ -18,6 +18,7 @@ interface ProductCardProps {
     created_at?: string;
     updated_at?: string;
     image_url?: string;
+    created_by?: string | null;
   };
   onEdit: (product: any) => void;
   onDelete: (id: string) => void;
@@ -27,6 +28,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onEdit, onDelete, onViewDetails, onDuplicate }: ProductCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isDefaultProduct = !product.created_by; // Produto padrão se created_by for NULL
   
   const isNew = () => {
     if (!product.created_at) return false;
@@ -65,7 +67,12 @@ export function ProductCard({ product, onEdit, onDelete, onViewDetails, onDuplic
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-lg truncate">{product.name}</CardTitle>
-                {isNew() && (
+                {isDefaultProduct && (
+                  <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                    Produto Padrão
+                  </Badge>
+                )}
+                {isNew() && !isDefaultProduct && (
                   <Badge variant="default" className="text-xs">
                     Novo
                   </Badge>
@@ -90,94 +97,77 @@ export function ProductCard({ product, onEdit, onDelete, onViewDetails, onDuplic
                 <Eye className="h-4 w-4 mr-2" />
                 Ver detalhes
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation();
-                onEdit(product);
-              }}>
-                <Edit className="h-4 w-4 mr-2" />
-                Editar
-              </DropdownMenuItem>
-              {onDuplicate && (
-                <DropdownMenuItem onClick={(e) => {
-                  e.stopPropagation();
-                  onDuplicate(product);
-                }}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Duplicar
-                </DropdownMenuItem>
+              {!isDefaultProduct && (
+                <>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(product);
+                  }}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  {onDuplicate && (
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicate(product);
+                    }}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Duplicar
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(product.id);
+                    }}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </DropdownMenuItem>
+                </>
               )}
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(product.id);
-                }}
-                className="text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent onClick={(e) => e.stopPropagation()}>
-        <div className="space-y-3">
+      <CardContent>
+        <div className="space-y-4">
           {product.detailed_context && (
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">
-                Contexto Detalhado
-              </p>
-              <p className={`text-sm text-foreground/80 ${!isExpanded && 'line-clamp-3'}`}>
-                {product.detailed_context}
-              </p>
-              {product.detailed_context.length > 150 && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-auto p-0 text-xs mt-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsExpanded(!isExpanded);
-                  }}
-                >
-                  {isExpanded ? 'Ver menos' : 'Ver mais'}
-                </Button>
-              )}
+            <div 
+              className={`text-sm text-muted-foreground transition-all duration-300 ${
+                isExpanded ? '' : 'line-clamp-3'
+              }`}
+            >
+              {product.detailed_context}
             </div>
           )}
           
-          <Separator />
-          
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <span>Criado {formatDate(product.created_at)}</span>
-            <span>Atualizado {formatDate(product.updated_at)}</span>
-          </div>
+          {product.detailed_context && product.detailed_context.length > 150 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="text-primary hover:text-primary/80 p-0 h-auto font-normal"
+            >
+              {isExpanded ? 'Ver menos' : 'Ver mais'}
+            </Button>
+          )}
 
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(product);
-              }}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 text-destructive hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(product.id);
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir
-            </Button>
+          <Separator />
+
+          <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between">
+              <span>Criado {formatDate(product.created_at)}</span>
+            </div>
+            {product.updated_at && product.updated_at !== product.created_at && (
+              <div className="flex items-center justify-between">
+                <span>Atualizado {formatDate(product.updated_at)}</span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

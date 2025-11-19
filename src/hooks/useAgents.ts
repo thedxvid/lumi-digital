@@ -7,8 +7,9 @@ export function useAgents() {
   const { agents: customAgents, loading } = useCustomAgents();
 
   const allAgents = useMemo(() => {
+    // Incluir agentes customizados E produtos padrões (entity_type = 'product' com created_by NULL)
     const activeCustomAgents = customAgents
-      .filter(agent => agent.is_active && (agent as any).entity_type === 'agent')
+      .filter(agent => agent.is_active && ((agent as any).entity_type === 'agent' || (agent as any).entity_type === 'product'))
       .map(agent => ({
         id: agent.id,
         name: agent.name,
