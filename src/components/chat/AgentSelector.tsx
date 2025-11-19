@@ -13,7 +13,7 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
   const { agents, getAgentById } = useAgents();
 
   return (
-    <div className="w-full max-w-md mx-auto mb-4">
+    <div className="w-full max-w-xs mx-auto mb-4">
       <h3 className="text-sm font-medium text-muted-foreground mb-2 px-1">
         Escolha seu agente especialista:
       </h3>
