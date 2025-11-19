@@ -47,7 +47,7 @@ export function ChatArea({ messages, isTyping, onSendMessage, selectedAgentId, o
             />
           ))}
 
-          {isTyping && <TypingIndicator />}
+          {isTyping && <TypingIndicator agentId={selectedAgentId} />}
           
           <div ref={bottomRef} />
         </div>
