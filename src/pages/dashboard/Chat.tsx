@@ -10,7 +10,8 @@ import { useLumiStore } from '@/hooks/useLumiStore';
 import { Message, Conversation } from '@/types/lumi';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, X } from 'lucide-react';
-import { getDefaultAgent } from '@/data/lumiAgents';
+import { getDefaultAgent, LUMI_AGENTS } from '@/data/lumiAgents';
+import { toast } from '@/hooks/use-toast';
 
 export default function Chat() {
   const location = useLocation();
@@ -83,6 +84,21 @@ export default function Chat() {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  // Create new conversation when agent changes
+  useEffect(() => {
+    if (selectedAgentId && messages.length > 0) {
+      const currentAgent = messages[0]?.agentId;
+      if (currentAgent && currentAgent !== selectedAgentId) {
+        handleNewChat();
+        const agentName = LUMI_AGENTS.find(a => a.id === selectedAgentId)?.name || 'novo agente';
+        toast({
+          title: `Iniciando nova conversa com ${agentName}`,
+          description: "Cada agente mantém sua própria conversa separada.",
+        });
+      }
+    }
+  }, [selectedAgentId]);
 
   const createNewConversation = (firstMessage: Message): Conversation => {
     const conversationId = generateUUID();
