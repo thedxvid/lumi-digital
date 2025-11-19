@@ -126,10 +126,15 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       is_local: true
     });
 
-    // Check if user already exists
-    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(payload.Customer.email);
+    console.log(`Verificando usuário: ${payload.Customer.email}`);
     
-    let userId = existingUser?.user?.id;
+    // Check if user already exists using listUsers
+    const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+    const existingUser = users?.find((u: any) => u.email === payload.Customer.email);
+    
+    console.log(`Usuário existente: ${existingUser ? 'Sim (ID: ' + existingUser.id + ')' : 'Não'}`);
+    
+    let userId = existingUser?.id;
     let password = '';
     let isNewUser = false;
     
