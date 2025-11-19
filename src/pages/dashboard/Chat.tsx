@@ -296,9 +296,9 @@ export default function Chat() {
       <div className="hidden md:flex md:w-80 border-r border-border bg-muted/20 relative z-20 flex-shrink-0 h-full">
         <div className="flex flex-col w-full h-full">
           <div className="p-4 border-b border-border flex-shrink-0">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Conversas</h2>
-              <div className="flex gap-2">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h2 className="text-base font-semibold truncate">Conversas</h2>
+              <div className="flex gap-1 flex-shrink-0">
                 {currentConversationId && messages.length > 0 && (
                   <ConversationExporter 
                     conversation={{
@@ -312,22 +312,22 @@ export default function Chat() {
                   >
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="gap-1.5"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Exportar conversa"
                     >
                       <Download className="h-4 w-4" />
-                      <span className="text-sm hidden lg:inline">Exportar</span>
                     </Button>
                   </ConversationExporter>
                 )}
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={handleNewChat}
-                  className="text-primary hover:text-primary/80 gap-1.5"
+                  className="text-primary hover:text-primary/80 h-8 w-8"
+                  title="Novo chat"
                 >
                   <MessageSquare className="h-4 w-4" />
-                  <span className="text-sm">Novo Chat</span>
                 </Button>
               </div>
             </div>
