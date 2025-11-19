@@ -296,20 +296,20 @@ export const VideoConfigForm = ({
               className="min-h-[120px] resize-none"
               disabled={loading}
             />
-            <div className="flex items-center justify-between gap-2 mt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
               {mode === 'text-to-video' && (
                 <p className="text-xs text-muted-foreground">
                   {prompt.length} caracteres {prompt.length < 10 && `(faltam ${10 - prompt.length})`}
                 </p>
               )}
-              <div className="flex gap-2 ml-auto">
+              <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={handleSuggestSafePrompt}
                   disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
-                  className="flex-shrink-0"
+                  className="w-full sm:w-auto sm:flex-shrink-0"
                 >
                   {suggestingPrompt ? (
                     <>
@@ -331,8 +331,8 @@ export const VideoConfigForm = ({
                   disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
                   data-enhance-prompt
                   className={isSora2Active 
-                    ? "flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                    : "flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    ? "w-full sm:w-auto sm:flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                    : "w-full sm:w-auto sm:flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                   }
                 >
                   {enhancingPrompt ? (
