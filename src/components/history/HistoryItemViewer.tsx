@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, MessageSquare, Download, Copy, Star } from 'lucide-react';
 import { formatAssetContent } from '@/utils/historyDataFormatter';
 import { toast } from 'sonner';
+import { ConversationExporter } from '@/components/conversation/ConversationExporter';
 
 interface HistoryItem {
   id: string;
@@ -127,10 +128,17 @@ export function HistoryItemViewer({
           </div>
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 flex-shrink-0 ml-2 sm:ml-4">
             {item.type === 'chat' ? (
-              <Badge variant="secondary" className="text-xs gap-1">
-                <MessageSquare className="w-3 h-3" />
-                Chat
-              </Badge>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant="secondary" className="text-xs gap-1 bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                  <MessageSquare className="w-3 h-3" />
+                  Chat
+                </Badge>
+                {item.data?.messages?.length && (
+                  <Badge variant="outline" className="text-xs">
+                    {item.data.messages.length} {item.data.messages.length === 1 ? 'mensagem' : 'mensagens'}
+                  </Badge>
+                )}
+              </div>
             ) : (
               <>
                 {item.subtype && (
@@ -172,6 +180,18 @@ export function HistoryItemViewer({
               <Copy className="w-3 h-3" />
               Copiar
             </Button>
+            {item.type === 'chat' && item.data && (
+              <ConversationExporter conversation={item.data}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1"
+                >
+                  <Download className="w-3 h-3" />
+                  Exportar
+                </Button>
+              </ConversationExporter>
+            )}
           </div>
         </div>
       </CardContent>

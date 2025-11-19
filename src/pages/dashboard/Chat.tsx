@@ -9,9 +9,10 @@ import { useLumiChat } from '@/hooks/useLumiChat';
 import { useLumiStore } from '@/hooks/useLumiStore';
 import { Message, Conversation } from '@/types/lumi';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, X } from 'lucide-react';
+import { MessageSquare, X, Download } from 'lucide-react';
 import { getDefaultAgent, LUMI_AGENTS } from '@/data/lumiAgents';
 import { toast } from '@/hooks/use-toast';
+import { ConversationExporter } from '@/components/conversation/ConversationExporter';
 
 export default function Chat() {
   const location = useLocation();
@@ -99,6 +100,28 @@ export default function Chat() {
       }
     }
   }, [selectedAgentId]);
+
+  // Load conversation from history navigation
+  useEffect(() => {
+    if (location.state?.conversationId) {
+      const conversationId = location.state.conversationId;
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      
+      if (conversation) {
+        console.log(`📂 Carregando conversa do histórico: ${conversation.title}`);
+        handleSelectConversation(conversationId);
+      } else {
+        toast({
+          title: "Conversa não encontrada",
+          description: "A conversa que você tentou abrir não existe mais.",
+          variant: "destructive"
+        });
+      }
+      
+      // Clear state to prevent re-triggering
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, conversations]);
 
   const createNewConversation = (firstMessage: Message): Conversation => {
     const conversationId = generateUUID();
@@ -275,15 +298,38 @@ export default function Chat() {
           <div className="p-4 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Conversas</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleNewChat}
-                className="text-primary hover:text-primary/80 gap-1.5"
-              >
-                <MessageSquare className="h-4 w-4" />
-                <span className="text-sm">Novo Chat</span>
-              </Button>
+              <div className="flex gap-2">
+                {currentConversationId && messages.length > 0 && (
+                  <ConversationExporter 
+                    conversation={{
+                      id: currentConversationId,
+                      title: conversations.find(c => c.id === currentConversationId)?.title || 'Conversa Atual',
+                      messages: messages,
+                      createdAt: conversations.find(c => c.id === currentConversationId)?.createdAt || Date.now(),
+                      updatedAt: Date.now(),
+                      agentId: selectedAgentId
+                    }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="text-sm hidden lg:inline">Exportar</span>
+                    </Button>
+                  </ConversationExporter>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleNewChat}
+                  className="text-primary hover:text-primary/80 gap-1.5"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span className="text-sm">Novo Chat</span>
+                </Button>
+              </div>
             </div>
           </div>
           
@@ -317,6 +363,26 @@ export default function Chat() {
           <div className="flex items-center justify-between p-3 border-b border-border/50">
             <h1 className="text-base font-semibold">Chat LUMI</h1>
             <div className="flex gap-2">
+              {currentConversationId && messages.length > 0 && (
+                <ConversationExporter 
+                  conversation={{
+                    id: currentConversationId,
+                    title: conversations.find(c => c.id === currentConversationId)?.title || 'Conversa Atual',
+                    messages: messages,
+                    createdAt: conversations.find(c => c.id === currentConversationId)?.createdAt || Date.now(),
+                    updatedAt: Date.now(),
+                    agentId: selectedAgentId
+                  }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </ConversationExporter>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
