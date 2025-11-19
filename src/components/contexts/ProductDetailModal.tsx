@@ -20,6 +20,7 @@ interface ProductDetailModalProps {
     pdf_filename?: string;
     user_role?: string;
     image_url?: string;
+    created_by?: string | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -111,8 +112,8 @@ export function ProductDetailModal({
 
             <Separator />
 
-            {/* System Prompt Gerado */}
-            {product.system_prompt && (
+            {/* System Prompt Gerado - Apenas para produtos criados pelo usuário */}
+            {product.system_prompt && product.created_by && (
               <div>
                 <h3 className="text-sm font-semibold mb-2">
                   Como a Lumi usa este produto
