@@ -48,7 +48,8 @@ export default function Chat() {
           const updated = {
             ...conversation,
             messages: messages,
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
+            agentId: selectedAgentId
           };
           localStorage.setItem('lumi-store', JSON.stringify({
             conversations: conversations.map(c => c.id === currentConversationId ? updated : c),
@@ -60,7 +61,7 @@ export default function Chat() {
     
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [currentConversationId, messages, conversations]);
+  }, [currentConversationId, messages, conversations, selectedAgentId]);
 
   // Salvamento automático periódico
   useEffect(() => {
@@ -68,13 +69,14 @@ export default function Chat() {
       const timer = setInterval(() => {
         updateConversation(currentConversationId, {
           messages: messages,
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          agentId: selectedAgentId
         });
       }, 5000); // Salvar a cada 5 segundos
       
       return () => clearInterval(timer);
     }
-  }, [currentConversationId, messages]);
+  }, [currentConversationId, messages, selectedAgentId]);
 
   // Handle incoming prompt from other pages (like ModuleRunner)
   useEffect(() => {
@@ -130,19 +132,22 @@ export default function Chat() {
       title: firstMessage.content.slice(0, 50) + (firstMessage.content.length > 50 ? '...' : ''),
       messages: [firstMessage],
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      agentId: selectedAgentId
     };
     return conversation;
   };
 
   const handleSendMessage = async (content: string, images?: string[], agentId?: string) => {
+    const effectiveAgentId = agentId || selectedAgentId;
+    
     const userMessage: Message = {
       id: generateUUID(),
       content,
       role: 'user',
       timestamp: Date.now(),
       images,
-      agentId,
+      agentId: effectiveAgentId,
       productId: selectedProductId,
     };
 
@@ -164,7 +169,8 @@ export default function Chat() {
       // ⚠️ SALVAR IMEDIATAMENTE - NÃO ESPERAR 5 SEGUNDOS!
       await updateConversation(conversationId, {
         messages: updatedMessages,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        agentId: effectiveAgentId
       });
       
       console.log('💾 Mensagem do usuário salva imediatamente');
@@ -180,7 +186,7 @@ export default function Chat() {
         content, 
         messagesForApi, 
         images, 
-        agentId,
+        effectiveAgentId,
         selectedProductId
       );
       
@@ -191,7 +197,7 @@ export default function Chat() {
           role: 'assistant',
           timestamp: Date.now(),
           generatedImages: response.generatedImages,
-          agentId,
+          agentId: effectiveAgentId,
         };
 
         // Usar o array atualizado com AMBAS as mensagens
@@ -201,7 +207,8 @@ export default function Chat() {
         if (conversationId) {
           await updateConversation(conversationId, {
             messages: finalMessages,
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
+            agentId: effectiveAgentId
           });
           console.log('💾 Resposta da IA salva');
         }
@@ -216,7 +223,8 @@ export default function Chat() {
     if (currentConversationId && messages.length > 0) {
       updateConversation(currentConversationId, {
         messages: messages,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        agentId: selectedAgentId
       });
       console.log('💾 Salvando conversa atual antes de trocar');
     }
@@ -227,6 +235,15 @@ export default function Chat() {
       console.log(`📂 Carregando conversa "${conversation.title}" com ${conversation.messages.length} mensagens`);
       setCurrentConversationId(id);
       setMessages(conversation.messages);
+      
+      // Atualizar o agente selecionado para corresponder ao agente da conversa
+      if (conversation.agentId) {
+        setSelectedAgentId(conversation.agentId);
+      } else if (conversation.messages.length > 0 && conversation.messages[0].agentId) {
+        // Fallback: usar o agentId da primeira mensagem
+        setSelectedAgentId(conversation.messages[0].agentId);
+      }
+      
       setShowHistory(false);
       lastSyncedConversationRef.current = id;
     }
@@ -245,14 +262,15 @@ export default function Chat() {
     if (currentConversationId && messages.length > 0) {
       updateConversation(currentConversationId, {
         messages: messages,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        agentId: selectedAgentId
       });
+      console.log('💾 Salvando conversa antes de criar nova');
     }
     
     setCurrentConversationId(undefined);
     setMessages([]);
-    setShowHistory(false);
-    lastSyncedConversationRef.current = undefined; // Reset ref
+    lastSyncedConversationRef.current = undefined;
   };
 
   return (
