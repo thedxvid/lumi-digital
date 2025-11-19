@@ -26,7 +26,9 @@ export function CarouselResultModal({
     try {
       for (let i = 0; i < carousel.images.length; i++) {
         const image = carousel.images[i];
-        const response = await fetch(image.url);
+        // Download the composed image (with text) if available, otherwise original
+        const imageUrl = image.composedUrl || image.url;
+        const response = await fetch(imageUrl);
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -83,7 +85,7 @@ export function CarouselResultModal({
                     <div className="space-y-4">
                       <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-background">
                         <img
-                          src={image.url}
+                          src={image.composedUrl || image.url}
                           alt={image.description}
                           className="h-full w-full object-contain"
                         />
@@ -91,6 +93,13 @@ export function CarouselResultModal({
                       <div className="text-center">
                         <p className="text-sm font-medium">Slide {index + 1} de {carousel.images.length}</p>
                         <p className="text-sm text-muted-foreground">{image.description}</p>
+                        {image.copy && (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            <p className="font-semibold">{image.copy.headline}</p>
+                            {image.copy.secondary && <p>{image.copy.secondary}</p>}
+                            {image.copy.cta && <p className="mt-1 font-medium">{image.copy.cta}</p>}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CarouselItem>
