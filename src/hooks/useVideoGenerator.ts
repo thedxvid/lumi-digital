@@ -98,7 +98,7 @@ export const useVideoGenerator = () => {
         const klingAvailable = (userLimits.kling_image_videos_lifetime_limit || 0) - (userLimits.kling_image_videos_lifetime_used || 0);
         const extraCredits = (userLimits.video_credits || 0) - (userLimits.video_credits_used || 0);
         
-        // Verificar se tem créditos para o tipo específico
+        // APENAS verificar créditos disponíveis - SEM verificação de plano PRO
         if (isSora && soraAvailable === 0 && extraCredits === 0) {
           console.log('No Sora credits available');
           window.dispatchEvent(new CustomEvent('video-limit-reached', {

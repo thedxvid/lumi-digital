@@ -68,7 +68,7 @@ const VideoGenerator = () => {
     }
   }, [location, hasLoadedImage]);
 
-  // Listen for video limit reached
+  // Listen for video limit reached - ONLY show CreditsExhaustedModal
   useEffect(() => {
     const handleLimitReached = (event: CustomEvent) => {
       const { videoType, remainingCredits } = event.detail;
