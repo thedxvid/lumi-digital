@@ -47,8 +47,9 @@ export function ProductCard({ product, onEdit, onDelete, onViewDetails, onDuplic
 
   return (
     <Card 
-      className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
-      onClick={() => onViewDetails(product)}
+      className="hover:shadow-lg transition-all duration-300 group"
+      onClick={() => !isDefaultProduct && onViewDetails(product)}
+      style={{ cursor: isDefaultProduct ? 'default' : 'pointer' }}
     >
       <CardHeader>
         <div className="flex justify-between items-start">
@@ -90,15 +91,15 @@ export function ProductCard({ product, onEdit, onDelete, onViewDetails, onDuplic
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails(product);
-              }}>
-                <Eye className="h-4 w-4 mr-2" />
-                Ver detalhes
-              </DropdownMenuItem>
               {!isDefaultProduct && (
                 <>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    onViewDetails(product);
+                  }}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver detalhes
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={(e) => {
                     e.stopPropagation();
                     onEdit(product);
@@ -120,7 +121,7 @@ export function ProductCard({ product, onEdit, onDelete, onViewDetails, onDuplic
                       e.stopPropagation();
                       onDelete(product.id);
                     }}
-                    className="text-destructive"
+                    className="text-destructive focus:text-destructive"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Excluir
