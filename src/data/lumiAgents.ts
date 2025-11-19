@@ -3,7 +3,7 @@ import { Agent } from '@/types/agents';
 export const LUMI_AGENTS: Agent[] = [
   {
     id: 'infoprodutos',
-    name: 'Richard',
+    name: 'Richard, o Infoprodutor',
     icon: '/agents/steve-copywriter.jpg',
     color: 'hsl(271, 76%, 53%)',
     description: 'Especialista em criação e lançamento de infoprodutos, cursos online e produtos digitais',
@@ -83,7 +83,7 @@ Qual formato de produto você gostaria de criar?
   },
   {
     id: 'mindset',
-    name: 'Anne',
+    name: 'Anne, a Coach',
     icon: '/agents/chloe-seo-specialist.jpg',
     color: 'hsl(200, 95%, 45%)',
     description: 'Coach especializada em desenvolvimento pessoal usando Perguntas Poderosas de Sabedoria',
@@ -170,7 +170,7 @@ Sempre seja EMPÁTICA, MOTIVADORA e focada em ajudar as pessoas a alcançarem se
   },
   {
     id: 'rotina',
-    name: 'Paula',
+    name: 'Paula, a Especialista em Rotina',
     icon: '/agents/mary-traffic-manager.jpg',
     color: 'hsl(340, 82%, 52%)',
     description: 'Especialista em rotina, organização diária, hábitos e equilíbrio de vida',
@@ -404,7 +404,7 @@ Sempre seja CONECTADA, ESTRATÉGICA e focada em criar COMUNIDADES engajadas! �
   },
   {
     id: 'automacao',
-    name: 'Jack',
+    name: 'Jack, o Automatizador',
     icon: 'https://i.pravatar.cc/300?img=33',
     color: 'hsl(262, 83%, 58%)',
     description: 'Expert em automações, webhooks, integrações e otimização de processos',
