@@ -76,13 +76,13 @@ export function AgentSelector({ selectedAgentId, onAgentChange }: AgentSelectorP
                       )}
                     </div>
                     
-                    {/* Descrição truncada - máximo 50 caracteres */}
+                    {/* Descrição truncada - máximo 35 caracteres */}
                     <p 
                       className="text-[11px] text-muted-foreground line-clamp-1 leading-tight"
                       title={agent.description}
                     >
-                      {agent.description.length > 50 
-                        ? `${agent.description.substring(0, 50)}...` 
+                      {agent.description.length > 35 
+                        ? `${agent.description.substring(0, 35)}...` 
                         : agent.description}
                     </p>
                   </div>
