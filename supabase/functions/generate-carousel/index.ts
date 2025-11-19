@@ -96,6 +96,9 @@ serve(async (req) => {
       });
     }
 
+    console.log('Generation mode:', generationMode);
+    console.log('Custom prompt:', customPrompt ? 'Present' : 'Missing');
+    console.log('Slides config:', slides ? `${slides.length} slides` : 'None');
     console.log(`Generating carousel "${title}" with ${imageCount} images`);
 
     // Theme descriptions for better prompts
@@ -112,8 +115,8 @@ serve(async (req) => {
       warm: "warm color palette (reds, oranges, yellows)",
       cool: "cool color palette (blues, greens, purples)",
       pastel: "soft pastel colors",
-      "high-contrast": "high contrast colors",
-      monochrome: "monochromatic color scheme",
+      complementary: "complementary color combinations",
+      monochromatic: "monochromatic color scheme",
       vibrant: "vibrant gradient colors"
     };
 
@@ -126,15 +129,37 @@ serve(async (req) => {
       inspirational: "inspirational and uplifting tone"
     };
 
+    // Create virtual slides for prompt-only mode
+    let slidesToProcess: SlideConfig[];
+    
+    if (generationMode === 'prompt-only' && customPrompt) {
+      console.log('Creating virtual slides from custom prompt...');
+      slidesToProcess = [];
+      
+      for (let i = 0; i < imageCount; i++) {
+        slidesToProcess.push({
+          title: `Slide ${i + 1}`,
+          content: `${customPrompt} (Slide ${i + 1} of ${imageCount})`,
+          visualElements: [],
+          imageMode: 'generate',
+          uploadedImageIndex: null,
+          visualInstruction: customPrompt
+        });
+      }
+    } else {
+      slidesToProcess = slides;
+    }
+
     // Generate multiple images sequentially
     const images: { url: string; description: string }[] = [];
 
     for (let i = 0; i < imageCount; i++) {
-      const slide = slides[i];
+      const slide = slidesToProcess[i];
       console.log(`Processing slide ${i + 1}/${imageCount}...`, {
         imageMode: slide.imageMode,
         uploadedImageIndex: slide.uploadedImageIndex,
-        hasVisualInstruction: !!slide.visualInstruction
+        hasVisualInstruction: !!slide.visualInstruction,
+        generationMode
       });
 
       let imageUrl: string;
@@ -195,7 +220,37 @@ IMPORTANT:
           });
         } else {
           // Gerar imagem do zero (sem referência)
-          slidePrompt = `
+          if (generationMode === 'prompt-only' && customPrompt) {
+            // Modo prompt-only: usar o prompt customizado com contexto de sequência
+            slidePrompt = `
+🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
+
+USER REQUEST: ${customPrompt}
+
+IMPORTANT INSTRUCTIONS FOR THIS SLIDE:
+- This is part of a ${imageCount}-slide carousel sequence
+- Create slide ${i + 1} that follows the user's request above
+- Maintain VISUAL CONSISTENCY across all slides in the carousel
+- Each slide should build upon or complement the previous ones
+- Use MODERN, PROFESSIONAL, MINIMALIST FONTS (avoid simple/basic fonts)
+- Ensure PERFECT SPELLING AND GRAMMAR in all text
+- Text should be clear, well-positioned, and easy to read
+- Square aspect ratio (1:1) for Instagram carousel
+${theme ? `- Theme: ${themeDescriptions[theme] || theme}` : ''}
+${colorPalette ? `- Color palette: ${paletteDescriptions[colorPalette] || colorPalette}` : ''}
+${tone ? `- Tone: ${toneDescriptions[tone] || tone}` : ''}
+${i === imageCount - 1 && callToAction ? `\n- ⚠️ This is the FINAL slide, MUST include call to action: "${callToAction}"` : ''}
+${i === 0 ? '\n- This is the FIRST slide - make it eye-catching and engaging' : ''}
+
+CRITICAL:
+- Follow the user's request while maintaining carousel coherence
+- Each slide should be valuable on its own but part of the sequence
+- Professional visual aesthetic throughout
+- Double-check all text for spelling and grammar
+            `.trim();
+          } else {
+            // Modo config normal
+            slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
 VISUAL INSTRUCTION: ${slide.visualInstruction}
@@ -220,7 +275,8 @@ IMPORTANT:
 - Double-check all text for spelling and grammar
 - Use high-quality, refined typography
 - Maintain visual consistency with professional standards
-          `.trim();
+            `.trim();
+          }
 
           messageContent.push({
             type: "text",
@@ -289,14 +345,16 @@ IMPORTANT:
       .insert({
         user_id: user.id,
         title,
-        prompt: slides.map(s => s.content).join(' | '),
+        prompt: generationMode === 'prompt-only' && customPrompt 
+          ? customPrompt 
+          : slides.map(s => s.content).join(' | '),
         image_count: imageCount,
         images,
         theme,
         color_palette: colorPalette,
         tone,
         call_to_action: callToAction,
-        slides_config: slides,
+        slides_config: generationMode === 'prompt-only' ? null : slides,
       })
       .select()
       .single();
