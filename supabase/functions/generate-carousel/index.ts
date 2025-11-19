@@ -151,7 +151,7 @@ serve(async (req) => {
     }
 
     // Generate multiple images sequentially
-    const images: { url: string; description: string }[] = [];
+    const images: { url: string; description: string; copy?: { headline: string; secondary: string; cta: string } }[] = [];
 
     for (let i = 0; i < imageCount; i++) {
       const slide = slidesToProcess[i];
@@ -227,53 +227,53 @@ IMPORTANT:
 
 USER REQUEST: ${customPrompt}
 
+CRITICAL INSTRUCTION: 
+Generate ONLY the VISUAL composition WITHOUT any text, words, letters, or typography.
+Create the background, elements, and visual aesthetic ONLY.
+All text will be added separately using professional typography.
+
 IMPORTANT INSTRUCTIONS FOR THIS SLIDE:
 - This is part of a ${imageCount}-slide carousel sequence
 - Create slide ${i + 1} that follows the user's request above
 - Maintain VISUAL CONSISTENCY across all slides in the carousel
 - Each slide should build upon or complement the previous ones
-- Use MODERN, PROFESSIONAL, MINIMALIST FONTS (avoid simple/basic fonts)
-- Ensure PERFECT SPELLING AND GRAMMAR in all text
-- Text should be clear, well-positioned, and easy to read
+- Generate PURE VISUALS: backgrounds, colors, shapes, illustrations, photos - NO TEXT
 - Square aspect ratio (1:1) for Instagram carousel
 ${theme ? `- Theme: ${themeDescriptions[theme] || theme}` : ''}
 ${colorPalette ? `- Color palette: ${paletteDescriptions[colorPalette] || colorPalette}` : ''}
 ${tone ? `- Tone: ${toneDescriptions[tone] || tone}` : ''}
-${i === imageCount - 1 && callToAction ? `\n- ⚠️ This is the FINAL slide, MUST include call to action: "${callToAction}"` : ''}
 ${i === 0 ? '\n- This is the FIRST slide - make it eye-catching and engaging' : ''}
 
-CRITICAL:
-- Follow the user's request while maintaining carousel coherence
-- Each slide should be valuable on its own but part of the sequence
-- Professional visual aesthetic throughout
-- Double-check all text for spelling and grammar
+REMEMBER: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
             `.trim();
           } else {
             // Modo config normal
             slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
+CRITICAL INSTRUCTION: 
+Generate ONLY the VISUAL composition WITHOUT any text, words, letters, or typography.
+Create the background, elements, and visual aesthetic ONLY.
+All text will be added separately using professional typography.
+
 VISUAL INSTRUCTION: ${slide.visualInstruction}
 
-TEXT FOR SLIDE: "${slide.content}"
+CONTENT FOR THIS SLIDE: ${slide.content}
 
-THEME: ${themeDescriptions[theme] || theme}
-COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
-TONE: ${toneDescriptions[tone] || tone}
+DESIGN SPECIFICATIONS:
+- Generate PURE VISUALS: backgrounds, colors, shapes, illustrations, photos - NO TEXT
+- Square aspect ratio (1:1) optimized for Instagram carousel
+- Theme: ${themeDescriptions[theme] || theme}
+- Color palette: ${paletteDescriptions[colorPalette] || colorPalette}
+- Tone: ${toneDescriptions[tone] || tone}
+${i === 0 ? '\n- This is the FIRST slide - make it eye-catching and engaging to hook the viewer' : ''}
 
-CRITICAL DESIGN REQUIREMENTS:
-- Use MODERN, PROFESSIONAL, MINIMALIST FONTS (avoid simple/basic fonts)
-- Font should be clean, readable, and visually appealing
-- Ensure PERFECT SPELLING AND GRAMMAR in all text
-- Text should be clear, well-positioned, and easy to read
+REMEMBER: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
+
+CRITICAL:
 - Professional visual aesthetic throughout
-- Square aspect ratio (1:1) for Instagram carousel
-- Follow the theme and color palette specified
-${i === imageCount - 1 && callToAction ? `- This is the FINAL slide, include call to action: "${callToAction}"` : ''}
-
-IMPORTANT: 
-- Double-check all text for spelling and grammar
-- Use high-quality, refined typography
+- Create space for text overlay (text will be added separately)
+- Focus on creating compelling visual backgrounds and elements
 - Maintain visual consistency with professional standards
             `.trim();
           }
@@ -327,11 +327,55 @@ IMPORTANT:
           console.error(`No image URL for slide ${i + 1}:`, JSON.stringify(data, null, 2));
           throw new Error(`No image URL returned for slide ${i + 1}`);
         }
-
-        console.log(`✅ Generated image for slide ${i + 1} successfully`);
       }
 
-      images.push({ url: imageUrl, description });
+      console.log(`✅ Generated image for slide ${i + 1} successfully`);
+      
+      // Generate copy for this slide using LLM
+      console.log(`📝 Generating copy for slide ${i + 1}...`);
+      
+      let copy = { headline: '', secondary: '', cta: '' };
+      try {
+        const copyResponse = await fetch(`${supabaseUrl}/functions/v1/generate-carousel-copy`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            slideNumber: i + 1,
+            totalSlides: imageCount,
+            content: slide.content,
+            theme: theme || 'modern',
+            tone: tone || 'professional',
+            isLastSlide: i === imageCount - 1,
+            callToAction: callToAction || ''
+          })
+        });
+
+        if (copyResponse.ok) {
+          copy = await copyResponse.json();
+          console.log(`✅ Copy generated for slide ${i + 1}:`, copy);
+        } else {
+          console.error(`Failed to generate copy for slide ${i + 1}`);
+          // Fallback copy
+          copy = {
+            headline: slide.content.substring(0, 80),
+            secondary: slide.content.substring(0, 150),
+            cta: i === imageCount - 1 ? (callToAction || '') : ''
+          };
+        }
+      } catch (error) {
+        console.error(`Error generating copy for slide ${i + 1}:`, error);
+        // Fallback copy
+        copy = {
+          headline: slide.content.substring(0, 80),
+          secondary: slide.content.substring(0, 150),
+          cta: i === imageCount - 1 ? (callToAction || '') : ''
+        };
+      }
+
+      images.push({ url: imageUrl, description, copy });
       
       // Add small delay between requests to avoid rate limiting
       if (i < imageCount - 1) {
