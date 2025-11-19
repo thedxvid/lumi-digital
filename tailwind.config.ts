@@ -22,6 +22,11 @@ export default {
 			fontFamily: {
 				'space-grotesk': ['Space Grotesk', 'sans-serif'],
 				sans: ['Inter', 'sans-serif'],
+				montserrat: ['Montserrat', 'sans-serif'],
+				poppins: ['Poppins', 'sans-serif'],
+				raleway: ['Raleway', 'sans-serif'],
+				outfit: ['Outfit', 'sans-serif'],
+				jakarta: ['Plus Jakarta Sans', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

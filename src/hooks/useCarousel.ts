@@ -129,7 +129,8 @@ export function useCarousel() {
                   cta: image.copy.cta,
                   textPosition: 'center',
                   textColor: '#FFFFFF',
-                  shadowIntensity: 0.6
+                  shadowIntensity: 0.65,
+                  tone: config.tone // Passa o tom para seleção de fonte
                 });
                 
                 return {
