@@ -23,10 +23,11 @@ export function useCustomAgents() {
   const fetchAgents = async () => {
     try {
       setLoading(true);
+      // Buscar agentes customizados E produtos padrões (created_by IS NULL)
       const { data, error } = await supabase
         .from('custom_agents' as any)
         .select('*')
-        .eq('entity_type', 'agent')
+        .in('entity_type', ['agent', 'product'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
