@@ -512,43 +512,76 @@ export type Database = {
       }
       orders: {
         Row: {
+          access_granted: boolean | null
           created_at: string | null
+          credentials_sent: boolean | null
           customer_email: string
+          customer_mobile: string | null
           customer_name: string
           id: string
+          installment_value: number | null
+          installments_number: number | null
+          kiwify_order_ref: string | null
+          order_status: string | null
           order_value: number
+          order_value_formatted: string | null
           payment_method: string | null
+          product_id: string | null
           product_name: string
+          product_type: string | null
           status: string | null
           transaction_id: string | null
           updated_at: string | null
           user_id: string | null
+          webhook_data: Json | null
         }
         Insert: {
+          access_granted?: boolean | null
           created_at?: string | null
+          credentials_sent?: boolean | null
           customer_email: string
+          customer_mobile?: string | null
           customer_name: string
           id?: string
+          installment_value?: number | null
+          installments_number?: number | null
+          kiwify_order_ref?: string | null
+          order_status?: string | null
           order_value: number
+          order_value_formatted?: string | null
           payment_method?: string | null
+          product_id?: string | null
           product_name: string
+          product_type?: string | null
           status?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
+          webhook_data?: Json | null
         }
         Update: {
+          access_granted?: boolean | null
           created_at?: string | null
+          credentials_sent?: boolean | null
           customer_email?: string
+          customer_mobile?: string | null
           customer_name?: string
           id?: string
+          installment_value?: number | null
+          installments_number?: number | null
+          kiwify_order_ref?: string | null
+          order_status?: string | null
           order_value?: number
+          order_value_formatted?: string | null
           payment_method?: string | null
+          product_id?: string | null
           product_name?: string
+          product_type?: string | null
           status?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
+          webhook_data?: Json | null
         }
         Relationships: []
       }

@@ -227,9 +227,8 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
           body: {
             email: payload.Customer.email,
-            name: `${payload.Customer.first_name} ${payload.Customer.last_name}`.trim(),
-            password: password,
-            product_name: payload.product_name
+            fullName: `${payload.Customer.first_name} ${payload.Customer.last_name}`.trim(),
+            password: password
           }
         });
 
