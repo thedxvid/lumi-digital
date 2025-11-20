@@ -203,6 +203,66 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       throw error;
     }
 
+    // ✅ CRIAR ASSINATURA DE 3 MESES
+    try {
+      console.log('📅 Criando assinatura de 3 meses...');
+      
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 3);
+
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .insert({
+          user_id: userId,
+          plan_type: 'basic',
+          duration_months: 3,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          is_active: true,
+          auto_renew: false
+        });
+
+      if (subscriptionError) {
+        console.error('Error creating subscription:', subscriptionError);
+        throw subscriptionError;
+      }
+      
+      console.log('✅ Assinatura de 3 meses criada com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao criar assinatura:', error);
+      throw error;
+    }
+
+    // ✅ ATUALIZAR LIMITES PARA PLANO BÁSICO
+    try {
+      console.log('🎯 Atualizando limites de uso para plano básico...');
+      
+      const { error: limitsError } = await supabase
+        .from('usage_limits')
+        .update({
+          plan_type: 'basic',
+          creative_images_daily_limit: 10,
+          creative_images_monthly_limit: 300,
+          profile_analysis_daily_limit: 5,
+          carousels_monthly_limit: 3,
+          videos_monthly_limit: 0,
+          sora_text_videos_lifetime_limit: 2,
+          kling_image_videos_lifetime_limit: 1
+        })
+        .eq('user_id', userId);
+
+      if (limitsError) {
+        console.error('Error updating usage limits:', limitsError);
+        throw limitsError;
+      }
+      
+      console.log('✅ Limites de uso atualizados com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao atualizar limites:', error);
+      throw error;
+    }
+
     try {
       console.log('💾 Salvando pedido...');
       const { error: orderError } = await supabase
@@ -378,6 +438,28 @@ async function handleRefundedOrder(payload: KiwifyWebhookPayload, supabase: any)
           subscription_status: 'cancelled'
         })
         .eq('id', order.user_id);
+
+      // ❌ DESATIVAR ASSINATURA
+      await supabase
+        .from('subscriptions')
+        .update({ is_active: false })
+        .eq('user_id', order.user_id);
+
+      // ❌ RESETAR LIMITES PARA FREE
+      await supabase
+        .from('usage_limits')
+        .update({
+          plan_type: 'free',
+          creative_images_daily_limit: 0,
+          creative_images_monthly_limit: 0,
+          profile_analysis_daily_limit: 0,
+          carousels_monthly_limit: 0,
+          videos_monthly_limit: 0,
+          video_credits: 0,
+          sora_text_videos_lifetime_limit: 0,
+          kling_image_videos_lifetime_limit: 0
+        })
+        .eq('user_id', order.user_id);
 
       await supabase
         .from('activity_logs')
