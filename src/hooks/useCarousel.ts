@@ -116,41 +116,6 @@ export function useCarousel() {
 
       console.log('✅ Carousel generated successfully');
       
-      // Compose text on images if copy is available
-      if (data.carousel && data.carousel.images) {
-        console.log('📝 Composing text on carousel images...');
-        const composedImages = await Promise.all(
-          data.carousel.images.map(async (image: CarouselImage, index: number) => {
-            if (image.copy && image.copy.headline) {
-              try {
-                const composedUrl = await composeTextOnCarouselImage(image.url, {
-                  headline: image.copy.headline,
-                  secondary: image.copy.secondary,
-                  cta: image.copy.cta,
-                  textPosition: 'center',
-                  textColor: '#FFFFFF',
-                  shadowIntensity: 0.65,
-                  tone: config.tone // Passa o tom para seleção de fonte
-                });
-                
-                return {
-                  ...image,
-                  composedUrl, // Final image with text
-                  baseUrl: image.url // Keep original for editing
-                };
-              } catch (error) {
-                console.error(`Error composing text on slide ${index + 1}:`, error);
-                return image; // Return original if composition fails
-              }
-            }
-            return image;
-          })
-        );
-        
-        data.carousel.images = composedImages;
-        console.log('✅ Text composition completed');
-      }
-      
       // Increment usage after successful generation
       await supabase.functions.invoke('check-limits', {
         body: { feature: 'carousels', increment: true }

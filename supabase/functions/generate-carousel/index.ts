@@ -331,51 +331,8 @@ CRITICAL:
 
       console.log(`✅ Generated image for slide ${i + 1} successfully`);
       
-      // Generate copy for this slide using LLM
-      console.log(`📝 Generating copy for slide ${i + 1}...`);
-      
-      let copy = { headline: '', secondary: '', cta: '' };
-      try {
-        const copyResponse = await fetch(`${supabaseUrl}/functions/v1/generate-carousel-copy`, {
-          method: 'POST',
-          headers: {
-            'Authorization': authHeader,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            slideNumber: i + 1,
-            totalSlides: imageCount,
-            content: slide.content,
-            theme: theme || 'modern',
-            tone: tone || 'professional',
-            isLastSlide: i === imageCount - 1,
-            callToAction: callToAction || ''
-          })
-        });
-
-        if (copyResponse.ok) {
-          copy = await copyResponse.json();
-          console.log(`✅ Copy generated for slide ${i + 1}:`, copy);
-        } else {
-          console.error(`Failed to generate copy for slide ${i + 1}`);
-          // Fallback copy
-          copy = {
-            headline: slide.content.substring(0, 80),
-            secondary: slide.content.substring(0, 150),
-            cta: i === imageCount - 1 ? (callToAction || '') : ''
-          };
-        }
-      } catch (error) {
-        console.error(`Error generating copy for slide ${i + 1}:`, error);
-        // Fallback copy
-        copy = {
-          headline: slide.content.substring(0, 80),
-          secondary: slide.content.substring(0, 150),
-          cta: i === imageCount - 1 ? (callToAction || '') : ''
-        };
-      }
-
-      images.push({ url: imageUrl, description, copy });
+      // Store only the base image without text
+      images.push({ url: imageUrl, description });
       
       // Add small delay between requests to avoid rate limiting
       if (i < imageCount - 1) {
