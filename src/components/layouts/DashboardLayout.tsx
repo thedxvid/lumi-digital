@@ -3,7 +3,6 @@ import { AnimatedDashboardSidebar } from '@/components/dashboard/AnimatedDashboa
 import { MobileHeader } from '@/components/dashboard/MobileHeader';
 import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { SupportButton } from '@/components/ui/support-button';
 import { cn } from '@/lib/utils';
 
 const DashboardLayout = () => {
@@ -33,9 +32,6 @@ const DashboardLayout = () => {
       
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
-      
-      {/* Support Button */}
-      <SupportButton variant="floating" />
     </>
   );
 };

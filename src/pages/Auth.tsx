@@ -5,7 +5,6 @@ import { useAuthErrors } from '@/hooks/useAuthErrors';
 import { SignInPage, Testimonial } from '@/components/ui/sign-in';
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { Button } from '@/components/ui/button';
-import { SupportButton } from '@/components/ui/support-button';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -228,9 +227,6 @@ const Auth = () => {
         emailError={emailError}
         passwordError={passwordError}
       />
-      
-      {/* Botão de Suporte Flutuante */}
-      <SupportButton variant="floating" />
     </div>
   );
 };
