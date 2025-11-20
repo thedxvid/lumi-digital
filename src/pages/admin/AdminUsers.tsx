@@ -522,6 +522,42 @@ const AdminUsers = () => {
     }
   };
 
+  const handleResendIndividualEmail = async (user: User) => {
+    if (!confirm(`Reenviar email de boas-vindas para ${user.full_name || user.email}?\n\nUma nova senha temporária será gerada e enviada.`)) {
+      return;
+    }
+
+    const loadingToast = sonnerToast.loading("Enviando email...", {
+      description: `Gerando credenciais para ${user.email}`
+    });
+
+    try {
+      const { error } = await supabase.functions.invoke('send-welcome-email', {
+        body: { 
+          email: user.email,
+          fullName: user.full_name || user.email.split('@')[0]
+        }
+      });
+
+      if (error) throw error;
+
+      sonnerToast.success("Email Enviado!", {
+        description: `Credenciais enviadas para ${user.email}`,
+        duration: 4000,
+        id: loadingToast
+      });
+
+      await fetchUsers();
+    } catch (error: any) {
+      console.error('Erro ao reenviar email individual:', error);
+      sonnerToast.error("Erro ao Enviar Email", {
+        description: error.message || "Não foi possível enviar o email",
+        duration: 5000,
+        id: loadingToast
+      });
+    }
+  };
+
   const handleResendWelcomeEmails = async () => {
     if (!confirm('⚠️ Isso irá reenviar emails de boas-vindas para os usuários que ainda não receberam. Novas senhas temporárias serão geradas. Deseja continuar?')) {
       return;
@@ -954,6 +990,10 @@ const AdminUsers = () => {
                     <DropdownMenuItem onClick={() => handleExtendSubscription(user.id, user.full_name)}>
                       <Calendar className="h-4 w-4 mr-2" />
                       Gerenciar Plano
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleResendIndividualEmail(user)}>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Reenviar Credenciais
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
