@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 // Gera uma senha temporária segura
@@ -162,7 +163,53 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log(`🚀 [resend-all-welcome-emails] Iniciando batch: offset=${offset}, batchSize=${batchSize}`);
 
-    // Criar cliente Supabase com service role
+    // Verificar autenticação com ANON KEY (para validar JWT)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Cliente com anon key para validar JWT do usuário
+    const supabaseAuth = createClient(
+      SUPABASE_URL!,
+      SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        },
+        global: {
+          headers: {
+            Authorization: authHeader
+          }
+        }
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+
+    if (authError || !user) {
+      console.error('❌ Erro de autenticação:', authError);
+      throw new Error('Unauthorized');
+    }
+
+    // Verificar se é admin usando anon key client
+    const { data: isAdmin, error: adminError } = await supabaseAuth
+      .rpc('has_role', { _user_id: user.id, _role: 'admin' });
+
+    if (adminError || !isAdmin) {
+      console.error('❌ Usuário não é admin:', user.id, adminError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Admin access required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('✅ Admin autorizado:', user.email);
+
+    // AGORA criar cliente com service role para operações admin
     const supabaseAdmin = createClient(
       SUPABASE_URL!,
       SUPABASE_SERVICE_ROLE_KEY!,
@@ -173,33 +220,6 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
     );
-
-    // Verificar autenticação
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
-
-    // Verificar se é admin
-    const { data: isAdmin, error: adminError } = await supabaseAdmin
-      .rpc('has_role', { _user_id: user.id, _role: 'admin' });
-
-    if (adminError || !isAdmin) {
-      console.error('❌ Usuário não é admin:', user.id);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('✅ Admin autorizado:', user.email);
 
     // Buscar TODOS os pedidos pagos (SEM filtro de credentials_sent)
     // Com paginação para processar em batches
