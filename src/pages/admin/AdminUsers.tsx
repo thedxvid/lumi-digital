@@ -749,12 +749,12 @@ const AdminUsers = () => {
             {isResendingAllEmails ? 'Reenviando...' : 'Reenviar para TODOS'}
           </Button>
           <Button
-            onClick={() => handleResendAllWelcomeEmails(60)}
+            onClick={() => handleResendAllWelcomeEmails(350)}
             disabled={isResendingAllEmails}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <Mail className="h-4 w-4 mr-2" />
-            Continuar do Email #61
+            Continuar do Email #351
           </Button>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
