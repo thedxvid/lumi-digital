@@ -49,15 +49,19 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    // Generate password recovery link using Supabase
-    // This method handles users that don't exist gracefully
+    // Generate password recovery link using Supabase Admin API
+    console.log("Generating recovery link for:", email);
+    
     const { data: recoveryData, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email,
     });
 
+    // Log the full error for debugging
     if (recoveryError) {
-      console.error("Error generating recovery link:", recoveryError);
+      console.error("Full error from generateLink:", JSON.stringify(recoveryError));
+      console.error("Error message:", recoveryError.message);
+      console.error("Error code:", recoveryError.code);
       
       // Always return success to prevent email enumeration attacks
       // Even if the email doesn't exist, we pretend it worked
@@ -76,12 +80,30 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Recovery link generated successfully");
+    if (!recoveryData || !recoveryData.properties) {
+      console.error("No recovery data returned");
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: "Se o email estiver cadastrado, você receberá um link de recuperação" 
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    console.log("Recovery link generated successfully for:", email);
 
     // Build the recovery URL with the generated token
-    // The token needs to be used with the auth confirmation endpoint
     const token = recoveryData.properties.hashed_token;
     const recoveryUrl = `https://applumi.com/reset-password?token=${token}&type=recovery`;
+    
+    console.log("Recovery URL created (token redacted)");
 
     // Send email via Resend with custom template
     const emailResponse = await resend.emails.send({
