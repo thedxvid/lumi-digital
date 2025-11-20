@@ -7,10 +7,20 @@ import { cn } from '@/lib/utils';
 interface SupportButtonProps {
   variant?: 'floating' | 'inline' | 'header';
   className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const SupportButton = ({ variant = 'floating', className }: SupportButtonProps) => {
-  const [open, setOpen] = useState(false);
+export const SupportButton = ({ 
+  variant = 'floating', 
+  className,
+  open: controlledOpen,
+  onOpenChange 
+}: SupportButtonProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   if (variant === 'floating') {
     return (
