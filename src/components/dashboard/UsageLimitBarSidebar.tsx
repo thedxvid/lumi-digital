@@ -47,7 +47,7 @@ export function UsageLimitBarSidebar() {
   const shouldShowUpgrade = features.some(f => (f.used / f.limit) * 100 >= 80);
 
   const handleUpgrade = () => {
-    navigate('/app/pricing');
+    navigate('/app/video-addons');
   };
 
   return (
