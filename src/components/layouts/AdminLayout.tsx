@@ -11,7 +11,8 @@ import {
   Lightbulb,
   Activity,
   Home,
-  Bot
+  Bot,
+  Upload
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -21,6 +22,7 @@ const AdminLayout = () => {
   const menuItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/admin' },
     { icon: Users, label: 'Usuários', path: '/admin/users' },
+    { icon: Upload, label: 'Importação', path: '/admin/bulk-import' },
     { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
     { icon: Bot, label: 'Agentes', path: '/admin/agents' },
     { icon: Activity, label: 'Atividades', path: '/admin/logs' },
