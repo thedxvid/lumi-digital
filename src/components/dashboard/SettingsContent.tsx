@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { NotificationSettings } from './NotificationSettings';
+import { PurchaseHistory } from './PurchaseHistory';
 
 export function SettingsContent() {
   const { user } = useAuth();
@@ -44,6 +44,9 @@ export function SettingsContent() {
 
       {/* Notificações - Componente completo */}
       <NotificationSettings />
+
+      {/* Histórico de Compras */}
+      <PurchaseHistory />
 
       {/* Aparência */}
       <Card>
