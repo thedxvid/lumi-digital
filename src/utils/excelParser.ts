@@ -53,13 +53,13 @@ export const parseExcelFile = async (file: File): Promise<ParsedData> => {
         jsonData.forEach((row: any) => {
           stats.total++;
 
-          const email = row['E-mail do cliente']?.toString().toLowerCase().trim() || '';
-          const name = row['Nome do cliente']?.toString().trim() || '';
+          const email = row['Email']?.toString().toLowerCase().trim() || '';
+          const name = row['Cliente']?.toString().trim() || '';
           const status = row['Status']?.toString().toLowerCase() || '';
           
           // Validar email
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(email)) {
+          if (!email || !emailRegex.test(email)) {
             invalidEmails.push(email || name || 'Email inválido');
             return;
           }
@@ -77,7 +77,7 @@ export const parseExcelFile = async (file: File): Promise<ParsedData> => {
           else if (status === 'waiting') stats.waiting++;
           else if (status === 'refunded') stats.refunded++;
 
-          const valueStr = row['Valor']?.toString().replace('R$', '').replace('.', '').replace(',', '.').trim() || '0';
+          const valueStr = row['Valor líquido']?.toString().replace('R$', '').replace('.', '').replace(',', '.').trim() || '0';
           
           users.push({
             saleId: row['ID da venda']?.toString() || '',
@@ -88,7 +88,7 @@ export const parseExcelFile = async (file: File): Promise<ParsedData> => {
             offer: row['Oferta']?.toString() || '',
             value: parseFloat(valueStr) || 0,
             installments: parseInt(row['Parcelas']?.toString() || '1'),
-            date: row['Data de criação'] ? new Date(row['Data de criação']) : new Date(),
+            date: row['Data de Criação'] ? new Date(row['Data de Criação']) : new Date(),
           });
         });
 
