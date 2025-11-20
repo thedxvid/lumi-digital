@@ -75,6 +75,7 @@ const AdminUsers = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [isResendingEmails, setIsResendingEmails] = useState(false);
+  const [isResendingAllEmails, setIsResendingAllEmails] = useState(false);
   const { toast } = useToast();
   
   // Email progress modal states
@@ -342,8 +343,113 @@ const AdminUsers = () => {
     };
   };
 
+  const handleResendAllWelcomeEmails = async () => {
+    if (!confirm('⚠️ ATENÇÃO: Isso irá reenviar emails de boas-vindas para TODOS OS USUÁRIOS (524 pessoas), mesmo os que já receberam. Novas senhas temporárias serão geradas para todos. Deseja continuar?')) {
+      return;
+    }
+
+    try {
+      // Resetar e abrir modal de progresso
+      setEmailProgress({
+        total: 0,
+        sent: 0,
+        failed: 0,
+        current: "",
+        errors: [],
+      });
+      setIsEmailComplete(false);
+      setIsResendingAllEmails(true);
+      setShowEmailProgress(true);
+
+      console.log('🚀 Iniciando reenvio TOTAL de emails...');
+
+      // Buscar TODOS os pedidos pagos (sem filtro de credentials_sent)
+      const { data: allOrders, error: countError } = await supabase
+        .from('orders')
+        .select('customer_email, customer_name')
+        .eq('order_status', 'paid')
+        .not('user_id', 'is', null);
+
+      if (countError) {
+        throw countError;
+      }
+
+      const totalToSend = allOrders?.length || 0;
+      
+      setEmailProgress(prev => ({
+        ...prev,
+        total: totalToSend
+      }));
+
+      console.log(`📊 Total de emails a enviar: ${totalToSend}`);
+
+      // Simular progresso (opcional, para melhor UX)
+      const progressInterval = setInterval(() => {
+        setEmailProgress(prev => {
+          if (prev.sent < prev.total - 1) {
+            return {
+              ...prev,
+              sent: prev.sent + 1,
+              current: `Enviando para usuário ${prev.sent + 1}/${prev.total}...`
+            };
+          }
+          return prev;
+        });
+      }, 2500);
+
+      // Chamar a NOVA edge function
+      const { data, error } = await supabase.functions.invoke('resend-all-welcome-emails', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
+
+      clearInterval(progressInterval);
+
+      if (error) throw error;
+
+      // Atualizar progresso com resultados reais
+      setEmailProgress({
+        total: data.results.total,
+        sent: data.results.success,
+        failed: data.results.failed,
+        current: "Concluído!",
+        errors: data.results.errors || []
+      });
+      setIsEmailComplete(true);
+
+      if (data.results.failed > 0) {
+        sonnerToast.warning("Envio Concluído com Avisos", {
+          description: `${data.results.success} emails enviados, ${data.results.failed} falharam`,
+          duration: 5000
+        });
+      } else {
+        sonnerToast.success("Emails Enviados!", {
+          description: `${data.results.success} emails enviados para todos os usuários`,
+          duration: 5000
+        });
+      }
+
+      await fetchUsers();
+
+    } catch (error: any) {
+      console.error('❌ Erro ao reenviar emails:', error);
+      setEmailProgress(prev => ({
+        ...prev,
+        current: `Erro: ${error.message}`,
+        errors: [...prev.errors, { email: 'Sistema', error: error.message }]
+      }));
+      sonnerToast.error("Erro ao Enviar Emails", {
+        description: error.message || "Ocorreu um erro. Tente novamente.",
+        duration: 5000
+      });
+    } finally {
+      setIsResendingAllEmails(false);
+    }
+  };
+
   const handleResendWelcomeEmails = async () => {
-    if (!confirm('⚠️ Isso irá reenviar emails de boas-vindas para TODOS os usuários que não receberam. Novas senhas temporárias serão geradas. Deseja continuar?')) {
+    if (!confirm('⚠️ Isso irá reenviar emails de boas-vindas para os usuários que ainda não receberam. Novas senhas temporárias serão geradas. Deseja continuar?')) {
       return;
     }
 
@@ -558,7 +664,15 @@ const AdminUsers = () => {
             disabled={isResendingEmails}
           >
             <Mail className="h-4 w-4 mr-2" />
-            {isResendingEmails ? 'Enviando...' : 'Reenviar Emails Pendentes'}
+            {isResendingEmails ? 'Enviando...' : 'Reenviar Pendentes'}
+          </Button>
+          <Button
+            onClick={handleResendAllWelcomeEmails}
+            disabled={isResendingAllEmails}
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            {isResendingAllEmails ? 'Reenviando...' : 'Reenviar para TODOS'}
           </Button>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -876,7 +990,7 @@ const AdminUsers = () => {
         onOpenChange={setShowEmailProgress}
         progress={emailProgress}
         isComplete={isEmailComplete}
-        isLoading={isResendingEmails}
+        isLoading={isResendingEmails || isResendingAllEmails}
       />
     </div>
   );
