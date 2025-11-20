@@ -21,71 +21,52 @@ export default function ResetPassword() {
   useEffect(() => {
     let mounted = true;
     
-    // Verificar se há parâmetros de recuperação na URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const searchParams = new URLSearchParams(window.location.search);
-    
-    const hasRecoveryToken = 
-      hashParams.get('type') === 'recovery' || 
-      searchParams.get('type') === 'recovery';
-
-    if (!hasRecoveryToken) {
-      toast.error('Link de recuperação inválido');
-      navigate('/auth');
-      return;
-    }
-
-    // Listener para mudanças na autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('🔐 Auth event:', event, 'Session:', !!session);
-        
-        if (!mounted) return;
-
-        if (event === 'PASSWORD_RECOVERY') {
-          setIsValidSession(true);
-          toast.success('Link válido! Redefina sua senha abaixo.');
-        } else if (event === 'SIGNED_IN' && session) {
-          setIsValidSession(true);
-        }
-      }
-    );
-
-    // Verificar sessão atual com um pequeno delay para permitir processamento
-    const checkSession = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
+    const verifyRecoveryToken = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const searchParams = new URLSearchParams(window.location.search);
       
-      if (!mounted) return;
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        setIsValidSession(true);
-      } else if (hasRecoveryToken) {
-        // Se tem token mas ainda não tem sessão, dar mais tempo
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        if (!mounted) return;
-        
-        const { data: { session: retrySession } } = await supabase.auth.getSession();
-        
-        if (retrySession) {
-          setIsValidSession(true);
-        } else {
-          toast.error('Link de recuperação expirado ou inválido');
-          navigate('/auth');
-        }
-      } else {
+      const token_hash = hashParams.get('token_hash') || searchParams.get('token_hash');
+      const type = hashParams.get('type') || searchParams.get('type');
+
+      console.log('🔐 Recovery params:', { has_token: !!token_hash, type });
+
+      if (!token_hash || type !== 'recovery') {
         toast.error('Link de recuperação inválido');
         navigate('/auth');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash,
+          type: 'recovery'
+        });
+
+        console.log('🔐 VerifyOtp result:', { success: !!data.session, error: error?.message });
+
+        if (error) {
+          toast.error('Link de recuperação expirado ou inválido');
+          setTimeout(() => navigate('/auth'), 2000);
+          return;
+        }
+
+        if (data.session && mounted) {
+          toast.success('Link válido! Redefina sua senha abaixo.');
+          setIsValidSession(true);
+        }
+      } catch (error) {
+        console.error('Error verifying recovery token:', error);
+        if (mounted) {
+          toast.error('Erro ao verificar link de recuperação');
+          navigate('/auth');
+        }
       }
     };
 
-    checkSession();
+    verifyRecoveryToken();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
   }, [navigate]);
 
