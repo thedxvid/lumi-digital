@@ -31,8 +31,9 @@ export default function ResetPassword() {
       console.log('🔐 Recovery params:', { has_token: !!token_hash, type });
 
       if (!token_hash || type !== 'recovery') {
-        toast.error('Link de recuperação inválido');
-        navigate('/auth');
+        console.error('🔐 Missing recovery params - redirecting to forgot password');
+        toast.error('Link de recuperação inválido. Solicite um novo link.');
+        navigate('/forgot-password');
         return;
       }
 
@@ -44,11 +45,12 @@ export default function ResetPassword() {
 
         console.log('🔐 VerifyOtp result:', { success: !!data.session, error: error?.message });
 
-        if (error) {
-          toast.error('Link de recuperação expirado ou inválido');
-          setTimeout(() => navigate('/auth'), 2000);
-          return;
-        }
+      if (error) {
+        console.error('🔐 VerifyOtp error:', error);
+        toast.error('Link de recuperação expirado ou inválido. Solicite um novo link.');
+        setTimeout(() => navigate('/forgot-password'), 3000);
+        return;
+      }
 
         if (data.session && mounted) {
           toast.success('Link válido! Redefina sua senha abaixo.');
@@ -118,7 +120,10 @@ export default function ResetPassword() {
         throw error;
       }
 
-      toast.success('Senha alterada com sucesso! 🎉');
+      toast.success('Senha alterada com sucesso! 🎉 Redirecionando para o login...');
+      
+      // Fazer logout para forçar novo login com a nova senha
+      await supabase.auth.signOut();
       
       // Redireciona para a página de autenticação após 2 segundos
       setTimeout(() => {

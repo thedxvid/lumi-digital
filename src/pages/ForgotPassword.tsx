@@ -32,19 +32,14 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-password-recovery', {
-        body: { email }
+      // Usar o método nativo do Supabase para recuperação de senha
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
       });
 
       if (error) {
-        console.error('Error calling edge function:', error);
-        toast.error('Erro ao enviar email de recuperação');
-        throw error;
-      }
-
-      // Check for specific errors from the edge function
-      if (data?.error) {
-        toast.error(data.error);
+        console.error('Password recovery error:', error);
+        toast.error(translateError(error));
         return;
       }
 
