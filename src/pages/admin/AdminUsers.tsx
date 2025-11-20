@@ -343,12 +343,37 @@ const AdminUsers = () => {
     };
   };
 
-  const handleResendAllWelcomeEmails = async () => {
-    if (!confirm('⚠️ ATENÇÃO: Isso irá reenviar emails de boas-vindas para TODOS OS USUÁRIOS, mesmo os que já receberam. Novas senhas temporárias serão geradas para todos. Deseja continuar?')) {
-      return;
-    }
-
+  const handleResendAllWelcomeEmails = async (customOffset = 0) => {
     try {
+      // Buscar total atual de pedidos
+      const { count: currentCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('order_status', 'paid')
+        .not('user_id', 'is', null);
+
+      const currentTotal = currentCount || 0;
+
+      // Se passou offset customizado, mostrar aviso detalhado
+      if (customOffset > 0) {
+        const remaining = currentTotal - customOffset;
+        
+        if (!confirm(
+          `⚠️ CONTINUANDO ENVIO\n\n` +
+          `📊 Total de pedidos pagos AGORA: ${currentTotal}\n` +
+          `✅ Você informou que ${customOffset} já foram enviados\n` +
+          `📬 Faltam ${remaining} emails\n\n` +
+          `⚠️ O sistema vai começar do email #${customOffset + 1}.\n` +
+          `Isso está correto?`
+        )) {
+          return;
+        }
+      } else {
+        if (!confirm('⚠️ ATENÇÃO: Isso irá reenviar emails de boas-vindas para TODOS OS USUÁRIOS, mesmo os que já receberam. Novas senhas temporárias serão geradas para todos. Deseja continuar?')) {
+          return;
+        }
+      }
+
       // Resetar e abrir modal de progresso
       setEmailProgress({
         total: 0,
@@ -362,15 +387,8 @@ const AdminUsers = () => {
       setShowEmailProgress(true);
 
       console.log('🚀 Iniciando reenvio TOTAL de emails em batches...');
-
-      // Buscar total de pedidos para mostrar progresso correto
-      const { count: totalCount } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('order_status', 'paid')
-        .not('user_id', 'is', null);
-
-      const totalToSend = totalCount || 0;
+      
+      const totalToSend = currentTotal;
       
       setEmailProgress(prev => ({
         ...prev,
@@ -378,19 +396,24 @@ const AdminUsers = () => {
       }));
 
       console.log(`📊 Total de emails a enviar: ${totalToSend}`);
+      if (customOffset > 0) {
+        console.log(`🔄 RESUMINDO DO EMAIL #${customOffset + 1}`);
+        console.log(`📬 Faltam ${totalToSend - customOffset} emails para enviar`);
+      }
 
       // Processar em batches de 50 emails
       const BATCH_SIZE = 50;
-      let offset = 0;
+      let offset = customOffset;
       let totalSent = 0;
       let totalFailed = 0;
       const allErrors: Array<{ email: string; error: string }> = [];
 
       while (offset < totalToSend) {
-        const batchNumber = Math.floor(offset / BATCH_SIZE) + 1;
-        const totalBatches = Math.ceil(totalToSend / BATCH_SIZE);
+        const batchNumber = Math.floor((offset - customOffset) / BATCH_SIZE) + 1;
+        const remainingEmails = totalToSend - customOffset;
+        const totalBatches = Math.ceil(remainingEmails / BATCH_SIZE);
         
-        console.log(`📦 Processando batch ${batchNumber}/${totalBatches} (offset: ${offset})`);
+        console.log(`📦 Processando batch ${batchNumber}/${totalBatches} (offset: ${offset}, já enviados: ${customOffset})`);
         
         setEmailProgress(prev => ({
           ...prev,
@@ -718,12 +741,20 @@ const AdminUsers = () => {
             {isResendingEmails ? 'Enviando...' : 'Reenviar Pendentes'}
           </Button>
           <Button
-            onClick={handleResendAllWelcomeEmails}
+            onClick={() => handleResendAllWelcomeEmails(0)}
             disabled={isResendingAllEmails}
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Mail className="h-4 w-4 mr-2" />
             {isResendingAllEmails ? 'Reenviando...' : 'Reenviar para TODOS'}
+          </Button>
+          <Button
+            onClick={() => handleResendAllWelcomeEmails(60)}
+            disabled={isResendingAllEmails}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            Continuar do Email #61
           </Button>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
