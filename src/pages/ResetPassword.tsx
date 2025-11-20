@@ -21,51 +21,54 @@ export default function ResetPassword() {
   useEffect(() => {
     let mounted = true;
     
-    const verifyRecoveryToken = async () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const searchParams = new URLSearchParams(window.location.search);
-      
-      const token_hash = hashParams.get('token_hash') || searchParams.get('token_hash');
-      const type = hashParams.get('type') || searchParams.get('type');
-
-      console.log('🔐 Recovery params:', { has_token: !!token_hash, type });
-
-      if (!token_hash || type !== 'recovery') {
-        console.error('🔐 Missing recovery params - redirecting to forgot password');
-        toast.error('Link de recuperação inválido. Solicite um novo link.');
-        navigate('/forgot-password');
-        return;
-      }
+    const checkRecoverySession = async () => {
+      // O Supabase já valida o token no endpoint /verify e estabelece uma sessão
+      // Aqui apenas verificamos se há uma sessão ativa após o redirect
+      console.log('🔐 Checking recovery session...', {
+        url: window.location.href,
+        hash: window.location.hash,
+        search: window.location.search
+      });
 
       try {
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash,
-          type: 'recovery'
+        // Verificar se há uma sessão ativa
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        console.log('🔐 Session check:', { 
+          hasSession: !!session, 
+          userId: session?.user?.id,
+          error: error?.message 
         });
 
-        console.log('🔐 VerifyOtp result:', { success: !!data.session, error: error?.message });
+        if (error) {
+          console.error('🔐 Session error:', error);
+          toast.error('Erro ao verificar sessão. Solicite um novo link de recuperação.');
+          setTimeout(() => navigate('/forgot-password'), 2000);
+          return;
+        }
 
-      if (error) {
-        console.error('🔐 VerifyOtp error:', error);
-        toast.error('Link de recuperação expirado ou inválido. Solicite um novo link.');
-        setTimeout(() => navigate('/forgot-password'), 3000);
-        return;
-      }
+        if (!session) {
+          console.error('🔐 No active session - token may be invalid or expired');
+          toast.error('Link de recuperação inválido ou expirado. Solicite um novo link.');
+          setTimeout(() => navigate('/forgot-password'), 2000);
+          return;
+        }
 
-        if (data.session && mounted) {
+        if (mounted) {
+          console.log('🔐 Valid recovery session found - user can reset password');
           toast.success('Link válido! Redefina sua senha abaixo.');
           setIsValidSession(true);
         }
       } catch (error) {
-        console.error('Error verifying recovery token:', error);
+        console.error('🔐 Error checking recovery session:', error);
         if (mounted) {
           toast.error('Erro ao verificar link de recuperação');
-          navigate('/auth');
+          navigate('/forgot-password');
         }
       }
     };
 
-    verifyRecoveryToken();
+    checkRecoverySession();
 
     return () => {
       mounted = false;
