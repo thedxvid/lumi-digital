@@ -9,6 +9,7 @@ import { FAQSection } from '@/components/ui/faq-section';
 import { AnimatedCard } from '@/components/ui/animated-card';
 import { LumiLogo } from '@/components/ui/lumi-logo';
 import { FallingPattern } from '@/components/ui/falling-pattern';
+import { SupportButton } from '@/components/ui/support-button';
 import { useNavigate } from 'react-router-dom';
 import { useScrollHeader } from '@/hooks/useScrollHeader';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -22,6 +23,7 @@ const LandingPage = () => {
     seconds: 14
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
 
   // Timer countdown
   useEffect(() => {
@@ -587,7 +589,12 @@ const LandingPage = () => {
               <a href="#" className="hover:text-foreground transition-colors">Termos de Uso</a>
               <a href="#" className="hover:text-foreground transition-colors">Política de Privacidade</a>
               <a href="#" className="hover:text-foreground transition-colors">Contato</a>
-              <a href="#" className="hover:text-foreground transition-colors">Suporte</a>
+              <button 
+                onClick={() => setSupportModalOpen(true)} 
+                className="hover:text-foreground transition-colors"
+              >
+                Suporte
+              </button>
             </div>
           </div>
           
@@ -598,6 +605,11 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
+      
+      {/* Support Button - Only show on landing page when not on mobile */}
+      <div className="hidden md:block">
+        <SupportButton variant="floating" />
+      </div>
     </div>;
 };
 export default LandingPage;
