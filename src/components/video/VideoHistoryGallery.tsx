@@ -60,18 +60,16 @@ const VideoCard = ({ item, onDelete, onToggleFavorite, onViewFullscreen }: {
     }
   };
 
-  const handleDownload = async (url: string, id: string) => {
+  const handleDownload = (url: string, id: string) => {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = `video-${id}.mp4`;
+      a.href = url;
+      a.download = `lumi-video-${id}.mp4`;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Error downloading video:', error);
     }
