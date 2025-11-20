@@ -22,8 +22,6 @@ export default function ResetPassword() {
     let mounted = true;
     
     const checkRecoverySession = async () => {
-      // O Supabase já valida o token no endpoint /verify e estabelece uma sessão
-      // Aqui apenas verificamos se há uma sessão ativa após o redirect
       console.log('🔐 Checking recovery session...', {
         url: window.location.href,
         hash: window.location.hash,
@@ -31,24 +29,41 @@ export default function ResetPassword() {
       });
 
       try {
-        // Verificar se há uma sessão ativa
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Tentar múltiplas vezes pois a sessão pode levar alguns ms para estabelecer após o redirect
+        let session = null;
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        while (attempts < maxAttempts && !session && mounted) {
+          const { data, error } = await supabase.auth.getSession();
+          
+          console.log(`🔐 Session check attempt ${attempts + 1}/${maxAttempts}:`, { 
+            hasSession: !!data.session, 
+            userId: data.session?.user?.id,
+            error: error?.message 
+          });
 
-        console.log('🔐 Session check:', { 
-          hasSession: !!session, 
-          userId: session?.user?.id,
-          error: error?.message 
-        });
+          if (error) {
+            console.error('🔐 Session error:', error);
+            toast.error('Erro ao verificar sessão. Solicite um novo link de recuperação.');
+            setTimeout(() => navigate('/forgot-password'), 2000);
+            return;
+          }
 
-        if (error) {
-          console.error('🔐 Session error:', error);
-          toast.error('Erro ao verificar sessão. Solicite um novo link de recuperação.');
-          setTimeout(() => navigate('/forgot-password'), 2000);
-          return;
+          if (data.session) {
+            session = data.session;
+            break;
+          }
+
+          attempts++;
+          if (attempts < maxAttempts) {
+            // Aguardar 500ms antes de tentar novamente
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
 
         if (!session) {
-          console.error('🔐 No active session - token may be invalid or expired');
+          console.error('🔐 No active session after all retries - token may be invalid or expired');
           toast.error('Link de recuperação inválido ou expirado. Solicite um novo link.');
           setTimeout(() => navigate('/forgot-password'), 2000);
           return;
