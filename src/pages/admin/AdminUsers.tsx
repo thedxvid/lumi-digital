@@ -246,10 +246,11 @@ const AdminUsers = () => {
   };
 
   const handleBulkActivate = async () => {
+    console.log('🎯 handleBulkActivate chamado. Usuários selecionados:', selectedUsers);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ access_granted: true })
+        .update({ access_granted: true, subscription_status: 'active' })
         .in('id', selectedUsers);
 
       if (error) throw error;
@@ -258,15 +259,17 @@ const AdminUsers = () => {
       setSelectedUsers([]);
       fetchUsers();
     } catch (error) {
+      console.error('❌ Erro ao ativar usuários:', error);
       toast({ title: 'Erro', description: 'Erro ao ativar usuários', variant: 'destructive' });
     }
   };
 
   const handleBulkDeactivate = async () => {
+    console.log('🎯 handleBulkDeactivate chamado. Usuários selecionados:', selectedUsers);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ access_granted: false })
+        .update({ access_granted: false, subscription_status: 'inactive' })
         .in('id', selectedUsers);
 
       if (error) throw error;
@@ -275,6 +278,7 @@ const AdminUsers = () => {
       setSelectedUsers([]);
       fetchUsers();
     } catch (error) {
+      console.error('❌ Erro ao desativar usuários:', error);
       toast({ title: 'Erro', description: 'Erro ao desativar usuários', variant: 'destructive' });
     }
   };

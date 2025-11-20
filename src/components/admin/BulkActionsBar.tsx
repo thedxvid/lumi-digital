@@ -47,7 +47,10 @@ export const BulkActionsBar = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onActivate}
+              onClick={() => {
+                console.log('🔵 Botão Ativar clicado');
+                onActivate();
+              }}
               className="h-8"
             >
               <UserCheck className="h-4 w-4 mr-2" />
@@ -56,7 +59,10 @@ export const BulkActionsBar = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onDeactivate}
+              onClick={() => {
+                console.log('🔴 Botão Desativar clicado');
+                onDeactivate();
+              }}
               className="h-8"
             >
               <UserX className="h-4 w-4 mr-2" />
