@@ -37,33 +37,26 @@ export const VideoResultModal = ({
   const isGenerating = generationStatus === 'generating';
   const isReady = generationStatus === 'ready';
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!videoUrl) return;
     
     setDownloading(true);
     try {
-      // Try to fetch and download
-      const response = await fetch(videoUrl, { mode: 'cors' });
-      if (!response.ok) throw new Error('Failed to fetch video');
-      
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = downloadUrl;
+      a.href = videoUrl;
       a.download = `lumi-video-${Date.now()}.mp4`;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.URL.revokeObjectURL(downloadUrl);
       
-      toast.success('Vídeo baixado com sucesso!');
+      toast.success('Download iniciado!');
     } catch (error) {
       console.error('Error downloading video:', error);
-      // Fallback: open in new tab
-      toast.info('Abrindo vídeo em nova aba para download...');
-      window.open(videoUrl, '_blank');
+      toast.error('Erro ao baixar vídeo. Tente abrir em nova aba.');
     } finally {
-      setDownloading(false);
+      setTimeout(() => setDownloading(false), 1000);
     }
   };
 
