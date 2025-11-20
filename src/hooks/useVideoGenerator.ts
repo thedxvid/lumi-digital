@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 import type { VideoHistoryItem, VideoConfig } from '@/types/video';
 import { getVideoGenerationEstimate, type TimeEstimate } from '@/utils/videoTimeEstimator';
@@ -18,6 +19,7 @@ export const useVideoGenerator = () => {
   const [preloadedVideo, setPreloadedVideo] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const videoPreloadRef = useRef<HTMLVideoElement | null>(null);
+  const { logActivity } = useActivity();
 
   useEffect(() => {
     loadHistory();
@@ -250,6 +252,9 @@ export const useVideoGenerator = () => {
           if (limitError) {
             console.error('Error incrementing usage:', limitError);
           }
+          
+          // Log activity
+          await logActivity('result');
           
           // Trigger a custom event to refresh usage limits across components
           window.dispatchEvent(new CustomEvent('usage-limits-updated'));

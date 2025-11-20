@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 import type { ProfileAnalysisInput, ProfileAnalysisOutput, SavedProfileAnalysis } from '@/types/profile';
 
@@ -10,6 +11,7 @@ export function useProfileAnalysis() {
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [currentResult, setCurrentResult] = useState<ProfileAnalysisOutput | null>(null);
   const { session } = useAuth();
+  const { logActivity } = useActivity();
 
   const analyzeProfile = async (input: ProfileAnalysisInput) => {
     if (!session?.access_token) {
@@ -97,6 +99,10 @@ export function useProfileAnalysis() {
 
       if (error) throw error;
       console.log('✅ Salvo no histórico');
+      
+      // Log activity
+      await logActivity('result');
+      
       await loadHistory();
     } catch (error) {
       console.error('❌ Erro ao salvar no histórico:', error);

@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 
 export function useSalesModules() {
   const [loading, setLoading] = useState(false);
   const { session } = useAuth();
+  const { logActivity } = useActivity();
 
   const callModule = async (module: string, data: any) => {
     if (!session?.access_token) {
@@ -77,6 +79,8 @@ export function useSalesModules() {
         console.error('Error auto-saving result:', error);
       } else {
         console.log('Result auto-saved successfully');
+        // Log activity after successful save
+        await logActivity('result');
       }
     } catch (error) {
       console.error('Error in auto-save:', error);

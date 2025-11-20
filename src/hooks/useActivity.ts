@@ -53,7 +53,11 @@ export function useActivity() {
         .single();
 
       const updates: any = {};
-      const currentModulesUsed = Array.isArray(existing?.modules_used) ? existing.modules_used.length : (existing?.modules_used || 0);
+      
+      // Garantir que modules_used seja sempre tratado como número
+      const currentModulesUsed = typeof existing?.modules_used === 'number' 
+        ? existing.modules_used 
+        : 0;
       
       if (activityType === 'module') {
         updates.modules_used = currentModulesUsed + 1;
@@ -62,19 +66,17 @@ export function useActivity() {
       } else if (activityType === 'result') {
         updates.results_generated = (existing?.results_generated || 0) + 1;
       }
-
-      const existingModulesUsed = Array.isArray(existing?.modules_used) ? existing.modules_used.length : (existing?.modules_used || 0);
       
       const { error } = await supabase
         .from('user_activity_log')
         .upsert({
           user_id: session?.user?.id,
           activity_date: today,
-          modules_used: existingModulesUsed,
-          chats_started: existing?.chats_started || 0,
-          results_generated: existing?.results_generated || 0,
+          action: activityType,
+          modules_used: updates.modules_used || currentModulesUsed,
+          chats_started: updates.chats_started || (existing?.chats_started || 0),
+          results_generated: updates.results_generated || (existing?.results_generated || 0),
           time_spent_minutes: existing?.time_spent_minutes || 0,
-          ...updates
         });
 
       if (error) throw error;
