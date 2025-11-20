@@ -712,12 +712,12 @@ const AdminUsers = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="mb-6">
+        <div className="mb-4">
           <h1 className="text-3xl font-bold text-foreground">Gerenciar Usuários</h1>
           <p className="text-muted-foreground">Controle completo de usuários e assinaturas</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button 
             variant="outline" 
             onClick={handleExport}
@@ -747,14 +747,6 @@ const AdminUsers = () => {
           >
             <Mail className="h-4 w-4 mr-2" />
             {isResendingAllEmails ? 'Reenviando...' : 'Reenviar para TODOS'}
-          </Button>
-          <Button
-            onClick={() => handleResendAllWelcomeEmails(350)}
-            disabled={isResendingAllEmails}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Mail className="h-4 w-4 mr-2" />
-            Continuar do Email #351
           </Button>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
