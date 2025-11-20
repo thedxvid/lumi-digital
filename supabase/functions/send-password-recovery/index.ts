@@ -55,6 +55,9 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: recoveryData, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email,
+      options: {
+        redirectTo: 'https://applumi.com/reset-password'
+      }
     });
 
     // Log the full error for debugging
@@ -80,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!recoveryData || !recoveryData.properties) {
+    if (!recoveryData || !recoveryData.properties || !recoveryData.properties.action_link) {
       console.error("No recovery data returned");
       return new Response(
         JSON.stringify({ 
@@ -99,9 +102,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Recovery link generated successfully for:", email);
 
-    // Build the recovery URL with the generated token
-    const token_hash = recoveryData.properties.hashed_token;
-    const recoveryUrl = `https://applumi.com/reset-password?token_hash=${token_hash}&type=recovery`;
+    // Use the action_link directly from Supabase
+    const recoveryUrl = recoveryData.properties.action_link;
     
     console.log("Recovery URL created (token redacted)");
 
