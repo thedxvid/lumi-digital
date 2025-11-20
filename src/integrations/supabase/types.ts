@@ -523,11 +523,11 @@ export type Database = {
           installments_number: number | null
           kiwify_order_ref: string | null
           order_status: string | null
-          order_value: number
+          order_value: number | null
           order_value_formatted: string | null
           payment_method: string | null
           product_id: string | null
-          product_name: string
+          product_name: string | null
           product_type: string | null
           status: string | null
           transaction_id: string | null
@@ -547,11 +547,11 @@ export type Database = {
           installments_number?: number | null
           kiwify_order_ref?: string | null
           order_status?: string | null
-          order_value: number
+          order_value?: number | null
           order_value_formatted?: string | null
           payment_method?: string | null
           product_id?: string | null
-          product_name: string
+          product_name?: string | null
           product_type?: string | null
           status?: string | null
           transaction_id?: string | null
@@ -571,11 +571,11 @@ export type Database = {
           installments_number?: number | null
           kiwify_order_ref?: string | null
           order_status?: string | null
-          order_value?: number
+          order_value?: number | null
           order_value_formatted?: string | null
           payment_method?: string | null
           product_id?: string | null
-          product_name?: string
+          product_name?: string | null
           product_type?: string | null
           status?: string | null
           transaction_id?: string | null

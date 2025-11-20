@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -40,19 +39,16 @@ interface KiwifyWebhookPayload {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Set webhook context for RLS policies
     await supabaseClient.rpc('set_config', {
       setting_name: 'app.webhook_context',
       new_value: 'kiwify_webhook',
@@ -61,6 +57,7 @@ serve(async (req) => {
 
     const payload: KiwifyWebhookPayload = await req.json();
     
+    console.log('📦 Payload completo recebido:', JSON.stringify(payload, null, 2));
     console.log('Kiwify webhook received:', {
       order_id: payload.order_id,
       order_status: payload.order_status,
@@ -68,7 +65,6 @@ serve(async (req) => {
       product_name: payload.product_name
     });
 
-    // Process different webhook events
     switch (payload.order_status) {
       case 'paid':
         await handlePaidOrder(payload, supabaseClient);
@@ -90,20 +86,14 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, message: 'Webhook processed successfully' }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
     console.error('Error processing Kiwify webhook:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
@@ -119,7 +109,6 @@ function generateSecurePassword(): string {
 
 async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
   try {
-    // Set webhook context for RLS policies
     await supabase.rpc('set_config', {
       setting_name: 'app.webhook_context',
       new_value: 'kiwify_webhook',
@@ -128,7 +117,6 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
 
     console.log(`Verificando usuário: ${payload.Customer.email}`);
     
-    // Check if user already exists using listUsers
     const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
     const existingUser = users?.find((u: any) => u.email === payload.Customer.email);
     
@@ -138,101 +126,128 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
     let password = '';
     let isNewUser = false;
     
-    if (!userId) {
-      // Generate secure password
-      password = generateSecurePassword();
-      isNewUser = true;
-      
-      // Create new user
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email: payload.Customer.email,
-        password: password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: `${payload.Customer.first_name} ${payload.Customer.last_name}`.trim(),
-          first_name: payload.Customer.first_name,
-          last_name: payload.Customer.last_name,
-          mobile: payload.Customer.mobile,
-          source: 'kiwify_purchase'
-        }
-      });
+    try {
+      if (!userId) {
+        password = generateSecurePassword();
+        isNewUser = true;
+        
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: payload.Customer.email,
+          password: password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
+            first_name: payload.Customer.first_name || '',
+            last_name: payload.Customer.last_name || '',
+            mobile: payload.Customer.mobile || '',
+            source: 'kiwify_purchase'
+          }
+        });
 
-      if (createError) {
-        console.error('Error creating user:', createError);
-        throw createError;
+        if (createError) {
+          console.error('Error creating user:', createError);
+          throw createError;
+        }
+        
+        userId = newUser.user.id;
+        console.log(`New user created: ${userId} for email: ${payload.Customer.email}`);
+      } else {
+        console.log(`Existing user found: ${userId} for email: ${payload.Customer.email}`);
       }
       
-      userId = newUser.user.id;
-      console.log(`New user created: ${userId} for email: ${payload.Customer.email}`);
-    } else {
-      console.log(`Existing user found: ${userId} for email: ${payload.Customer.email}`);
+      console.log('✅ Usuário processado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao processar usuário:', error);
+      throw error;
     }
 
-    // Grant user role
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .upsert({
-        user_id: userId,
-        role: 'user',
-        granted_at: new Date().toISOString()
-      });
+    try {
+      console.log('👤 Concedendo role de usuário...');
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: 'user'
+        });
 
-    if (roleError) {
-      console.error('Error granting user role:', roleError);
+      if (roleError) {
+        console.error('Error granting user role:', roleError);
+        throw roleError;
+      }
+      
+      console.log('✅ Role concedida com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao conceder role:', error);
+      throw error;
     }
 
-    // Update profile with access granted
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        full_name: `${payload.Customer.first_name} ${payload.Customer.last_name}`.trim(),
-        access_granted: true,
-        subscription_status: 'active'
-      });
+    try {
+      console.log('📝 Atualizando perfil...');
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          full_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
+          access_granted: true,
+          subscription_status: 'active'
+        });
 
-    if (profileError) {
-      console.error('Error updating profile:', profileError);
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        throw profileError;
+      }
+      
+      console.log('✅ Perfil atualizado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao atualizar perfil:', error);
+      throw error;
     }
 
-    // Save order information
-    const { error: orderError } = await supabase
-      .from('orders')
-      .upsert({
-        id: payload.order_id,
-        user_id: userId,
-        kiwify_order_ref: payload.order_ref,
-        product_id: payload.product_id,
-        product_name: payload.product_name,
-        product_type: payload.product_type,
-        order_status: payload.order_status,
-        payment_method: payload.payment_method,
-        installments_number: payload.installments_number,
-        installment_value: payload.installment_value,
-        order_value: payload.order_value,
-        order_value_formatted: payload.order_value_formatted,
-        customer_email: payload.Customer.email,
-        customer_name: `${payload.Customer.first_name} ${payload.Customer.last_name}`.trim(),
-        customer_mobile: payload.Customer.mobile,
-        created_at: payload.created_at,
-        updated_at: payload.updated_at,
-        webhook_data: payload,
-        access_granted: true,
-        credentials_sent: false
-      });
+    try {
+      console.log('💾 Salvando pedido...');
+      const { error: orderError } = await supabase
+        .from('orders')
+        .upsert({
+          id: payload.order_id,
+          user_id: userId,
+          kiwify_order_ref: payload.order_ref || null,
+          product_id: payload.product_id || null,
+          product_name: payload.product_name || 'Produto não informado',
+          product_type: payload.product_type || null,
+          order_status: payload.order_status,
+          payment_method: payload.payment_method || null,
+          installments_number: payload.installments_number || 1,
+          installment_value: payload.installment_value || 0,
+          order_value: payload.order_value || 0,
+          order_value_formatted: payload.order_value_formatted || 'R$ 0,00',
+          customer_email: payload.Customer.email,
+          customer_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
+          customer_mobile: payload.Customer.mobile || null,
+          created_at: payload.created_at,
+          updated_at: payload.updated_at,
+          webhook_data: payload,
+          access_granted: true,
+          credentials_sent: false
+        });
 
-    if (orderError) {
-      console.error('Error saving order:', orderError);
-      throw orderError;
+      if (orderError) {
+        console.error('Error saving order:', orderError);
+        throw orderError;
+      }
+      
+      console.log('✅ Pedido salvo com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao salvar pedido:', error);
+      throw error;
     }
 
-    // Send welcome email with credentials (only for new users)
-    if (isNewUser && password) {
-      try {
+    try {
+      console.log('📧 Enviando email de boas-vindas...');
+      if (isNewUser && password) {
         const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
           body: {
             email: payload.Customer.email,
-            fullName: `${payload.Customer.first_name} ${payload.Customer.last_name}`.trim(),
+            fullName: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Cliente',
             password: password
           }
         });
@@ -240,33 +255,28 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         if (emailError) {
           console.error('Error sending welcome email:', emailError);
         } else {
-          // Mark credentials as sent
+          console.log('✅ Email enviado com sucesso');
           await supabase
             .from('orders')
             .update({ credentials_sent: true })
             .eq('id', payload.order_id);
-          
-          console.log(`Welcome email sent to: ${payload.Customer.email}`);
         }
-      } catch (emailError) {
-        console.error('Error in email sending process:', emailError);
       }
+    } catch (error) {
+      console.error('⚠️ Falha ao enviar email (não crítico):', error);
     }
 
-    // Log activity
-    await supabase.rpc('log_activity', {
-      _action: 'purchase_completed',
-      _details: {
-        order_id: payload.order_id,
-        product_name: payload.product_name,
-        order_value: payload.order_value,
-        customer_email: payload.Customer.email,
-        new_user: isNewUser
-      },
-      _user_id: userId
-    });
-
-    console.log(`Access granted to user ${userId} for order ${payload.order_id}`);
+    await supabase
+      .from('activity_logs')
+      .insert({
+        user_id: userId,
+        action: 'purchase_completed',
+        details: {
+          order_id: payload.order_id,
+          product_name: payload.product_name || 'Produto não informado',
+          order_value: payload.order_value || 0
+        }
+      });
 
   } catch (error) {
     console.error('Error handling paid order:', error);
@@ -275,135 +285,115 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
 }
 
 async function handlePendingOrder(payload: KiwifyWebhookPayload, supabase: any) {
-  // Set webhook context for RLS policies
-  await supabase.rpc('set_config', {
-    setting_name: 'app.webhook_context',
-    new_value: 'kiwify_webhook',
-    is_local: true
-  });
+  try {
+    console.log('💾 Salvando pedido pendente...');
+    
+    const { error: orderError } = await supabase
+      .from('orders')
+      .upsert({
+        id: payload.order_id,
+        user_id: null,
+        kiwify_order_ref: payload.order_ref || null,
+        product_id: payload.product_id || null,
+        product_name: payload.product_name || 'Produto não informado',
+        product_type: payload.product_type || null,
+        order_status: payload.order_status,
+        payment_method: payload.payment_method || null,
+        installments_number: payload.installments_number || 1,
+        installment_value: payload.installment_value || 0,
+        order_value: payload.order_value || 0,
+        order_value_formatted: payload.order_value_formatted || 'R$ 0,00',
+        customer_email: payload.Customer.email,
+        customer_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
+        customer_mobile: payload.Customer.mobile || null,
+        created_at: payload.created_at,
+        updated_at: payload.updated_at,
+        webhook_data: payload,
+        access_granted: false,
+        credentials_sent: false
+      });
 
-  // Save pending order without creating user account
-  const { error } = await supabase
-    .from('orders')
-    .upsert({
-      id: payload.order_id,
-      kiwify_order_ref: payload.order_ref,
-      product_id: payload.product_id,
-      product_name: payload.product_name,
-      order_status: payload.order_status,
-      payment_method: payload.payment_method,
-      installments_number: payload.installments_number,
-      installment_value: payload.installment_value,
-      order_value: payload.order_value,
-      order_value_formatted: payload.order_value_formatted,
-      customer_email: payload.Customer.email,
-      customer_name: `${payload.Customer.first_name} ${payload.Customer.last_name}`.trim(),
-      customer_mobile: payload.Customer.mobile,
-      created_at: payload.created_at,
-      updated_at: payload.updated_at,
-      webhook_data: payload,
-      access_granted: false,
-      credentials_sent: false
-    });
-
-  if (error) {
-    console.error('Error saving pending order:', error);
+    if (orderError) {
+      console.error('Error saving pending order:', orderError);
+      throw orderError;
+    }
+    
+    console.log('✅ Pedido pendente salvo com sucesso');
+  } catch (error) {
+    console.error('❌ Erro ao salvar pedido pendente:', error);
     throw error;
   }
-
-  console.log(`Pending order saved: ${payload.order_id}`);
 }
 
 async function handleCancelledOrder(payload: KiwifyWebhookPayload, supabase: any) {
-  // Set webhook context for RLS policies
-  await supabase.rpc('set_config', {
-    setting_name: 'app.webhook_context',
-    new_value: 'kiwify_webhook',
-    is_local: true
-  });
+  try {
+    const { error: orderError } = await supabase
+      .from('orders')
+      .update({
+        order_status: payload.order_status,
+        updated_at: payload.updated_at
+      })
+      .eq('id', payload.order_id);
 
-  // Update order status
-  const { error } = await supabase
-    .from('orders')
-    .update({
-      order_status: payload.order_status,
-      updated_at: payload.updated_at
-    })
-    .eq('id', payload.order_id);
+    if (orderError) {
+      console.error('Error updating cancelled order:', orderError);
+      throw orderError;
+    }
 
-  if (error) {
-    console.error('Error updating cancelled order:', error);
+    console.log('Order cancelled:', payload.order_id);
+  } catch (error) {
+    console.error('Error handling cancelled order:', error);
     throw error;
   }
-
-  console.log(`Order cancelled: ${payload.order_id}`);
 }
 
 async function handleRefundedOrder(payload: KiwifyWebhookPayload, supabase: any) {
-  // Set webhook context for RLS policies
-  await supabase.rpc('set_config', {
-    setting_name: 'app.webhook_context',
-    new_value: 'kiwify_webhook',
-    is_local: true
-  });
-
-  // Update order status
-  const { error: orderError } = await supabase
-    .from('orders')
-    .update({
-      order_status: payload.order_status,
-      updated_at: payload.updated_at,
-      access_granted: false
-    })
-    .eq('id', payload.order_id);
-
-  if (orderError) {
-    console.error('Error updating refunded order:', orderError);
-    throw orderError;
-  }
-
-  // Revoke user access
-  const { data: order } = await supabase
-    .from('orders')
-    .select('user_id')
-    .eq('id', payload.order_id)
-    .single();
-
-  if (order?.user_id) {
-    // Remove user role
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', order.user_id)
-      .eq('role', 'user');
-
-    if (roleError) {
-      console.error('Error removing user role:', roleError);
-    }
-
-    // Update profile access
-    const { error: profileError } = await supabase
-      .from('profiles')
+  try {
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
       .update({
+        order_status: payload.order_status,
         access_granted: false,
-        subscription_status: 'inactive'
+        updated_at: payload.updated_at
       })
-      .eq('id', order.user_id);
+      .eq('id', payload.order_id)
+      .select()
+      .single();
 
-    if (profileError) {
-      console.error('Error revoking profile access:', profileError);
+    if (orderError) {
+      console.error('Error updating refunded order:', orderError);
+      throw orderError;
     }
 
-    // Log activity
-    await supabase.rpc('log_activity', {
-      _action: 'access_revoked',
-      _details: {
-        reason: payload.order_status,
-        order_id: payload.order_id
-      },
-      _user_id: order.user_id
-    });
+    if (order?.user_id) {
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', order.user_id);
 
-    console.log(`Access revoked for user ${order.user_id} due to ${payload.order_status}`);
+      await supabase
+        .from('profiles')
+        .update({
+          access_granted: false,
+          subscription_status: 'cancelled'
+        })
+        .eq('id', order.user_id);
+
+      await supabase
+        .from('activity_logs')
+        .insert({
+          user_id: order.user_id,
+          action: 'access_revoked',
+          details: {
+            order_id: payload.order_id,
+            reason: payload.order_status
+          }
+        });
+
+      console.log('Access revoked for user:', order.user_id);
+    }
+  } catch (error) {
+    console.error('Error handling refunded order:', error);
+    throw error;
   }
 }
