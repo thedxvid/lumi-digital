@@ -72,6 +72,7 @@ const AdminUsers = () => {
     subscriptionStatus: 'all'
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [isResendingEmails, setIsResendingEmails] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -328,6 +329,57 @@ const AdminUsers = () => {
     };
   };
 
+  const handleResendWelcomeEmails = async () => {
+    if (!confirm('⚠️ Isso irá reenviar emails de boas-vindas para TODOS os usuários que não receberam. Novas senhas temporárias serão geradas. Deseja continuar?')) {
+      return;
+    }
+
+    setIsResendingEmails(true);
+    
+    try {
+      console.log('📧 Iniciando reenvio de emails...');
+      
+      const { data, error } = await supabase.functions.invoke('resend-welcome-emails', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      const results = data.results;
+      
+      toast({
+        title: "✅ Emails Reenviados!",
+        description: `Sucesso: ${results.success} | Falhas: ${results.failed} | Total: ${results.total}`,
+        variant: results.failed > 0 ? "default" : "default"
+      });
+
+      // Mostrar detalhes dos erros se houver
+      if (results.errors && results.errors.length > 0) {
+        console.error('❌ Erros ao enviar emails:', results.errors);
+        toast({
+          title: "⚠️ Alguns emails falharam",
+          description: `${results.errors.length} emails não puderam ser enviados. Verifique o console para detalhes.`,
+          variant: "destructive"
+        });
+      }
+
+      // Atualizar lista de usuários
+      fetchUsers();
+
+    } catch (error: any) {
+      console.error('❌ Erro ao reenviar emails:', error);
+      toast({
+        title: "Erro ao Reenviar Emails",
+        description: error.message || "Erro desconhecido",
+        variant: "destructive"
+      });
+    } finally {
+      setIsResendingEmails(false);
+    }
+  };
+
   const handleRolesModalClose = () => {
     setShowRolesModal(false);
     setSelectedUserId(null);
@@ -420,6 +472,14 @@ const AdminUsers = () => {
           >
             <Mail className="h-4 w-4 mr-2" />
             Testar Email
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={handleResendWelcomeEmails}
+            disabled={isResendingEmails}
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            {isResendingEmails ? 'Enviando...' : 'Reenviar Emails Pendentes'}
           </Button>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
