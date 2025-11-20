@@ -44,13 +44,7 @@ export default function ForgotPassword() {
 
       // Check for specific errors from the edge function
       if (data?.error) {
-        if (data.error.includes('não encontrado')) {
-          toast.error('Email não cadastrado no sistema');
-        } else if (data.error.includes('inválido')) {
-          toast.error('Formato de email inválido');
-        } else {
-          toast.error(data.error);
-        }
+        toast.error(data.error);
         return;
       }
 

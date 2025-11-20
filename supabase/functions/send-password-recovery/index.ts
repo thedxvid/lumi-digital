@@ -49,34 +49,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    // Check if user exists
-    const { data: user, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (userError) {
-      console.error("Error checking user:", userError);
-      return new Response(
-        JSON.stringify({ error: "Erro ao verificar usuário" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    const userExists = user.users.find(u => u.email === email);
-
-    if (!userExists) {
-      console.log("User not found:", email);
-      return new Response(
-        JSON.stringify({ error: "Email não encontrado no sistema" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
     // Generate password recovery link
+    // Note: generateLink will fail silently if user doesn't exist (security best practice)
     const { data: recoveryData, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email,
@@ -87,11 +61,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (recoveryError) {
       console.error("Error generating recovery link:", recoveryError);
+      
+      // Always return success to prevent email enumeration attacks
+      // Even if the email doesn't exist, we pretend it worked
       return new Response(
-        JSON.stringify({ error: "Erro ao gerar link de recuperação" }),
+        JSON.stringify({ 
+          success: true,
+          message: "Se o email estiver cadastrado, você receberá um link de recuperação" 
+        }),
         {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
         }
       );
     }
