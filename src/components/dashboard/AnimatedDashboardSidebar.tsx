@@ -17,7 +17,8 @@ import {
   Shield,
   BookUser,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  GraduationCap
 } from "lucide-react";
 import { SupportButton } from "@/components/ui/support-button";
 import { motion } from "framer-motion";
@@ -68,6 +69,13 @@ export function AnimatedDashboardSidebar() {
       href: "/app",
       icon: (
         <Home className="text-foreground h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Tutorial",
+      href: "/app/tutorial",
+      icon: (
+        <GraduationCap className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {
