@@ -349,19 +349,34 @@ const AdminUsers = () => {
 
       const results = data.results;
       
-      toast({
-        title: "✅ Emails Reenviados!",
-        description: `Sucesso: ${results.success} | Falhas: ${results.failed} | Total: ${results.total}`,
-        variant: results.failed > 0 ? "default" : "default"
-      });
+      // Notificação de sucesso detalhada
+      if (results.success > 0) {
+        toast({
+          title: "✅ Emails Enviados com Sucesso!",
+          description: `${results.success} ${results.success === 1 ? 'email foi enviado' : 'emails foram enviados'} com sucesso${results.failed > 0 ? `. ${results.failed} ${results.failed === 1 ? 'falhou' : 'falharam'}.` : '.'}`,
+          variant: "default",
+          duration: 5000
+        });
+      }
 
       // Mostrar detalhes dos erros se houver
       if (results.errors && results.errors.length > 0) {
         console.error('❌ Erros ao enviar emails:', results.errors);
         toast({
-          title: "⚠️ Alguns emails falharam",
-          description: `${results.errors.length} emails não puderam ser enviados. Verifique o console para detalhes.`,
-          variant: "destructive"
+          title: "⚠️ Alguns Emails Falharam",
+          description: `${results.errors.length} ${results.errors.length === 1 ? 'email não pôde' : 'emails não puderam'} ser ${results.errors.length === 1 ? 'enviado' : 'enviados'}. Verifique os logs para mais detalhes.`,
+          variant: "destructive",
+          duration: 7000
+        });
+      }
+      
+      // Notificação caso nenhum email tenha sido enviado
+      if (results.total === 0) {
+        toast({
+          title: "ℹ️ Nenhum Email Pendente",
+          description: "Não há emails pendentes para serem reenviados.",
+          variant: "default",
+          duration: 4000
         });
       }
 
