@@ -8,13 +8,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { NotificationSettings } from './NotificationSettings';
 import { PurchaseHistory } from './PurchaseHistory';
 import { supabase } from '@/integrations/supabase/client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuthErrors } from '@/hooks/useAuthErrors';
 
 export function SettingsContent() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { validatePassword, translateError } = useAuthErrors();
+  const [fullName, setFullName] = useState('');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,16 +28,72 @@ export function SettingsContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          setFullName(data.full_name || '');
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user?.id]);
+
+  const handleProfileUpdate = async () => {
+    if (!user?.id) return;
+
+    setIsUpdatingProfile(true);
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Perfil atualizado com sucesso',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao atualizar perfil',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
   const handlePasswordChange = async () => {
+    // Validar campos preenchidos
     if (!newPassword || !confirmPassword) {
       toast({
         title: 'Erro',
-        description: 'Por favor, preencha todos os campos de senha',
+        description: 'Por favor, preencha a nova senha e confirmação',
         variant: 'destructive',
       });
       return;
     }
 
+    // Validar se as senhas coincidem
     if (newPassword !== confirmPassword) {
       toast({
         title: 'Erro',
@@ -42,10 +103,12 @@ export function SettingsContent() {
       return;
     }
 
-    if (newPassword.length < 6) {
+    // Validar força da senha
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
       toast({
         title: 'Erro',
-        description: 'A nova senha deve ter pelo menos 6 caracteres',
+        description: passwordValidation.error || 'Senha inválida',
         variant: 'destructive',
       });
       return;
@@ -61,17 +124,19 @@ export function SettingsContent() {
       if (error) throw error;
 
       toast({
-        title: 'Sucesso',
-        description: 'Senha alterada com sucesso',
+        title: 'Sucesso! 🎉',
+        description: 'Sua senha foi alterada com sucesso',
       });
 
+      // Limpar campos
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
+      const friendlyError = translateError(error);
       toast({
         title: 'Erro',
-        description: error.message || 'Erro ao alterar senha',
+        description: friendlyError,
         variant: 'destructive',
       });
     } finally {
@@ -95,8 +160,10 @@ export function SettingsContent() {
               <Label htmlFor="name">Nome</Label>
               <Input 
                 id="name" 
-                placeholder="Usuário"
-                defaultValue="Usuário"
+                placeholder="Seu nome completo"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={isLoadingProfile}
               />
             </div>
             <div className="space-y-2">
@@ -110,38 +177,19 @@ export function SettingsContent() {
             </div>
           </div>
           
+          <Button 
+            onClick={handleProfileUpdate}
+            disabled={isUpdatingProfile || isLoadingProfile}
+            variant="outline"
+          >
+            {isUpdatingProfile ? 'Salvando...' : 'Salvar Perfil'}
+          </Button>
+          
           <Separator className="my-6" />
           
           <div className="space-y-4">
             <h4 className="text-sm font-medium">Alterar Senha</h4>
             
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Senha Atual</Label>
-              <div className="relative">
-                <Input 
-                  id="current-password"
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••••"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                >
-                  {showCurrentPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="new-password">Nova Senha</Label>
               <div className="relative">
@@ -150,7 +198,7 @@ export function SettingsContent() {
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••••"
+                  placeholder="Digite sua nova senha"
                   className="pr-10"
                 />
                 <Button
@@ -167,6 +215,11 @@ export function SettingsContent() {
                   )}
                 </Button>
               </div>
+              {newPassword && validatePassword(newPassword).error && (
+                <p className="text-xs text-destructive">
+                  {validatePassword(newPassword).error}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -177,7 +230,7 @@ export function SettingsContent() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••••"
+                  placeholder="Confirme sua nova senha"
                   className="pr-10"
                 />
                 <Button
@@ -194,13 +247,26 @@ export function SettingsContent() {
                   )}
                 </Button>
               </div>
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-destructive">
+                  As senhas não coincidem
+                </p>
+              )}
             </div>
 
             <Button 
               onClick={handlePasswordChange}
-              disabled={isChangingPassword}
+              disabled={isChangingPassword || !newPassword || !confirmPassword}
+              className="w-full"
             >
-              {isChangingPassword ? 'Alterando...' : 'Alterar Senha'}
+              {isChangingPassword ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin">⏳</span>
+                  Alterando Senha...
+                </span>
+              ) : (
+                'Alterar Senha'
+              )}
             </Button>
           </div>
         </CardContent>
