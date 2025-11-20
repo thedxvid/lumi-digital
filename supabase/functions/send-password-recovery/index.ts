@@ -100,8 +100,8 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Recovery link generated successfully for:", email);
 
     // Build the recovery URL with the generated token
-    const token = recoveryData.properties.hashed_token;
-    const recoveryUrl = `https://applumi.com/reset-password?token=${token}&type=recovery`;
+    const token_hash = recoveryData.properties.hashed_token;
+    const recoveryUrl = `https://applumi.com/reset-password?token_hash=${token_hash}&type=recovery`;
     
     console.log("Recovery URL created (token redacted)");
 
