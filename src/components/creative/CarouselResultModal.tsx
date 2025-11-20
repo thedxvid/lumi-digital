@@ -26,8 +26,8 @@ export function CarouselResultModal({
     try {
       for (let i = 0; i < carousel.images.length; i++) {
         const image = carousel.images[i];
-        // Download the composed image (with text) if available, otherwise original
-        const imageUrl = image.composedUrl || image.url;
+        // Download the base image without text
+        const imageUrl = image.url;
         const response = await fetch(imageUrl);
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -85,7 +85,7 @@ export function CarouselResultModal({
                     <div className="space-y-4">
                       <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-background">
                         <img
-                          src={image.composedUrl || image.url}
+                          src={image.url}
                           alt={image.description}
                           className="h-full w-full object-contain"
                         />
