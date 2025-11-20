@@ -27,6 +27,7 @@ import AdminAgents from '@/pages/admin/AdminAgents';
 import AdminLogs from '@/pages/admin/AdminLogs';
 import AdminSettings from '@/pages/admin/AdminSettings';
 import CreateBatchUsers from '@/pages/admin/CreateBatchUsers';
+import BulkUserImport from '@/pages/admin/BulkUserImport';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProtectedAdminRoute } from '@/components/ProtectedAdminRoute';
 
@@ -65,6 +66,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="create-batch" element={<CreateBatchUsers />} />
+            <Route path="bulk-import" element={<BulkUserImport />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="agents" element={<AdminAgents />} />
             <Route path="logs" element={<AdminLogs />} />
