@@ -107,10 +107,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend with custom template
     const emailResponse = await resend.emails.send({
-      from: "Equipe Lumi <suportedalumi@gmail.com>",
-      reply_to: "suportedalumi@gmail.com",
+      from: "Equipe Lumi <suporte@applumi.com>",
+      reply_to: "suporte@applumi.com",
       to: [email],
       subject: "🔒 Recuperação de Senha - Lumi",
+      headers: {
+        'X-Entity-Ref-ID': `lumi-password-recovery-${Date.now()}`,
+        'List-Unsubscribe': '<mailto:suporte@applumi.com?subject=Unsubscribe>',
+        'Precedence': 'bulk',
+      },
       html: `
         <!DOCTYPE html>
         <html>
