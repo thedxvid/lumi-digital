@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 
 export interface CreativeHistoryItem {
@@ -39,6 +40,7 @@ export function useCreativeEngine() {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [suggestedCopy, setSuggestedCopy] = useState<any>(null);
   const { session } = useAuth();
+  const { logActivity } = useActivity();
 
   const generateCreative = async (images: string[], prompt: string, config?: CreativeConfig): Promise<string | null> => {
     if (!session?.access_token) {
@@ -135,6 +137,9 @@ export function useCreativeEngine() {
             Authorization: `Bearer ${session.access_token}`,
           },
         });
+
+        // Log activity
+        await logActivity('result');
 
         if (limitError) {
           console.error('Error incrementing usage:', limitError);

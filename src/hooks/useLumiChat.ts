@@ -2,12 +2,14 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 import { Message } from '@/types/lumi';
 
 export function useLumiChat() {
   const [loading, setLoading] = useState(false);
   const { session } = useAuth();
+  const { logActivity } = useActivity();
 
   const sendMessage = async (
     message: string, 
@@ -75,6 +77,11 @@ export function useLumiChat() {
           console.error('Erro ao registrar analytics do agente:', analyticsError);
           // Não falhar a requisição se analytics falharem
         }
+      }
+
+      // Log activity for first message in conversation
+      if (conversationHistory.length === 0) {
+        await logActivity('chat');
       }
 
       return {

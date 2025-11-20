@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 import { composeTextOnCarouselImage } from '@/utils/carouselTextComposer';
 
@@ -37,6 +38,7 @@ export function useCarousel() {
   const [history, setHistory] = useState<CarouselHistoryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
+  const { logActivity } = useActivity();
 
   // Load history on mount
   useEffect(() => {
@@ -120,6 +122,9 @@ export function useCarousel() {
       await supabase.functions.invoke('check-limits', {
         body: { feature: 'carousels', increment: true }
       });
+
+      // Log activity
+      await logActivity('result');
 
       toast.success('Carrossel gerado com sucesso! 🎨');
       await loadHistory();
