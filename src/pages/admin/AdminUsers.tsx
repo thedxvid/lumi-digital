@@ -3,13 +3,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, UserCheck, UserX, Mail, Users, Plus, Shield, Settings } from 'lucide-react';
+import { 
+  Search, UserCheck, UserX, Mail, Users, Plus, Shield, Settings, 
+  Download, MoreVertical, Calendar, Eye, SlidersHorizontal 
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AddUserModal from '@/components/admin/AddUserModal';
 import EmailTestModal from '@/components/admin/EmailTestModal';
 import { UserRolesManager } from '@/components/admin/UserRolesManager';
 import { UserLimitsEditor } from '@/components/admin/UserLimitsEditor';
+import { AdminStatsCards } from '@/components/admin/AdminStatsCards';
+import { BulkActionsBar } from '@/components/admin/BulkActionsBar';
+import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
+import { SubscriptionManager } from '@/components/admin/SubscriptionManager';
+import { UsageBar } from '@/components/admin/UsageBar';
 
 interface User {
   id: string;
@@ -18,7 +29,26 @@ interface User {
   access_granted: boolean;
   subscription_status: string;
   created_at: string;
+  last_sign_in_at?: string;
   roles?: string[];
+  subscription?: {
+    plan_type: string;
+    end_date: string;
+    is_active: boolean;
+  };
+  usage_limits?: {
+    creative_images_monthly_used: number;
+    creative_images_monthly_limit: number;
+    videos_monthly_used: number;
+    videos_monthly_limit: number;
+  };
+}
+
+interface Filters {
+  planType: string;
+  accessStatus: string;
+  role: string;
+  subscriptionStatus: string;
 }
 
 const AdminUsers = () => {

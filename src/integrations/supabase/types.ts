@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_actions_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       agent_usage: {
         Row: {
           agent_id: string
@@ -1160,6 +1190,22 @@ export type Database = {
         Args: { duration_months: number; start_date: string }
         Returns: string
       }
+      get_admin_user_details: {
+        Args: never
+        Returns: {
+          access_granted: boolean
+          auth_created_at: string
+          confirmed_at: string
+          created_at: string
+          email: string
+          email_confirmed_at: string
+          full_name: string
+          id: string
+          last_sign_in_at: string
+          subscription_status: string
+          updated_at: string
+        }[]
+      }
       get_user_streak: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
@@ -1172,6 +1218,10 @@ export type Database = {
       log_activity: {
         Args: { _action: string; _details?: Json }
         Returns: undefined
+      }
+      log_admin_action: {
+        Args: { _action: string; _details?: Json; _target_user_id: string }
+        Returns: string
       }
       reset_daily_limits: { Args: never; Returns: undefined }
       reset_monthly_limits: { Args: never; Returns: undefined }
