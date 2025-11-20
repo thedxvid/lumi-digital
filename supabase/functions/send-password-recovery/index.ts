@@ -49,14 +49,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    // Generate password recovery link
-    // Note: generateLink will fail silently if user doesn't exist (security best practice)
+    // Generate password recovery link using Supabase
+    // This method handles users that don't exist gracefully
     const { data: recoveryData, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email,
-      options: {
-        redirectTo: 'https://applumi.com/reset-password',
-      }
     });
 
     if (recoveryError) {
@@ -81,8 +78,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Recovery link generated successfully");
 
-    // Extract token from the hashed_token
-    const recoveryUrl = `https://applumi.com/reset-password?token=${recoveryData.properties.hashed_token}`;
+    // Build the recovery URL with the generated token
+    // The token needs to be used with the auth confirmation endpoint
+    const token = recoveryData.properties.hashed_token;
+    const recoveryUrl = `https://applumi.com/reset-password?token=${token}&type=recovery`;
 
     // Send email via Resend with custom template
     const emailResponse = await resend.emails.send({
