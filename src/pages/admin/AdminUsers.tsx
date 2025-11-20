@@ -21,6 +21,8 @@ import { BulkActionsBar } from '@/components/admin/BulkActionsBar';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { SubscriptionManager } from '@/components/admin/SubscriptionManager';
 import { UsageBar } from '@/components/admin/UsageBar';
+import { EmailProgressModal } from '@/components/admin/EmailProgressModal';
+import { toast as sonnerToast } from 'sonner';
 
 interface User {
   id: string;
@@ -74,6 +76,17 @@ const AdminUsers = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [isResendingEmails, setIsResendingEmails] = useState(false);
   const { toast } = useToast();
+  
+  // Email progress modal states
+  const [showEmailProgress, setShowEmailProgress] = useState(false);
+  const [emailProgress, setEmailProgress] = useState({
+    total: 0,
+    sent: 0,
+    failed: 0,
+    current: "",
+    errors: [] as Array<{ email: string; error: string }>,
+  });
+  const [isEmailComplete, setIsEmailComplete] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -334,61 +347,112 @@ const AdminUsers = () => {
       return;
     }
 
-    setIsResendingEmails(true);
-    
     try {
-      console.log('📧 Iniciando reenvio de emails...');
+      // Resetar e abrir modal de progresso
+      setEmailProgress({
+        total: 0,
+        sent: 0,
+        failed: 0,
+        current: "",
+        errors: [],
+      });
+      setIsEmailComplete(false);
+      setIsResendingEmails(true);
+      setShowEmailProgress(true);
+
+      console.log('🚀 Iniciando envio de emails...');
+
+      // Primeiro, buscar quantos emails precisam ser enviados
+      const { data: pendingOrders, error: countError } = await supabase
+        .from('orders')
+        .select('customer_email, customer_name')
+        .eq('order_status', 'paid')
+        .or('credentials_sent.eq.false,credentials_sent.is.null')
+        .not('user_id', 'is', null);
+
+      if (countError) {
+        throw countError;
+      }
+
+      const totalToSend = pendingOrders?.length || 0;
       
+      setEmailProgress(prev => ({
+        ...prev,
+        total: totalToSend
+      }));
+
+      if (totalToSend === 0) {
+        setIsEmailComplete(true);
+        setIsResendingEmails(false);
+        sonnerToast.info("Nenhum Email Pendente", {
+          description: "Todos os usuários já receberam seus emails de acesso.",
+          duration: 4000
+        });
+        return;
+      }
+
+      // Simular progresso para melhor UX
+      const simulateProgress = setInterval(() => {
+        setEmailProgress(prev => {
+          if (prev.sent + prev.failed >= prev.total) {
+            clearInterval(simulateProgress);
+            return prev;
+          }
+          const nextIndex = prev.sent + prev.failed;
+          return {
+            ...prev,
+            current: pendingOrders[nextIndex]?.customer_email || "",
+          };
+        });
+      }, 300);
+
+      // Chamar a função de envio
       const { data, error } = await supabase.functions.invoke('resend-welcome-emails', {
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         }
       });
 
+      clearInterval(simulateProgress);
+
       if (error) throw error;
 
       const results = data.results;
       
-      // Notificação de sucesso detalhada
-      if (results.success > 0) {
-        toast({
-          title: "✅ Emails Enviados com Sucesso!",
-          description: `${results.success} ${results.success === 1 ? 'email foi enviado' : 'emails foram enviados'} com sucesso${results.failed > 0 ? `. ${results.failed} ${results.failed === 1 ? 'falhou' : 'falharam'}.` : '.'}`,
-          variant: "default",
+      // Atualizar progresso final
+      setEmailProgress({
+        total: results.total,
+        sent: results.success,
+        failed: results.failed,
+        current: "",
+        errors: results.errors || [],
+      });
+
+      setIsEmailComplete(true);
+
+      // Toast de resumo
+      if (results.failed === 0) {
+        sonnerToast.success("Envio Concluído!", {
+          description: `Todos os ${results.success} emails foram enviados com sucesso.`,
+          duration: 5000
+        });
+      } else {
+        sonnerToast.warning("Envio Concluído com Avisos", {
+          description: `${results.success} enviados, ${results.failed} falharam.`,
           duration: 5000
         });
       }
 
-      // Mostrar detalhes dos erros se houver
-      if (results.errors && results.errors.length > 0) {
-        console.error('❌ Erros ao enviar emails:', results.errors);
-        toast({
-          title: "⚠️ Alguns Emails Falharam",
-          description: `${results.errors.length} ${results.errors.length === 1 ? 'email não pôde' : 'emails não puderam'} ser ${results.errors.length === 1 ? 'enviado' : 'enviados'}. Verifique os logs para mais detalhes.`,
-          variant: "destructive",
-          duration: 7000
-        });
-      }
-      
-      // Notificação caso nenhum email tenha sido enviado
-      if (results.total === 0) {
-        toast({
-          title: "ℹ️ Nenhum Email Pendente",
-          description: "Não há emails pendentes para serem reenviados.",
-          variant: "default",
-          duration: 4000
-        });
-      }
-
-      // Atualizar lista de usuários
+      // Recarregar dados
       fetchUsers();
 
     } catch (error: any) {
       console.error('❌ Erro ao reenviar emails:', error);
-      toast({
-        title: "Erro ao Reenviar Emails",
-        description: error.message || "Erro desconhecido",
-        variant: "destructive"
+      setIsEmailComplete(true);
+      
+      sonnerToast.error("Erro ao Enviar Emails", {
+        description: error.message || "Ocorreu um erro. Tente novamente.",
+        duration: 5000
       });
     } finally {
       setIsResendingEmails(false);
@@ -806,6 +870,14 @@ const AdminUsers = () => {
           onSuccess={fetchUsers}
         />
       )}
+
+      <EmailProgressModal
+        open={showEmailProgress}
+        onOpenChange={setShowEmailProgress}
+        progress={emailProgress}
+        isComplete={isEmailComplete}
+        isLoading={isResendingEmails}
+      />
     </div>
   );
 };
