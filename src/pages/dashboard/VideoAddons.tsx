@@ -1,28 +1,21 @@
 import { useState } from 'react';
-import { Video, ShoppingCart, Check } from 'lucide-react';
+import { Video, ShoppingCart, Check, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { useSubscription } from '@/hooks/useSubscription';
 import { videoAddons } from '@/data/pricingPlans';
-import { toast } from 'sonner';
 import type { VideoAddonType } from '@/types/subscription';
 
 export default function VideoAddons() {
   const { limits } = useUsageLimits();
   const { subscription } = useSubscription();
-  const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
 
   const handlePurchase = async (packageType: VideoAddonType) => {
-    setPurchasing(packageType);
-    
-    toast.info('Sistema de pagamento em desenvolvimento', {
-      description: 'Entre em contato com o suporte para adquirir créditos extras.',
-      duration: 5000
-    });
-    
-    setPurchasing(null);
+    setShowComingSoonDialog(true);
   };
 
   const availablePackages = videoAddons;
@@ -136,10 +129,9 @@ export default function VideoAddons() {
                   size="lg"
                   variant={isPopular ? "default" : "outline"}
                   onClick={() => handlePurchase(addon.type)}
-                  disabled={purchasing === addon.type}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {purchasing === addon.type ? 'Processando...' : 'Comprar Agora'}
+                  Comprar Agora
                 </Button>
               </CardFooter>
             </Card>
@@ -188,6 +180,32 @@ export default function VideoAddons() {
           </Card>
         </div>
       </div>
+
+      {/* Coming Soon Dialog */}
+      <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-primary/10 rounded-full">
+                <Clock className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <AlertDialogTitle className="text-center text-2xl">
+              Função em Breve!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-base">
+              O sistema de compra de créditos extras está sendo desenvolvido e será liberado em breve.
+              <br /><br />
+              Por enquanto, entre em contato com nosso suporte para adquirir créditos extras de vídeos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <Button onClick={() => setShowComingSoonDialog(false)} className="w-full sm:w-auto">
+              Entendi
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
