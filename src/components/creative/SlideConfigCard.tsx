@@ -27,7 +27,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
               {slideNumber}
             </div>
             <span className="font-medium">
-              {slide.title || `Slide ${slideNumber}`}
+              Slide {slideNumber}
             </span>
           </div>
           <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -35,30 +35,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
         
         <CollapsibleContent>
           <div className="space-y-4 p-4 pt-0">
-            <div className="space-y-2">
-              <Label htmlFor={`slide-${slideNumber}-title`}>Título do Slide *</Label>
-              <Input
-                id={`slide-${slideNumber}-title`}
-                placeholder={`Ex: Passo ${slideNumber}`}
-                value={slide.title}
-                onChange={(e) => onChange({ ...slide, title: e.target.value })}
-                disabled={disabled}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`slide-${slideNumber}-content`}>Texto do Slide *</Label>
-              <Textarea
-                id={`slide-${slideNumber}-content`}
-                placeholder="O texto/frase que aparecerá no slide..."
-                value={slide.content}
-                onChange={(e) => onChange({ ...slide, content: e.target.value })}
-                disabled={disabled}
-                className="min-h-[80px] resize-none"
-              />
-            </div>
-
-            <div className="space-y-3 pt-2 border-t border-border">
+            <div className="space-y-3">
               <Label className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" />
                 Como Gerar a Imagem deste Slide

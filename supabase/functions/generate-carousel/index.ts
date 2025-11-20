@@ -169,7 +169,7 @@ serve(async (req) => {
       if (slide.imageMode === 'upload' && slide.uploadedImageIndex !== null && uploadedImages[slide.uploadedImageIndex]) {
         console.log(`Using uploaded image ${slide.uploadedImageIndex} for slide ${i + 1}`);
         imageUrl = uploadedImages[slide.uploadedImageIndex];
-        description = slide.content || `Slide ${i + 1}`;
+        description = slide.visualInstruction || `Slide ${i + 1}`;
       } else {
         // Gerar imagem com IA
         let slidePrompt: string;
@@ -182,16 +182,13 @@ serve(async (req) => {
 
 VISUAL INSTRUCTION: ${slide.visualInstruction}
 
-TEXT FOR SLIDE: "${slide.content}"
-
 THEME: ${themeDescriptions[theme] || theme}
 COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
 
 CRITICAL DESIGN REQUIREMENTS:
-- Use MODERN, PROFESSIONAL, MINIMALIST FONTS (avoid simple/basic fonts)
-- Font should be clean, readable, and visually appealing
-- Ensure PERFECT SPELLING AND GRAMMAR in all text
-- Text should be clear, well-positioned, and easy to read
+- Generate ONLY the VISUAL composition WITHOUT any text, words, letters, or typography
+- Create the background, elements, and visual aesthetic based on the visual instruction
+- All text will be added separately using professional typography
 - Professional visual aesthetic throughout
 - Use the reference images provided to maintain the person's visual identity
 - Keep the person's face, hair, body type, and overall appearance identical to the reference photos
@@ -200,10 +197,7 @@ CRITICAL DESIGN REQUIREMENTS:
 - Make it look natural and realistic
 - Square aspect ratio (1:1) for Instagram carousel
 
-IMPORTANT: 
-- Double-check all text for spelling and grammar
-- Use high-quality, refined typography
-- Maintain visual consistency with professional standards
+IMPORTANT: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
           `.trim();
 
           messageContent.push({
@@ -257,8 +251,6 @@ Create the background, elements, and visual aesthetic ONLY.
 All text will be added separately using professional typography.
 
 VISUAL INSTRUCTION: ${slide.visualInstruction}
-
-CONTENT FOR THIS SLIDE: ${slide.content}
 
 DESIGN SPECIFICATIONS:
 - Generate PURE VISUALS: backgrounds, colors, shapes, illustrations, photos - NO TEXT
@@ -321,7 +313,7 @@ CRITICAL:
         const data = await response.json();
         
         imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        description = data.choices?.[0]?.message?.content || slide.content || `Slide ${i + 1}`;
+        description = data.choices?.[0]?.message?.content || slide.visualInstruction || `Slide ${i + 1}`;
 
         if (!imageUrl) {
           console.error(`No image URL for slide ${i + 1}:`, JSON.stringify(data, null, 2));

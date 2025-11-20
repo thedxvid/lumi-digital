@@ -12,10 +12,6 @@ import { SlideConfigCard } from './SlideConfigCard';
 import { CarouselImageUploader } from './CarouselImageUploader';
 
 export interface SlideConfig {
-  title: string;
-  content: string;
-  visualElements: string[];
-  highlight?: string;
   imageMode: 'upload' | 'generate' | 'generate-with-reference';
   uploadedImageIndex: number | null;
   visualInstruction: string;
@@ -50,9 +46,9 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
   const [customPrompt, setCustomPrompt] = useState('');
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [slides, setSlides] = useState<SlideConfig[]>([
-    { title: '', content: '', visualElements: [], imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
-    { title: '', content: '', visualElements: [], imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
-    { title: '', content: '', visualElements: [], imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
+    { imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
+    { imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
+    { imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
   ]);
 
   // Ajustar número de slides quando imageCount mudar
@@ -62,9 +58,6 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
       const newSlides = [...slides];
       while (newSlides.length < imageCount) {
         newSlides.push({ 
-          title: '', 
-          content: '', 
-          visualElements: [], 
           imageMode: 'generate', 
           uploadedImageIndex: null, 
           visualInstruction: '' 
@@ -84,9 +77,6 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
 
   const canGenerate = title.trim() !== '' && (
     (generationMode === 'config' && slides.slice(0, imageCount).every(s => {
-      const hasBasicInfo = s.title && s.content;
-      if (!hasBasicInfo) return false;
-      
       // Validar baseado no imageMode
       if (s.imageMode === 'upload') {
         return s.uploadedImageIndex !== null && uploadedImages[s.uploadedImageIndex];
