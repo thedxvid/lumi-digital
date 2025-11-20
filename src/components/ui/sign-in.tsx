@@ -33,6 +33,9 @@ interface SignInPageProps {
   footerText?: string;
   hideSignUp?: boolean;
   hideGoogleSignIn?: boolean;
+  isSubmitting?: boolean;
+  emailError?: string;
+  passwordError?: string;
 }
 
 // --- SUB-COMPONENTS ---
@@ -75,7 +78,10 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   logoSrc,
   footerText,
   hideSignUp = false,
-  hideGoogleSignIn = false
+  hideGoogleSignIn = false,
+  isSubmitting = false,
+  emailError,
+  passwordError
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   return <div className="min-h-[100dvh] flex flex-col md:flex-row w-[100dvw]">
@@ -94,35 +100,72 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-muted-foreground">Email</label>
                 <GlassInputWrapper>
-                  <input name="email" type="email" placeholder="Digite seu email" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" required />
+                  <input 
+                    name="email" 
+                    type="email" 
+                    placeholder="Digite seu email" 
+                    className={`w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none ${emailError ? 'border-red-500' : ''}`}
+                    required 
+                    disabled={isSubmitting}
+                  />
                 </GlassInputWrapper>
+                {emailError && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <span>⚠️</span> {emailError}
+                  </p>
+                )}
               </div>
 
               <div className="animate-element animate-delay-400">
                 <label className="text-sm font-medium text-muted-foreground">Senha</label>
                 <GlassInputWrapper>
                   <div className="relative">
-                    <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Digite sua senha" className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none" required />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center">
+                    <input 
+                      name="password" 
+                      type={showPassword ? 'text' : 'password'} 
+                      placeholder="Digite sua senha" 
+                      className={`w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none ${passwordError ? 'border-red-500' : ''}`}
+                      required 
+                      disabled={isSubmitting}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center" disabled={isSubmitting}>
                       {showPassword ? <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" /> : <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />}
                     </button>
                   </div>
                 </GlassInputWrapper>
+                {passwordError && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <span>⚠️</span> {passwordError}
+                  </p>
+                )}
               </div>
 
               <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="rememberMe" className="w-4 h-4 rounded border-border" />
+                  <input type="checkbox" name="rememberMe" className="w-4 h-4 rounded border-border" disabled={isSubmitting} />
                   <span className="text-foreground/90">Manter conectado</span>
                 </label>
                 {onResetPassword && <a href="#" onClick={e => {
                 e.preventDefault();
-                onResetPassword();
-              }} className="hover:underline text-foreground transition-colors">Esqueceu a senha?</a>}
+                if (!isSubmitting) onResetPassword();
+              }} className="hover:underline text-primary font-medium transition-colors flex items-center gap-1">
+                <span>🔒</span> Esqueceu a senha?
+              </a>}
               </div>
 
-              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-lumi-gold py-4 font-medium text-background hover:bg-lumi-gold-dark transition-colors">
-                Entrar
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="animate-element animate-delay-600 w-full rounded-2xl bg-lumi-gold py-4 font-medium text-background hover:bg-lumi-gold-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Entrando...
+                  </>
+                ) : (
+                  'Entrar'
+                )}
               </button>
             </form>
 

@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthErrors } from '@/hooks/useAuthErrors';
 import { SignInPage, Testimonial } from '@/components/ui/sign-in';
 import { FallingPattern } from '@/components/ui/falling-pattern';
 import { Button } from '@/components/ui/button';
+import { SupportButton } from '@/components/ui/support-button';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
+  const { translateError, validateEmail, validatePassword } = useAuthErrors();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState<string>('');
+  const [passwordError, setPasswordError] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -19,53 +24,110 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && !loading && mounted) {
+      toast.success(`Bem-vindo de volta! 🎉`);
       navigate('/app');
     }
   }, [user, loading, navigate, mounted]);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Limpar erros anteriores
+    setEmailError('');
+    setPasswordError('');
+    
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('Email ou senha incorretos');
-      } else if (error.message.includes('Email not confirmed')) {
-        toast.error('Conta não ativada. Entre em contato com o suporte.');
+    // Validar email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.error || '');
+      toast.error(emailValidation.error);
+      return;
+    }
+
+    // Validar senha
+    if (!password || password.length < 6) {
+      setPasswordError('Senha deve ter no mínimo 6 caracteres');
+      toast.error('Senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        const friendlyError = translateError(error);
+        toast.error(friendlyError);
+        
+        // Definir erro específico
+        if (error.message.includes('credentials') || error.message.includes('password')) {
+          setPasswordError('Email ou senha incorretos');
+        } else if (error.message.includes('email')) {
+          setEmailError(friendlyError);
+        }
       } else {
-        toast.error(error.message);
+        toast.success('Login realizado com sucesso! 🎉');
       }
-    } else {
-      toast.success('Login realizado com sucesso!');
+    } catch (error: any) {
+      const friendlyError = translateError(error);
+      toast.error(friendlyError);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Limpar erros anteriores
+    setEmailError('');
+    setPasswordError('');
+    
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    if (password.length < 6) {
-      toast.error('A senha deve ter no mínimo 6 caracteres');
+    // Validar email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.error || '');
+      toast.error(emailValidation.error);
       return;
     }
 
-    const { error } = await signUp(email, password, '');
-    
-    if (error) {
-      if (error.message.includes('User already registered')) {
-        toast.error('Este email já está cadastrado');
+    // Validar senha
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setPasswordError(passwordValidation.error || '');
+      toast.error(passwordValidation.error);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await signUp(email, password, '');
+      
+      if (error) {
+        const friendlyError = translateError(error);
+        toast.error(friendlyError);
+        if (error.message.includes('already registered')) {
+          setEmailError('Este email já está cadastrado');
+        }
       } else {
-        toast.error(error.message);
+        toast.success('Conta criada com sucesso! Bem-vindo à LUMI 🎉');
+        await signIn(email, password);
       }
-    } else {
-      toast.success('Conta criada! Fazendo login...');
-      await signIn(email, password);
+    } catch (error: any) {
+      const friendlyError = translateError(error);
+      toast.error(friendlyError);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -162,7 +224,13 @@ const Auth = () => {
         onResetPassword={handleResetPassword}
         hideSignUp={true}
         hideGoogleSignIn={true}
+        isSubmitting={isSubmitting}
+        emailError={emailError}
+        passwordError={passwordError}
       />
+      
+      {/* Botão de Suporte Flutuante */}
+      <SupportButton variant="floating" />
     </div>
   );
 };

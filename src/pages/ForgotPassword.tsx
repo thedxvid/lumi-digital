@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthErrors } from '@/hooks/useAuthErrors';
 import { Button } from '@/components/ui/button';
 import { FloatingInput } from '@/components/ui/floating-input';
 import { Card } from '@/components/ui/card';
+import { SupportButton } from '@/components/ui/support-button';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
@@ -11,13 +13,19 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const navigate = useNavigate();
+  const { validateEmail, translateError } = useAuthErrors();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError('');
 
-    if (!email.includes('@')) {
-      toast.error('Email inválido');
+    // Validar email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.error || '');
+      toast.error(emailValidation.error);
       return;
     }
 
@@ -25,16 +33,20 @@ export default function ForgotPassword() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://applumi.com/reset-password',
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) throw error;
+      if (error) {
+        const friendlyError = translateError(error);
+        toast.error(friendlyError);
+        throw error;
+      }
 
       setEmailSent(true);
-      toast.success('Email de recuperação enviado!');
+      toast.success('Email de recuperação enviado! 📧');
     } catch (error: any) {
-      console.error('Erro ao enviar email de recuperação:', error);
-      toast.error(error.message || 'Erro ao enviar email de recuperação');
+      const friendlyError = translateError(error);
+      toast.error(friendlyError);
     } finally {
       setLoading(false);
     }
@@ -83,16 +95,27 @@ export default function ForgotPassword() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <FloatingInput
-            id="email"
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-            autoFocus
-          />
+          <div>
+            <FloatingInput
+              id="email"
+              type="email"
+              label="Email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailError('');
+              }}
+              required
+              disabled={loading}
+              autoFocus
+              className={emailError ? 'border-red-500' : ''}
+            />
+            {emailError && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <span>⚠️</span> {emailError}
+              </p>
+            )}
+          </div>
 
           <Button
             type="submit"
@@ -113,7 +136,7 @@ export default function ForgotPassword() {
           </Button>
         </form>
 
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <Button
             variant="link"
             onClick={() => navigate('/auth')}
@@ -123,8 +146,15 @@ export default function ForgotPassword() {
             <ArrowLeft className="w-4 h-4 mr-1" />
             Voltar para o login
           </Button>
+          
+          <div className="pt-2 border-t border-border">
+            <SupportButton variant="inline" className="w-full" />
+          </div>
         </div>
       </Card>
+      
+      {/* Botão de Suporte Flutuante */}
+      <SupportButton variant="floating" />
     </div>
   );
 }
