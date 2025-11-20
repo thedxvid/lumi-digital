@@ -23,11 +23,25 @@ export function useCustomAgents() {
   const fetchAgents = async () => {
     try {
       setLoading(true);
-      // Buscar agentes customizados E produtos padrões (created_by IS NULL)
+      
+      // Obter o ID do usuário atual
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
+      if (!userId) {
+        setAgents([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Buscar apenas:
+      // 1. Produtos do sistema (created_by IS NULL)
+      // 2. Agentes/produtos criados pelo usuário atual (created_by = userId)
       const { data, error } = await supabase
         .from('custom_agents' as any)
         .select('*')
         .in('entity_type', ['agent', 'product'])
+        .or(`created_by.is.null,created_by.eq.${userId}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
