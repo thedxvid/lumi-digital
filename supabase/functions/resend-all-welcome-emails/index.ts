@@ -157,7 +157,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('🚀 [resend-all-welcome-emails] Iniciando processo de reenvio TOTAL...');
+    // Ler parâmetros de batch (limite de 50 emails por chamada para evitar timeout)
+    const { batchSize = 50, offset = 0 } = await req.json().catch(() => ({}));
+    
+    console.log(`🚀 [resend-all-welcome-emails] Iniciando batch: offset=${offset}, batchSize=${batchSize}`);
 
     // Criar cliente Supabase com service role
     const supabaseAdmin = createClient(
@@ -199,11 +202,14 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('✅ Admin autorizado:', user.email);
 
     // Buscar TODOS os pedidos pagos (SEM filtro de credentials_sent)
+    // Com paginação para processar em batches
     const { data: orders, error: ordersError } = await supabaseAdmin
       .from('orders')
       .select('id, customer_email, customer_name, user_id')
       .eq('order_status', 'paid')
-      .not('user_id', 'is', null);
+      .not('user_id', 'is', null)
+      .range(offset, offset + batchSize - 1)
+      .order('created_at', { ascending: true }); // Ordenar para consistência
 
     if (ordersError) {
       console.error('❌ Erro ao buscar pedidos:', ordersError);
@@ -315,7 +321,13 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: true,
-        results
+        results,
+        batchInfo: {
+          offset,
+          batchSize,
+          processedInThisBatch: orders.length,
+          hasMore: orders.length === batchSize // Se processou todos do batch, pode ter mais
+        }
       }),
       {
         status: 200,

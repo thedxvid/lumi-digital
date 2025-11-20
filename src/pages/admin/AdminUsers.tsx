@@ -344,7 +344,7 @@ const AdminUsers = () => {
   };
 
   const handleResendAllWelcomeEmails = async () => {
-    if (!confirm('⚠️ ATENÇÃO: Isso irá reenviar emails de boas-vindas para TODOS OS USUÁRIOS (524 pessoas), mesmo os que já receberam. Novas senhas temporárias serão geradas para todos. Deseja continuar?')) {
+    if (!confirm('⚠️ ATENÇÃO: Isso irá reenviar emails de boas-vindas para TODOS OS USUÁRIOS, mesmo os que já receberam. Novas senhas temporárias serão geradas para todos. Deseja continuar?')) {
       return;
     }
 
@@ -361,20 +361,16 @@ const AdminUsers = () => {
       setIsResendingAllEmails(true);
       setShowEmailProgress(true);
 
-      console.log('🚀 Iniciando reenvio TOTAL de emails...');
+      console.log('🚀 Iniciando reenvio TOTAL de emails em batches...');
 
-      // Buscar TODOS os pedidos pagos (sem filtro de credentials_sent)
-      const { data: allOrders, error: countError } = await supabase
+      // Buscar total de pedidos para mostrar progresso correto
+      const { count: totalCount } = await supabase
         .from('orders')
-        .select('customer_email, customer_name')
+        .select('*', { count: 'exact', head: true })
         .eq('order_status', 'paid')
         .not('user_id', 'is', null);
 
-      if (countError) {
-        throw countError;
-      }
-
-      const totalToSend = allOrders?.length || 0;
+      const totalToSend = totalCount || 0;
       
       setEmailProgress(prev => ({
         ...prev,
@@ -383,49 +379,103 @@ const AdminUsers = () => {
 
       console.log(`📊 Total de emails a enviar: ${totalToSend}`);
 
-      // Simular progresso (opcional, para melhor UX)
-      const progressInterval = setInterval(() => {
-        setEmailProgress(prev => {
-          if (prev.sent < prev.total - 1) {
-            return {
-              ...prev,
-              sent: prev.sent + 1,
-              current: `Enviando para usuário ${prev.sent + 1}/${prev.total}...`
-            };
+      // Processar em batches de 50 emails
+      const BATCH_SIZE = 50;
+      let offset = 0;
+      let totalSent = 0;
+      let totalFailed = 0;
+      const allErrors: Array<{ email: string; error: string }> = [];
+
+      while (offset < totalToSend) {
+        const batchNumber = Math.floor(offset / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(totalToSend / BATCH_SIZE);
+        
+        console.log(`📦 Processando batch ${batchNumber}/${totalBatches} (offset: ${offset})`);
+        
+        setEmailProgress(prev => ({
+          ...prev,
+          current: `Processando lote ${batchNumber} de ${totalBatches}...`,
+        }));
+
+        try {
+          const { data, error } = await supabase.functions.invoke('resend-all-welcome-emails', {
+            body: { 
+              batchSize: BATCH_SIZE, 
+              offset 
+            },
+            headers: {
+              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            }
+          });
+
+          if (error) throw error;
+
+          // Atualizar progresso acumulado
+          totalSent += data.results.success;
+          totalFailed += data.results.failed;
+          
+          if (data.results.errors) {
+            allErrors.push(...data.results.errors);
           }
-          return prev;
-        });
-      }, 2500);
 
-      // Chamar a NOVA edge function
-      const { data, error } = await supabase.functions.invoke('resend-all-welcome-emails', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          setEmailProgress(prev => ({
+            ...prev,
+            sent: totalSent,
+            failed: totalFailed,
+            errors: allErrors,
+            current: `Lote ${batchNumber}/${totalBatches} concluído. ${totalSent} enviados, ${totalFailed} falhas.`
+          }));
+
+          console.log(`✅ Batch ${batchNumber} concluído: ${data.results.success} enviados, ${data.results.failed} falhas`);
+
+          // Se não processou o batch completo, não há mais emails
+          if (!data.batchInfo.hasMore) {
+            console.log('✅ Todos os emails foram processados');
+            break;
+          }
+
+          offset += BATCH_SIZE;
+
+          // Pequeno delay entre batches para não sobrecarregar
+          if (offset < totalToSend) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+
+        } catch (batchError: any) {
+          console.error(`❌ Erro no batch ${batchNumber}:`, batchError);
+          allErrors.push({
+            email: `Batch ${batchNumber}`,
+            error: batchError.message
+          });
+          
+          // Decidir se continua ou para
+          const shouldContinue = confirm(`Erro no lote ${batchNumber}: ${batchError.message}\n\nDeseja continuar com os próximos lotes?`);
+          if (!shouldContinue) {
+            throw new Error(`Processo interrompido no lote ${batchNumber}`);
+          }
+          
+          offset += BATCH_SIZE;
         }
-      });
+      }
 
-      clearInterval(progressInterval);
-
-      if (error) throw error;
-
-      // Atualizar progresso com resultados reais
-      setEmailProgress({
-        total: data.results.total,
-        sent: data.results.success,
-        failed: data.results.failed,
-        current: "Concluído!",
-        errors: data.results.errors || []
-      });
+      // Finalizar
+      setEmailProgress(prev => ({
+        ...prev,
+        current: "Processo concluído!",
+        sent: totalSent,
+        failed: totalFailed,
+        errors: allErrors
+      }));
       setIsEmailComplete(true);
 
-      if (data.results.failed > 0) {
+      if (totalFailed > 0) {
         sonnerToast.warning("Envio Concluído com Avisos", {
-          description: `${data.results.success} emails enviados, ${data.results.failed} falharam`,
+          description: `${totalSent} emails enviados, ${totalFailed} falharam`,
           duration: 5000
         });
       } else {
-        sonnerToast.success("Emails Enviados!", {
-          description: `${data.results.success} emails enviados para todos os usuários`,
+        sonnerToast.success("Todos os Emails Enviados!", {
+          description: `${totalSent} emails enviados com sucesso para todos os usuários`,
           duration: 5000
         });
       }
@@ -439,8 +489,9 @@ const AdminUsers = () => {
         current: `Erro: ${error.message}`,
         errors: [...prev.errors, { email: 'Sistema', error: error.message }]
       }));
-      sonnerToast.error("Erro ao Enviar Emails", {
-        description: error.message || "Ocorreu um erro. Tente novamente.",
+      setIsEmailComplete(true);
+      sonnerToast.error("Erro no Processo", {
+        description: error.message || "Erro ao reenviar emails",
         duration: 5000
       });
     } finally {
