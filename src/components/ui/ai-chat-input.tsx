@@ -18,7 +18,15 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
   const [uploading, setUploading] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
+  }, [inputValue]);
 
   // Close input when clicking outside
   useEffect(() => {
@@ -185,15 +193,16 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
 
             {/* Text Input & Placeholder */}
             <div className="relative flex-1 min-w-0">
-              <input
-                type="text"
+              <textarea
+                ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={disabled || uploading}
                 placeholder="Como posso te ajudar hoje?"
-                className="w-full border-0 outline-0 rounded-md py-2 px-1 text-sm sm:text-base bg-transparent font-normal text-foreground placeholder:text-muted-foreground"
+                className="w-full border-0 outline-0 rounded-md py-2 px-1 text-sm sm:text-base bg-transparent font-normal text-foreground placeholder:text-muted-foreground resize-none min-h-[40px] max-h-[200px] overflow-y-auto"
                 onFocus={handleActivate}
+                rows={1}
               />
             </div>
 
