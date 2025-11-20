@@ -32,21 +32,33 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error } = await supabase.functions.invoke('send-password-recovery', {
+        body: { email }
       });
 
       if (error) {
-        const friendlyError = translateError(error);
-        toast.error(friendlyError);
+        console.error('Error calling edge function:', error);
+        toast.error('Erro ao enviar email de recuperação');
         throw error;
+      }
+
+      // Check for specific errors from the edge function
+      if (data?.error) {
+        if (data.error.includes('não encontrado')) {
+          toast.error('Email não cadastrado no sistema');
+        } else if (data.error.includes('inválido')) {
+          toast.error('Formato de email inválido');
+        } else {
+          toast.error(data.error);
+        }
+        return;
       }
 
       setEmailSent(true);
       toast.success('Email de recuperação enviado! 📧');
     } catch (error: any) {
-      const friendlyError = translateError(error);
-      toast.error(friendlyError);
+      console.error('Password recovery error:', error);
+      toast.error('Erro ao enviar email. Tente novamente.');
     } finally {
       setLoading(false);
     }
