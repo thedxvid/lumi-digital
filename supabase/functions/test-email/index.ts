@@ -35,9 +35,31 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lumi <noreply@applumi.com>",
+        from: "Equipe Lumi <suporte@applumi.com>",
+        reply_to: "suporte@applumi.com",
         to: [email],
         subject: "🧪 Teste de Email - Sistema Lumi",
+        headers: {
+          'X-Entity-Ref-ID': `lumi-test-${Date.now()}`,
+          'List-Unsubscribe': '<mailto:suporte@applumi.com?subject=Unsubscribe>',
+          'Precedence': 'bulk',
+        },
+        text: `
+TESTE DE EMAIL - SISTEMA LUMI
+
+Este é um email de teste do sistema Lumi.
+
+✅ Sucesso! O sistema de envio de emails está configurado corretamente e funcionando.
+
+Detalhes do Teste:
+📧 Destinatário: ${email}
+⏰ Data/Hora: ${new Date().toLocaleString('pt-BR')}
+🔧 Sistema: Resend + Supabase Edge Functions
+
+Se você recebeu este email, significa que o sistema de notificações está pronto para uso!
+
+© ${new Date().getFullYear()} Lumi - Email de Teste
+        `,
         html: `
           <!DOCTYPE html>
           <html>
@@ -46,7 +68,11 @@ const handler = async (req: Request): Promise<Response> => {
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
             </head>
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+              <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+                Teste de email do sistema Lumi - Verificando deliverability
+              </div>
+              
+              <div style="background: #10b981; padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
                 <h1 style="color: white; margin: 0; font-size: 28px;">🧪 Teste de Email</h1>
               </div>
               
@@ -74,9 +100,18 @@ const handler = async (req: Request): Promise<Response> => {
                 
                 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
                 
-                <p style="color: #9ca3af; font-size: 12px; margin-top: 30px; text-align: center;">
-                  © ${new Date().getFullYear()} Lumi - Email de Teste
-                </p>
+                <div style="text-align: center; margin-top: 30px;">
+                  <p style="color: #6b7280; font-size: 14px; margin-bottom: 10px;">
+                    Precisa de ajuda? Entre em contato:
+                  </p>
+                  <p style="color: #10b981; font-size: 14px; margin: 5px 0;">
+                    📧 <a href="mailto:suporte@applumi.com" style="color: #10b981; text-decoration: none;">suporte@applumi.com</a>
+                  </p>
+                  
+                  <p style="color: #9ca3af; font-size: 11px; margin-top: 15px;">
+                    © ${new Date().getFullYear()} Lumi - Email de Teste
+                  </p>
+                </div>
               </div>
             </body>
           </html>
