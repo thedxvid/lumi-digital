@@ -118,12 +118,14 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
 
   const containerVariants = {
     collapsed: {
-      height: selectedImages.length > 0 ? "auto" : 68,
+      height: "auto",
+      minHeight: selectedImages.length > 0 ? "auto" : 68,
       boxShadow: "0 2px 8px 0 rgba(0,0,0,0.08)",
       transition: { type: "spring" as const, stiffness: 120, damping: 18 },
     },
     expanded: {
-      height: selectedImages.length > 0 ? "auto" : 68,
+      height: "auto",
+      minHeight: selectedImages.length > 0 ? "auto" : 68,
       boxShadow: "0 8px 32px 0 rgba(0,0,0,0.16)",
       transition: { type: "spring" as const, stiffness: 120, damping: 18 },
     },
@@ -192,7 +194,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
             </button>
 
             {/* Text Input & Placeholder */}
-            <div className="relative flex-1 min-w-0">
+            <div className="relative flex-1 min-w-0 flex items-center">
               <textarea
                 ref={textareaRef}
                 value={inputValue}
@@ -200,7 +202,7 @@ export const AIChatInput = ({ onSendMessage, disabled, className }: AIChatInputP
                 onKeyDown={handleKeyDown}
                 disabled={disabled || uploading}
                 placeholder="Como posso te ajudar hoje?"
-                className="w-full border-0 outline-0 rounded-md py-2 px-1 text-sm sm:text-base bg-transparent font-normal text-foreground placeholder:text-muted-foreground resize-none min-h-[40px] max-h-[200px] overflow-y-auto"
+                className="w-full border-0 outline-0 rounded-md py-2 px-1 text-sm sm:text-base bg-transparent font-normal text-foreground placeholder:text-muted-foreground resize-none min-h-[40px] max-h-[200px] overflow-y-auto leading-normal"
                 onFocus={handleActivate}
                 rows={1}
               />
