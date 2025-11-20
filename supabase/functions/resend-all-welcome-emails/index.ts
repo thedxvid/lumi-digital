@@ -188,7 +188,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
 
     if (authError || !user) {
       console.error('❌ Erro de autenticação:', authError);
