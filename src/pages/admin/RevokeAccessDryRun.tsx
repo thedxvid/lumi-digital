@@ -85,11 +85,17 @@ const RevokeAccessDryRun = () => {
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+      // Converter arquivo para base64
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      const binary = Array.from(bytes).map(byte => String.fromCharCode(byte)).join('');
+      const base64 = btoa(binary);
 
       const { data, error } = await supabase.functions.invoke('process-blackfriday-spreadsheet', {
-        body: formData,
+        body: { 
+          file: base64,
+          filename: selectedFile.name 
+        },
       });
 
       if (error) {

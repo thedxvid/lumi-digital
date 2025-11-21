@@ -54,21 +54,26 @@ serve(async (req) => {
       );
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
+    const body = await req.json();
+    const { file: base64File, filename } = body;
 
-    if (!file) {
+    if (!base64File) {
       return new Response(
         JSON.stringify({ error: 'No file provided' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    console.log('Processing file:', file.name);
+    console.log('Processing file:', filename);
 
-    // Ler arquivo Excel
-    const arrayBuffer = await file.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    // Decodificar base64 e ler arquivo Excel
+    const binaryString = atob(base64File);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    const workbook = XLSX.read(bytes, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet);
