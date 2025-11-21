@@ -39,3 +39,6 @@ verify_jwt = true
 [functions.create-multiple-users]
 verify_jwt = true
 
+[functions.revoke-unauthorized-access]
+verify_jwt = true
+
