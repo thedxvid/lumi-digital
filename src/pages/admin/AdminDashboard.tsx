@@ -169,7 +169,7 @@ const AdminDashboard = () => {
           </Alert>
 
           <Button
-            onClick={() => navigate('/admin/revoke-access-dry-run')}
+            onClick={() => navigate('/admin/revoke-access')}
             size="lg"
             className="w-full"
             variant="destructive"
