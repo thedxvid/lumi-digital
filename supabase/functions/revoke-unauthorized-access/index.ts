@@ -378,24 +378,29 @@ serve(async (req) => {
             }
           }
 
-          // Enviar email de notificação
-          try {
-            console.log(`📧 Enviando email de revogação para: ${user.email}`);
-            const { error: emailError } = await supabaseClient.functions.invoke('send-revocation-email', {
-              body: {
-                email: user.email,
-                fullName: user.full_name || 'Cliente'
-              }
-            });
+          // Enviar email de notificação APENAS se tiver email válido
+          if (user.email && user.email !== 'N/A' && user.email.includes('@')) {
+            try {
+              console.log(`📧 Enviando email de revogação para: ${user.email}`);
+              const { error: emailError } = await supabaseClient.functions.invoke('send-revocation-email', {
+                body: {
+                  email: user.email,
+                  fullName: user.full_name || 'Cliente'
+                }
+              });
 
-            if (emailError) {
-              console.error(`❌ Erro ao enviar email para ${user.email}:`, emailError);
-            } else {
-              emailsSentCount++;
-              console.log(`✅ Email enviado para: ${user.email}`);
+              if (emailError) {
+                console.error(`❌ Erro ao enviar email para ${user.email}:`, emailError);
+              } else {
+                emailsSentCount++;
+                console.log(`✅ Email enviado para: ${user.email}`);
+              }
+            } catch (emailError) {
+              console.error(`❌ Falha ao enviar email para ${user.email}:`, emailError);
+              // Continua processando próximos usuários mesmo se o email falhar
             }
-          } catch (emailError) {
-            console.error(`❌ Falha ao enviar email para ${user.email}:`, emailError);
+          } else {
+            console.log(`⚠️ Email inválido ou ausente para usuário: ${user.full_name} (${user.id}) - pulando envio de email`);
           }
         } catch (error) {
           console.error(`❌ Erro crítico ao processar ${user.email}:`, error);
