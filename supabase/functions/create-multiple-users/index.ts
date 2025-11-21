@@ -163,6 +163,94 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log(`\n📝 Processando: ${user.email}`);
 
+        // Verificar se usuário já existe
+        const { data: existingUsers } = await supabase.auth.admin.listUsers();
+        const existingUser = existingUsers?.users.find(u => u.email === user.email);
+
+        if (existingUser) {
+          console.log(`♻️ Usuário já existe: ${user.email}, atualizando dados...`);
+          
+          // Atualizar perfil
+          await supabase
+            .from('profiles')
+            .update({
+              access_granted: true,
+              subscription_status: 'active',
+              full_name: user.fullName
+            })
+            .eq('id', existingUser.id);
+
+          // Verificar se já tem subscription ativa
+          const { data: existingSub } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', existingUser.id)
+            .eq('is_active', true)
+            .single();
+
+          if (!existingSub) {
+            // Criar nova subscription se não existir
+            const startDate = new Date();
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + durationMonths);
+
+            await supabase
+              .from('subscriptions')
+              .insert({
+                user_id: existingUser.id,
+                plan_type: planType,
+                duration_months: durationMonths,
+                start_date: startDate.toISOString(),
+                end_date: endDate.toISOString(),
+                is_active: true,
+                auto_renew: false,
+              });
+            console.log(`✅ Nova subscription criada para ${user.email}`);
+          } else {
+            console.log(`ℹ️ Subscription já ativa para ${user.email}`);
+          }
+
+          // Atualizar usage_limits
+          const limitsConfig = planType === 'pro' ? {
+            creative_images_daily_limit: 30,
+            creative_images_monthly_limit: 900,
+            profile_analysis_daily_limit: 10,
+            carousels_monthly_limit: 10,
+            videos_monthly_limit: 15,
+          } : {
+            creative_images_daily_limit: 10,
+            creative_images_monthly_limit: 300,
+            profile_analysis_daily_limit: 5,
+            carousels_monthly_limit: 3,
+            videos_monthly_limit: 0,
+          };
+
+          await supabase
+            .from('usage_limits')
+            .update({
+              plan_type: planType,
+              ...limitsConfig,
+            })
+            .eq('user_id', existingUser.id);
+
+          // Enviar email de reativação
+          const emailSent = await sendWelcomeEmail(user.email, user.fullName, 'Sua conta foi reativada com sucesso!');
+
+          results.push({
+            email: user.email,
+            success: true,
+            userId: existingUser.id,
+            updated: true,
+            emailSent,
+          });
+
+          console.log(`✅ Usuário ${user.email} atualizado com sucesso`);
+          
+          // Delay entre usuários para evitar rate limiting
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          continue;
+        }
+
         // Gerar senha temporária
         const tempPassword = generateTemporaryPassword();
 
@@ -248,6 +336,7 @@ const handler = async (req: Request): Promise<Response> => {
           email: user.email,
           success: true,
           userId: authUser.user!.id,
+          created: true,
           emailSent,
           password: tempPassword // Retornar para o admin ver
         });
@@ -267,17 +356,19 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    const successCount = results.filter(r => r.success).length;
+    const createdCount = results.filter(r => r.success && r.created).length;
+    const updatedCount = results.filter(r => r.success && r.updated).length;
     const failCount = results.filter(r => !r.success).length;
 
-    console.log(`\n✅ Resumo: ${successCount} criados, ${failCount} falharam`);
+    console.log(`\n✅ Resumo: ${createdCount} criados, ${updatedCount} atualizados, ${failCount} falharam`);
 
     return new Response(
       JSON.stringify({
         success: true,
         summary: {
           total: users.length,
-          success: successCount,
+          created: createdCount,
+          updated: updatedCount,
           failed: failCount
         },
         results
