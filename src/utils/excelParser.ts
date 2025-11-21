@@ -109,19 +109,7 @@ export const parseExcelFile = async (file: File): Promise<ParsedData> => {
 };
 
 export const mapOfferToPlan = (offer: string, value: number): { planType: 'basic'; durationMonths: 1 | 3 | 6 } => {
-  const offerLower = offer.toLowerCase();
-  
-  // Vitalício ou valores baixos = 6 meses
-  if (offerLower.includes('vitalício') || offerLower.includes('vitalicio') || value < 200) {
-    return { planType: 'basic', durationMonths: 6 };
-  }
-  
-  // BLACK FRIDAY ou valores altos = 3 meses
-  if (offerLower.includes('black') || value >= 500) {
-    return { planType: 'basic', durationMonths: 3 };
-  }
-  
-  // Padrão: 3 meses
+  // TODOS os compradores Black Friday recebem 3 meses, independente de valor ou oferta
   return { planType: 'basic', durationMonths: 3 };
 };
 
