@@ -4,27 +4,45 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ArrowLeft, FileWarning, Shield, Users, XCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, FileSpreadsheet, Shield, Users, XCircle, Upload, Check } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface UserToRevoke {
   id: string;
   email: string;
   full_name: string;
-  access_granted: boolean;
   subscription_status: string;
-  has_active_subscription: boolean;
+  created_at: string;
+}
+
+interface ParsedUser {
+  email: string;
+  name: string;
+  status: string;
+  offer: string;
+  date: string;
 }
 
 interface DryRunReport {
-  total_users_with_access: number;
-  legitimate_buyers: number;
-  users_to_revoke: number;
-  users_to_revoke_list: UserToRevoke[];
-  admin_users_protected: number;
-  summary: string;
+  spreadsheet?: {
+    totalRows: number;
+    validPaidEmails: number;
+    parsedUsers: ParsedUser[];
+  };
+  system: {
+    totalUsersWithAccess: number;
+    totalAdmins: number;
+    usersToRevoke: UserToRevoke[];
+  };
+  summary: {
+    legitimateBuyers: number;
+    currentUsersWithAccess: number;
+    usersToRevoke: number;
+    adminsProtected: number;
+  };
 }
 
 const RevokeAccessDryRun = () => {
@@ -33,26 +51,72 @@ const RevokeAccessDryRun = () => {
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [report, setReport] = useState<DryRunReport | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const runDryRun = async () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        toast({
+          title: 'Arquivo inválido',
+          description: 'Por favor, selecione um arquivo Excel (.xlsx ou .xls)',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setSelectedFile(file);
+      setReport(null);
+      toast({
+        title: '✅ Arquivo selecionado',
+        description: file.name,
+      });
+    }
+  };
+
+  const processSpreadsheet = async () => {
+    if (!selectedFile) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, selecione uma planilha primeiro',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('revoke-unauthorized-access', {
-        body: { dryRun: true, execute: false }
-      });
+      const formData = new FormData();
+      formData.append('file', selectedFile);
 
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-blackfriday-spreadsheet`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: formData,
+        }
+      );
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao processar planilha');
+      }
+
+      const data = await response.json();
       setReport(data);
       
       toast({
-        title: '✅ Análise concluída',
-        description: `${data.users_to_revoke} usuários serão afetados. Revise os detalhes abaixo.`,
+        title: '✅ Planilha processada',
+        description: `${data.summary.usersToRevoke} usuários identificados para remoção`,
       });
     } catch (error: any) {
-      console.error('Error running analysis:', error);
+      console.error('Error processing spreadsheet:', error);
       toast({
-        title: 'Erro ao executar análise',
+        title: 'Erro ao processar planilha',
         description: error.message,
         variant: 'destructive',
       });
@@ -62,7 +126,7 @@ const RevokeAccessDryRun = () => {
   };
 
   const executeRevocation = async () => {
-    if (!report || report.users_to_revoke === 0) {
+    if (!report || report.summary.usersToRevoke === 0) {
       toast({
         title: 'Nenhuma ação necessária',
         description: 'Não há usuários para remover.',
@@ -71,25 +135,38 @@ const RevokeAccessDryRun = () => {
     }
 
     const confirmed = window.confirm(
-      `⚠️ ATENÇÃO! Esta ação irá remover o acesso de ${report.users_to_revoke} usuários.\n\nEsta ação NÃO pode ser desfeita automaticamente.\n\nDeseja continuar?`
+      `⚠️ ATENÇÃO! Esta ação irá remover o acesso de ${report.summary.usersToRevoke} usuários.\n\nEsta ação NÃO pode ser desfeita automaticamente.\n\nDeseja continuar?`
     );
 
     if (!confirmed) return;
 
+    const doubleConfirm = window.confirm(
+      `🚨 CONFIRMAÇÃO FINAL\n\nVocê está prestes a remover permanentemente o acesso de ${report.summary.usersToRevoke} usuários.\n\nClique em OK para prosseguir.`
+    );
+
+    if (!doubleConfirm) return;
+
     setExecuting(true);
     try {
+      const userIds = report.system.usersToRevoke.map(u => u.id);
+
       const { data, error } = await supabase.functions.invoke('revoke-unauthorized-access', {
-        body: { dryRun: false, execute: true }
+        body: { 
+          dryRun: false,
+          execute: true,
+          userIds
+        }
       });
 
       if (error) throw error;
 
-      setReport(data);
-      
       toast({
-        title: '✅ Remoção executada com sucesso',
-        description: `${data.users_to_revoke} usuários tiveram seus acessos removidos.`,
+        title: '✅ Remoção executada',
+        description: `${report.summary.usersToRevoke} acessos removidos com sucesso`,
       });
+      
+      setReport(null);
+      setSelectedFile(null);
     } catch (error: any) {
       console.error('Error executing revocation:', error);
       toast({
@@ -113,9 +190,9 @@ const RevokeAccessDryRun = () => {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Remoção de Acessos Não Autorizados</h1>
+          <h1 className="text-3xl font-bold">Cruzamento de Dados - Black Friday</h1>
           <p className="text-muted-foreground">
-            Verificar e remover acessos de usuários que não constam nas planilhas da Black Friday
+            Processar planilha de vendas e remover acessos não autorizados
           </p>
         </div>
       </div>
@@ -124,33 +201,60 @@ const RevokeAccessDryRun = () => {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>⚠️ Atenção - Ação Crítica</AlertTitle>
         <AlertDescription>
-          Esta ferramenta identificará e removerá o acesso de todos os usuários que NÃO estão nas planilhas de vendas válidas da Black Friday.
-          Revise cuidadosamente a lista antes de executar a remoção.
+          Esta ferramenta remove permanentemente o acesso de usuários que NÃO estão na planilha de vendas. Use com extrema cautela.
         </AlertDescription>
       </Alert>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileWarning className="h-5 w-5" />
-            Análise e Remoção de Acessos
+            <FileSpreadsheet className="h-5 w-5" />
+            Upload da Planilha de Vendas
           </CardTitle>
           <CardDescription>
-            Identifique quais usuários NÃO estão nas planilhas válidas e execute a remoção dos acessos
+            Faça upload do arquivo Excel com as vendas legítimas para identificar usuários não autorizados
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <Button
-            onClick={runDryRun}
-            disabled={loading || executing}
+        <CardContent className="space-y-4">
+          <div className="border-2 border-dashed border-border rounded-lg p-6">
+            <div className="flex flex-col items-center gap-4">
+              <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />
+              <div className="text-center">
+                <h3 className="font-semibold mb-2">Selecione a Planilha Excel</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Arquivo .xlsx ou .xls com as vendas da Black Friday (coluna "Status" = "paid")
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-4 w-full justify-center">
+                <Input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  disabled={loading || executing}
+                  className="max-w-xs"
+                />
+                {selectedFile && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <Check className="h-4 w-4" />
+                    {selectedFile.name}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Button 
+            onClick={processSpreadsheet} 
+            disabled={!selectedFile || loading || executing}
             size="lg"
             className="w-full"
-            variant="outline"
           >
-            {loading ? '🔍 Analisando...' : '🔍 Analisar Usuários'}
+            <Upload className="mr-2 h-4 w-4" />
+            {loading ? 'Processando Planilha...' : 'Analisar Planilha e Cruzar Dados'}
           </Button>
 
-          {report && report.users_to_revoke > 0 && (
+          {report && report.summary.usersToRevoke > 0 && (
             <Button
               onClick={executeRevocation}
               disabled={loading || executing}
@@ -158,7 +262,7 @@ const RevokeAccessDryRun = () => {
               className="w-full"
               variant="destructive"
             >
-              {executing ? '⚙️ Executando Remoção...' : `🚨 Executar Remoção (${report.users_to_revoke} usuários)`}
+              {executing ? '⚙️ Executando Remoção...' : `🚨 Executar Remoção (${report.summary.usersToRevoke} usuários)`}
             </Button>
           )}
         </CardContent>
@@ -166,6 +270,25 @@ const RevokeAccessDryRun = () => {
 
       {report && (
         <>
+          {report.spreadsheet && (
+            <Alert>
+              <FileSpreadsheet className="h-4 w-4" />
+              <AlertTitle>📊 Dados da Planilha</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <p className="font-semibold">Total de Linhas:</p>
+                    <p className="text-2xl">{report.spreadsheet.totalRows}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-green-600">✅ Vendas Pagas:</p>
+                    <p className="text-2xl text-green-600">{report.spreadsheet.validPaidEmails}</p>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-3">
@@ -175,7 +298,7 @@ const RevokeAccessDryRun = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{report.total_users_with_access}</div>
+                <div className="text-2xl font-bold">{report.summary.currentUsersWithAccess}</div>
               </CardContent>
             </Card>
 
@@ -187,7 +310,7 @@ const RevokeAccessDryRun = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{report.legitimate_buyers}</div>
+                <div className="text-2xl font-bold text-green-600">{report.summary.legitimateBuyers}</div>
               </CardContent>
             </Card>
 
@@ -199,7 +322,7 @@ const RevokeAccessDryRun = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{report.users_to_revoke}</div>
+                <div className="text-2xl font-bold text-red-600">{report.summary.usersToRevoke}</div>
               </CardContent>
             </Card>
 
@@ -211,7 +334,7 @@ const RevokeAccessDryRun = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{report.admin_users_protected}</div>
+                <div className="text-2xl font-bold text-yellow-600">{report.summary.adminsProtected}</div>
               </CardContent>
             </Card>
           </div>
@@ -219,45 +342,41 @@ const RevokeAccessDryRun = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-red-600">
-                ⚠️ Usuários que PERDERÃO acesso ({report.users_to_revoke})
+                ⚠️ Usuários que PERDERÃO acesso ({report.summary.usersToRevoke})
               </CardTitle>
               <CardDescription>
-                Estes usuários têm acesso atualmente mas NÃO constam nas planilhas de vendas válidas da Black Friday
+                Estes usuários têm acesso mas NÃO constam na planilha de vendas legítimas
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {report.users_to_revoke_list.length === 0 ? (
+              {report.system.usersToRevoke.length === 0 ? (
                 <Alert>
                   <AlertTitle>✅ Nenhum usuário a remover</AlertTitle>
                   <AlertDescription>
-                    Todos os usuários com acesso estão nas planilhas de vendas válidas!
+                    Todos os usuários com acesso estão na planilha de vendas!
                   </AlertDescription>
                 </Alert>
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-md border max-h-96 overflow-y-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nome</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Subscription</TableHead>
+                        <TableHead>Data</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {report.users_to_revoke_list.map((user) => (
+                      {report.system.usersToRevoke.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.full_name}</TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
-                            <Badge variant={user.access_granted ? 'default' : 'secondary'}>
-                              {user.access_granted ? 'Ativo' : 'Inativo'}
-                            </Badge>
+                            <Badge variant="outline">{user.subscription_status}</Badge>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant={user.has_active_subscription ? 'default' : 'outline'}>
-                              {user.subscription_status}
-                            </Badge>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {new Date(user.created_at).toLocaleDateString('pt-BR')}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -267,13 +386,6 @@ const RevokeAccessDryRun = () => {
               )}
             </CardContent>
           </Card>
-
-          <Alert>
-            <AlertTitle>📋 Resumo</AlertTitle>
-            <AlertDescription className="whitespace-pre-wrap font-mono text-xs">
-              {report.summary}
-            </AlertDescription>
-          </Alert>
         </>
       )}
     </div>

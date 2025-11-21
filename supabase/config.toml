@@ -45,3 +45,6 @@ verify_jwt = true
 [functions.revoke-unauthorized-access]
 verify_jwt = true
 
+[functions.process-blackfriday-spreadsheet]
+verify_jwt = true
+

@@ -245,8 +245,9 @@ serve(async (req) => {
     console.log('📊 [revoke-access] Total legitimate emails:', LEGITIMATE_BLACK_FRIDAY_EMAILS.length);
 
     // Verificar se é para executar ou apenas dry-run
-    const { dryRun = true, execute = false } = await req.json();
+    const { dryRun = true, execute = false, userIds = [] } = await req.json();
     console.log(`🎯 [revoke-access] Mode: ${execute ? 'EXECUÇÃO REAL' : 'DRY-RUN (simulação)'}`);
+    console.log(`📋 [revoke-access] User IDs from spreadsheet: ${userIds.length}`);
 
     // 1. Buscar todos os usuários com acesso
     const { data: profiles, error: profilesError } = await supabaseClient
@@ -303,23 +304,41 @@ serve(async (req) => {
     console.log('🛡️ [revoke-access] Admin users to protect:', adminUsersSet.size);
 
     // 5. Identificar usuários a remover
-    const usersToRevoke = profiles
-      ?.filter(profile => {
-        const email = authUsersMap.get(profile.id);
-        const isAdmin = adminUsersSet.has(profile.id);
-        const isLegitimate = email && LEGITIMATE_BLACK_FRIDAY_EMAILS.includes(email.toLowerCase().trim());
+    let usersToRevoke;
+    
+    if (userIds.length > 0) {
+      // Se userIds foram fornecidos (da planilha), usar apenas esses
+      console.log('📊 [revoke-access] Using provided user IDs from spreadsheet');
+      usersToRevoke = profiles
+        ?.filter(profile => userIds.includes(profile.id) && !adminUsersSet.has(profile.id))
+        .map(profile => ({
+          id: profile.id,
+          email: authUsersMap.get(profile.id) || 'N/A',
+          full_name: profile.full_name || 'Sem nome',
+          access_granted: profile.access_granted,
+          subscription_status: profile.subscription_status || 'N/A',
+          has_active_subscription: activeSubscriptionsMap.has(profile.id)
+        })) || [];
+    } else {
+      // Caso contrário, usar a lista hardcoded (fallback)
+      console.log('📋 [revoke-access] Using hardcoded legitimate emails list (fallback)');
+      usersToRevoke = profiles
+        ?.filter(profile => {
+          const email = authUsersMap.get(profile.id);
+          const isAdmin = adminUsersSet.has(profile.id);
+          const isLegitimate = email && LEGITIMATE_BLACK_FRIDAY_EMAILS.includes(email.toLowerCase().trim());
 
-        // Não remover admins e remover quem não está na lista legítima
-        return !isAdmin && !isLegitimate;
-      })
-      .map(profile => ({
-        id: profile.id,
-        email: authUsersMap.get(profile.id) || 'N/A',
-        full_name: profile.full_name || 'Sem nome',
-        access_granted: profile.access_granted,
-        subscription_status: profile.subscription_status || 'N/A',
-        has_active_subscription: activeSubscriptionsMap.has(profile.id)
-      })) || [];
+          return !isAdmin && !isLegitimate;
+        })
+        .map(profile => ({
+          id: profile.id,
+          email: authUsersMap.get(profile.id) || 'N/A',
+          full_name: profile.full_name || 'Sem nome',
+          access_granted: profile.access_granted,
+          subscription_status: profile.subscription_status || 'N/A',
+          has_active_subscription: activeSubscriptionsMap.has(profile.id)
+        })) || [];
+    }
 
     console.log('🚨 [revoke-access] Users to revoke:', usersToRevoke.length);
 
