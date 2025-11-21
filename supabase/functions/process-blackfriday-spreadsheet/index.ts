@@ -34,6 +34,10 @@ serve(async (req) => {
       );
     }
 
+    // Extrair JWT do header
+    const jwt = authHeader.replace('Bearer ', '');
+    console.log('🔑 JWT extracted, length:', jwt.length);
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -44,11 +48,11 @@ serve(async (req) => {
       }
     );
 
-    console.log('👤 Fetching user...');
+    console.log('👤 Fetching user with JWT...');
     const {
       data: { user },
       error: userError,
-    } = await supabaseClient.auth.getUser();
+    } = await supabaseClient.auth.getUser(jwt);
 
     if (userError) {
       console.error('❌ Error getting user:', userError);
