@@ -88,12 +88,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     
-    return { error };
+    if (error) {
+      return { error };
+    }
+
+    // Verificar se o usuário tem acesso permitido
+    if (data.user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('access_granted')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error checking access:', profileError);
+        return { error: null };
+      }
+
+      // Se acesso foi negado, fazer logout imediatamente
+      if (profile && !profile.access_granted) {
+        await supabase.auth.signOut();
+        return { 
+          error: { 
+            message: 'Sua conta foi desativada. Entre em contato com o suporte.',
+            name: 'AccessDenied',
+            status: 403
+          } as any
+        };
+      }
+    }
+    
+    return { error: null };
   };
 
   const signOut = async () => {
