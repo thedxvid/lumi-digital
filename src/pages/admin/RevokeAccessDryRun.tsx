@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ArrowLeft, FileSpreadsheet, Shield, Users, XCircle, Upload, Check } from 'lucide-react';
+import { AlertCircle, ArrowLeft, FileSpreadsheet, Shield, Users, XCircle, Upload, Check, Download } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,7 @@ const RevokeAccessDryRun = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [report, setReport] = useState<DryRunReport | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -174,6 +175,52 @@ const RevokeAccessDryRun = () => {
     }
   };
 
+  const exportBackup = async () => {
+    if (!report || report.summary.usersToRevoke === 0) {
+      toast({
+        title: 'Nenhum dado para exportar',
+        description: 'Não há usuários para exportar.',
+      });
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const userIds = report.system.usersToRevoke.map(u => u.id);
+
+      const { data, error } = await supabase.functions.invoke('export-users-backup', {
+        body: { userIds }
+      });
+
+      if (error) throw error;
+
+      // Criar blob e fazer download
+      const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `backup_usuarios_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: '✅ Backup exportado',
+        description: `Arquivo CSV com ${report.summary.usersToRevoke} usuários baixado com sucesso`,
+      });
+    } catch (error: any) {
+      console.error('Error exporting backup:', error);
+      toast({
+        title: 'Erro ao exportar backup',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-4">
@@ -250,15 +297,28 @@ const RevokeAccessDryRun = () => {
           </Button>
 
           {report && report.summary.usersToRevoke > 0 && (
-            <Button
-              onClick={executeRevocation}
-              disabled={loading || executing}
-              size="lg"
-              className="w-full"
-              variant="destructive"
-            >
-              {executing ? '⚙️ Executando Remoção...' : `🚨 Executar Remoção (${report.summary.usersToRevoke} usuários)`}
-            </Button>
+            <div className="space-y-2">
+              <Button
+                onClick={exportBackup}
+                disabled={loading || executing || exporting}
+                size="lg"
+                className="w-full"
+                variant="outline"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {exporting ? 'Exportando Backup...' : `💾 Exportar Backup CSV (${report.summary.usersToRevoke} usuários)`}
+              </Button>
+              
+              <Button
+                onClick={executeRevocation}
+                disabled={loading || executing || exporting}
+                size="lg"
+                className="w-full"
+                variant="destructive"
+              >
+                {executing ? '⚙️ Executando Remoção...' : `🚨 Executar Remoção (${report.summary.usersToRevoke} usuários)`}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
