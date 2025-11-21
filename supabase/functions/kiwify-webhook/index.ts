@@ -12,6 +12,13 @@ interface KiwifyWebhookPayload {
   product_id: string;
   product_name: string;
   product_type: string;
+  checkout_link?: string;
+  Product?: {
+    product_id: string;
+    product_name: string;
+    product_offer_id?: string;
+    product_offer_name?: string;
+  };
   Customer: {
     email: string;
     first_name: string;
@@ -27,6 +34,15 @@ interface KiwifyWebhookPayload {
     email: string;
     value: number;
   }>;
+  TrackingParameters?: {
+    utm_source?: string;
+    utm_campaign?: string;
+    utm_medium?: string;
+    utm_content?: string;
+    utm_term?: string;
+    src?: string;
+    sck?: string;
+  };
   order_status: 'paid' | 'waiting_payment' | 'refused' | 'refunded' | 'chargeback' | 'cancelled';
   payment_method: string;
   installments_number: number;
@@ -107,8 +123,66 @@ function generateSecurePassword(): string {
   return password;
 }
 
+function isEligibleOffer(payload: KiwifyWebhookPayload): { 
+  isEligible: boolean; 
+  reason?: string;
+  offerInfo: {
+    offerId?: string;
+    offerName?: string;
+    checkoutLink?: string;
+  }
+} {
+  const offerName = payload.Product?.product_offer_name || '';
+  const offerId = payload.Product?.product_offer_id || '';
+  
+  // Verificar se a oferta contém "black" no nome (case insensitive)
+  const isBlackFriday = offerName.toLowerCase().includes('black');
+  
+  console.log('🎫 Validando oferta:', {
+    offerName,
+    offerId,
+    isBlackFriday,
+    checkoutLink: payload.checkout_link
+  });
+  
+  return {
+    isEligible: isBlackFriday,
+    reason: isBlackFriday ? undefined : `Oferta não elegível para Black Friday: ${offerName}`,
+    offerInfo: {
+      offerId,
+      offerName,
+      checkoutLink: payload.checkout_link
+    }
+  };
+}
+
 async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
   try {
+    // ✅ VALIDAR SE É OFERTA ELEGÍVEL (BLACK FRIDAY)
+    const eligibility = isEligibleOffer(payload);
+    
+    console.log('🎫 Resultado da validação:', {
+      isEligible: eligibility.isEligible,
+      offerName: eligibility.offerInfo.offerName,
+      offerId: eligibility.offerInfo.offerId,
+      checkoutLink: eligibility.offerInfo.checkoutLink,
+      email: payload.Customer.email
+    });
+    
+    if (!eligibility.isEligible) {
+      console.log('❌ Oferta não elegível - compra será IGNORADA:', eligibility.reason);
+      console.log('❌ Email do cliente:', payload.Customer.email);
+      console.log('❌ Nome da oferta:', eligibility.offerInfo.offerName);
+      
+      // NÃO salvar nada no banco, apenas retornar
+      return {
+        success: false,
+        message: eligibility.reason
+      };
+    }
+    
+    console.log('✅ Oferta elegível (Black Friday) - prosseguindo com o processamento');
+
     await supabase.rpc('set_config', {
       setting_name: 'app.webhook_context',
       new_value: 'kiwify_webhook',
@@ -265,6 +339,8 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
 
     try {
       console.log('💾 Salvando pedido...');
+      const eligibility = isEligibleOffer(payload);
+      
       const { error: orderError } = await supabase
         .from('orders')
         .upsert({
@@ -274,6 +350,14 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
           product_id: payload.product_id || null,
           product_name: payload.product_name || 'Produto não informado',
           product_type: payload.product_type || null,
+          product_offer_id: eligibility.offerInfo.offerId,
+          product_offer_name: eligibility.offerInfo.offerName,
+          checkout_link: eligibility.offerInfo.checkoutLink,
+          utm_source: payload.TrackingParameters?.utm_source,
+          utm_campaign: payload.TrackingParameters?.utm_campaign,
+          utm_medium: payload.TrackingParameters?.utm_medium,
+          utm_content: payload.TrackingParameters?.utm_content,
+          tracking_params: payload.TrackingParameters || {},
           order_status: payload.order_status,
           payment_method: payload.payment_method || null,
           installments_number: payload.installments_number || 1,
@@ -286,6 +370,8 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
           created_at: payload.created_at,
           updated_at: payload.updated_at,
           webhook_data: payload,
+          is_eligible_offer: true,
+          rejection_reason: null,
           access_granted: true,
           credentials_sent: false
         });
@@ -346,6 +432,14 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
 
 async function handlePendingOrder(payload: KiwifyWebhookPayload, supabase: any) {
   try {
+    // Validar oferta mesmo para pedidos pendentes
+    const eligibility = isEligibleOffer(payload);
+    
+    if (!eligibility.isEligible) {
+      console.log('❌ Pedido pendente de oferta não elegível - será ignorado');
+      return { success: false, message: eligibility.reason };
+    }
+    
     console.log('💾 Salvando pedido pendente...');
     
     const { error: orderError } = await supabase
@@ -357,6 +451,14 @@ async function handlePendingOrder(payload: KiwifyWebhookPayload, supabase: any) 
         product_id: payload.product_id || null,
         product_name: payload.product_name || 'Produto não informado',
         product_type: payload.product_type || null,
+        product_offer_id: eligibility.offerInfo.offerId,
+        product_offer_name: eligibility.offerInfo.offerName,
+        checkout_link: eligibility.offerInfo.checkoutLink,
+        utm_source: payload.TrackingParameters?.utm_source,
+        utm_campaign: payload.TrackingParameters?.utm_campaign,
+        utm_medium: payload.TrackingParameters?.utm_medium,
+        utm_content: payload.TrackingParameters?.utm_content,
+        tracking_params: payload.TrackingParameters || {},
         order_status: payload.order_status,
         payment_method: payload.payment_method || null,
         installments_number: payload.installments_number || 1,
@@ -369,6 +471,8 @@ async function handlePendingOrder(payload: KiwifyWebhookPayload, supabase: any) 
         created_at: payload.created_at,
         updated_at: payload.updated_at,
         webhook_data: payload,
+        is_eligible_offer: true,
+        rejection_reason: null,
         access_granted: false,
         credentials_sent: false
       });

@@ -543,6 +543,7 @@ export type Database = {
       orders: {
         Row: {
           access_granted: boolean | null
+          checkout_link: string | null
           created_at: string | null
           credentials_sent: boolean | null
           customer_email: string
@@ -551,6 +552,7 @@ export type Database = {
           id: string
           installment_value: number | null
           installments_number: number | null
+          is_eligible_offer: boolean | null
           kiwify_order_ref: string | null
           order_status: string | null
           order_value: number | null
@@ -558,15 +560,24 @@ export type Database = {
           payment_method: string | null
           product_id: string | null
           product_name: string | null
+          product_offer_id: string | null
+          product_offer_name: string | null
           product_type: string | null
+          rejection_reason: string | null
           status: string | null
+          tracking_params: Json | null
           transaction_id: string | null
           updated_at: string | null
           user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
           webhook_data: Json | null
         }
         Insert: {
           access_granted?: boolean | null
+          checkout_link?: string | null
           created_at?: string | null
           credentials_sent?: boolean | null
           customer_email: string
@@ -575,6 +586,7 @@ export type Database = {
           id?: string
           installment_value?: number | null
           installments_number?: number | null
+          is_eligible_offer?: boolean | null
           kiwify_order_ref?: string | null
           order_status?: string | null
           order_value?: number | null
@@ -582,15 +594,24 @@ export type Database = {
           payment_method?: string | null
           product_id?: string | null
           product_name?: string | null
+          product_offer_id?: string | null
+          product_offer_name?: string | null
           product_type?: string | null
+          rejection_reason?: string | null
           status?: string | null
+          tracking_params?: Json | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
           webhook_data?: Json | null
         }
         Update: {
           access_granted?: boolean | null
+          checkout_link?: string | null
           created_at?: string | null
           credentials_sent?: boolean | null
           customer_email?: string
@@ -599,6 +620,7 @@ export type Database = {
           id?: string
           installment_value?: number | null
           installments_number?: number | null
+          is_eligible_offer?: boolean | null
           kiwify_order_ref?: string | null
           order_status?: string | null
           order_value?: number | null
@@ -606,11 +628,19 @@ export type Database = {
           payment_method?: string | null
           product_id?: string | null
           product_name?: string | null
+          product_offer_id?: string | null
+          product_offer_name?: string | null
           product_type?: string | null
+          rejection_reason?: string | null
           status?: string | null
+          tracking_params?: Json | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
           webhook_data?: Json | null
         }
         Relationships: []
