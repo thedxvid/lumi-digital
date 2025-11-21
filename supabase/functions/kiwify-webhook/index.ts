@@ -13,6 +13,9 @@ interface KiwifyWebhookPayload {
   product_name: string;
   product_type: string;
   checkout_link?: string;
+  webhook_event_type?: string; // Tipo específico do evento (order_approved, order_rejected, etc.)
+  approved_date?: string; // Data de aprovação
+  access_url?: string; // URL de acesso à área de membros
   Product?: {
     product_id: string;
     product_name: string;
@@ -29,11 +32,19 @@ interface KiwifyWebhookPayload {
     email: string;
     name: string;
   };
-  Commissions: Array<{
-    name: string;
-    email: string;
-    value: number;
-  }>;
+  Commissions: {
+    charge_amount?: number;
+    currency?: string;
+    product_base_price?: number;
+    kiwify_fee?: number;
+    commissioned_stores?: Array<{
+      id: string;
+      type: string;
+      email: string;
+      value: number;
+    }>;
+    my_commission?: number;
+  };
   TrackingParameters?: {
     utm_source?: string;
     utm_campaign?: string;
@@ -43,6 +54,23 @@ interface KiwifyWebhookPayload {
     src?: string;
     sck?: string;
   };
+  Subscription?: {
+    start_date?: string;
+    next_payment?: string;
+    status?: string;
+    customer_access?: {
+      has_access: boolean;
+      active_period: boolean;
+      access_until?: string;
+    };
+    plan?: {
+      id: string;
+      name: string;
+      frequency: string;
+      qty_charges: number;
+    };
+  };
+  subscription_id?: string;
   order_status: 'paid' | 'waiting_payment' | 'refused' | 'refunded' | 'chargeback' | 'cancelled';
   payment_method: string;
   installments_number: number;
@@ -55,6 +83,14 @@ interface KiwifyWebhookPayload {
 }
 
 serve(async (req) => {
+  // Tratar HEAD requests (validação da Kiwify)
+  if (req.method === 'HEAD') {
+    return new Response('ok', { 
+      status: 200, 
+      headers: corsHeaders 
+    });
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -74,11 +110,16 @@ serve(async (req) => {
     const payload: KiwifyWebhookPayload = await req.json();
     
     console.log('📦 Payload completo recebido:', JSON.stringify(payload, null, 2));
+    console.log('📦 Tipo de evento:', payload.webhook_event_type || 'não especificado');
+    console.log('📦 Status do pedido:', payload.order_status);
     console.log('Kiwify webhook received:', {
       order_id: payload.order_id,
+      webhook_event_type: payload.webhook_event_type,
       order_status: payload.order_status,
       customer_email: payload.Customer.email,
-      product_name: payload.product_name
+      product_name: payload.product_name,
+      approved_date: payload.approved_date,
+      has_subscription: !!payload.Subscription
     });
 
     switch (payload.order_status) {
