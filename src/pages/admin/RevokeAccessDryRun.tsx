@@ -88,25 +88,14 @@ const RevokeAccessDryRun = () => {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-blackfriday-spreadsheet`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: formData,
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('process-blackfriday-spreadsheet', {
+        body: formData,
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao processar planilha');
+      if (error) {
+        throw new Error(error.message || 'Erro ao processar planilha');
       }
 
-      const data = await response.json();
       setReport(data);
       
       toast({
