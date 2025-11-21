@@ -43,6 +43,7 @@ interface DryRunReport {
     usersToRevoke: number;
     adminsProtected: number;
   };
+  legitimateUserIds: string[]; // IDs dos usuários legítimos da planilha
 }
 
 const RevokeAccessDryRun = () => {
@@ -144,7 +145,7 @@ const RevokeAccessDryRun = () => {
 
     setExecuting(true);
     try {
-      const userIds = report.system.usersToRevoke.map(u => u.id);
+      const userIds = report.legitimateUserIds; // IDs dos usuários legítimos da planilha
 
       const { data, error } = await supabase.functions.invoke('revoke-unauthorized-access', {
         body: { 
