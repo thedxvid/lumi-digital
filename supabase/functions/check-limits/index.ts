@@ -42,10 +42,13 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
     if (userError || !user) {
+      console.error('❌ [check-limits] Auth error:', userError);
       throw new Error('Unauthorized');
     }
 
     const { feature, increment = false }: CheckLimitsRequest = await req.json();
+    
+    console.log(`🔍 [check-limits] Request for user ${user.id}:`, { feature, increment });
 
     // Reset limits if needed
     await supabaseClient.rpc('reset_daily_limits');
@@ -135,6 +138,13 @@ serve(async (req) => {
         
         allowed = hasAnyCredits;
         
+        console.log(`📊 [check-limits] Video credits for user ${user.id}:`, {
+          sora: { limit: limits.sora_text_videos_lifetime_limit, used: limits.sora_text_videos_lifetime_used, available: totalSoraAvailable },
+          kling: { limit: limits.kling_image_videos_lifetime_limit, used: limits.kling_image_videos_lifetime_used, available: totalKlingAvailable },
+          extra: { credits: limits.video_credits, used: limits.video_credits_used, available: extraCreditsAvailable },
+          allowed
+        });
+        
         if (!allowed) {
           reason = 'Você usou todos os seus vídeos grátis! Compre créditos extras para continuar gerando.';
           requiresUpgrade = false; // Direcionar para compra de addons
@@ -163,13 +173,12 @@ serve(async (req) => {
         case 'carousels':
           updates.carousels_monthly_used = limits.carousels_monthly_used + 1;
           break;
-        case 'videos':
-          if (limits.videos_monthly_used < limits.videos_monthly_limit) {
-            updates.videos_monthly_used = limits.videos_monthly_used + 1;
-          } else {
-            updates.video_credits_used = limits.video_credits_used + 1;
-          }
-          break;
+      case 'videos':
+        // NOTA: O incremento de vídeos NÃO é feito aqui porque o generate-video
+        // já decrementa os lifetime limits corretos (sora/kling) baseado na API usada.
+        // Fazer increment aqui causaria dupla contagem.
+        console.log('⚠️ Video increment skipped - handled by generate-video function');
+        break;
       }
 
       await supabaseClient
@@ -185,6 +194,8 @@ serve(async (req) => {
       requiresUpgrade,
       upgradeUrl: requiresUpgrade ? '/pricing' : undefined
     };
+
+    console.log(`✅ [check-limits] Response for user ${user.id}:`, response);
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -86,11 +86,18 @@ export const useVideoGenerator = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { data: userLimits } = await supabase
+      console.log('🔍 [VideoGen] Checking video credits for user:', user.id);
+
+      const { data: userLimits, error: limitsError } = await supabase
         .from('usage_limits')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      if (limitsError) {
+        console.error('❌ [VideoGen] Error fetching limits:', limitsError);
+        throw limitsError;
+      }
 
       if (userLimits) {
         const isSora = config.api_provider?.includes('sora');
@@ -100,9 +107,19 @@ export const useVideoGenerator = () => {
         const klingAvailable = (userLimits.kling_image_videos_lifetime_limit || 0) - (userLimits.kling_image_videos_lifetime_used || 0);
         const extraCredits = (userLimits.video_credits || 0) - (userLimits.video_credits_used || 0);
         
+        console.log('📊 [VideoGen] Credits status:', {
+          api_provider: config.api_provider,
+          isSora,
+          isKling,
+          soraAvailable,
+          klingAvailable,
+          extraCredits,
+          total_available: soraAvailable + klingAvailable + extraCredits
+        });
+        
         // APENAS verificar créditos disponíveis - SEM verificação de plano PRO
         if (isSora && soraAvailable === 0 && extraCredits === 0) {
-          console.log('No Sora credits available');
+          console.warn('⚠️ [VideoGen] No Sora credits available');
           window.dispatchEvent(new CustomEvent('video-limit-reached', {
             detail: { videoType: 'sora', remainingCredits: extraCredits }
           }));
@@ -113,7 +130,7 @@ export const useVideoGenerator = () => {
         }
         
         if (isKling && klingAvailable === 0 && extraCredits === 0) {
-          console.log('No Kling credits available');
+          console.warn('⚠️ [VideoGen] No Kling credits available');
           window.dispatchEvent(new CustomEvent('video-limit-reached', {
             detail: { videoType: 'kling', remainingCredits: extraCredits }
           }));
@@ -123,17 +140,15 @@ export const useVideoGenerator = () => {
           return null;
         }
         
-        console.log('Credits check passed:', {
-          isSora,
-          isKling,
-          soraAvailable,
-          klingAvailable,
-          extraCredits
-        });
+        console.log('✅ [VideoGen] Credits check passed - proceeding with generation');
       }
     } catch (checkError) {
-      console.error('Error checking limits:', checkError);
-      // Continue even if check fails to avoid blocking legitimate users
+      console.error('❌ [VideoGen] Error checking limits:', checkError);
+      toast.error('Erro ao verificar limites de vídeo');
+      setLoading(false);
+      setGenerationStatus('idle');
+      setResultModalOpen(false);
+      return null;
     }
 
     try {
