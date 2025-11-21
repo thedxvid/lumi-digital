@@ -209,6 +209,16 @@ serve(async (req) => {
 
     console.log('Users to revoke:', usersToRevoke.length);
 
+    // Identificar usuários legítimos (no sistema E na planilha)
+    const legitimateUsers = allUsers?.filter(profile => {
+      const email = userEmailMap.get(profile.id);
+      const isInSpreadsheet = email && validEmails.has(email);
+      return isInSpreadsheet;
+    }) || [];
+
+    const legitimateUserIds = legitimateUsers.map(u => u.id);
+    console.log('Legitimate users (in system AND spreadsheet):', legitimateUserIds.length);
+
     // Preparar relatório
     const report = {
       spreadsheet: {
@@ -233,6 +243,7 @@ serve(async (req) => {
         usersToRevoke: usersToRevoke.length,
         adminsProtected: adminIds.size,
       },
+      legitimateUserIds, // IDs dos usuários legítimos no sistema
     };
 
     console.log('Report summary:', report.summary);
