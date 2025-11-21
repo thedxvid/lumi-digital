@@ -21,38 +21,76 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔐 Starting authentication...');
+    
+    const authHeader = req.headers.get('Authorization');
+    console.log('📋 Auth header present:', !!authHeader);
+    
+    if (!authHeader) {
+      console.error('❌ No Authorization header found');
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
 
+    console.log('👤 Fetching user...');
     const {
       data: { user },
+      error: userError,
     } = await supabaseClient.auth.getUser();
 
-    if (!user) {
+    if (userError) {
+      console.error('❌ Error getting user:', userError);
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Error verifying user: ' + userError.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
 
-    const { data: hasAdminRole } = await supabaseClient.rpc('has_role', {
+    if (!user) {
+      console.error('❌ No user found');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - No user found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    console.log('✅ User authenticated:', user.id);
+
+    console.log('🔍 Checking admin role...');
+    const { data: hasAdminRole, error: roleError } = await supabaseClient.rpc('has_role', {
       _user_id: user.id,
       _role: 'admin',
     });
 
+    if (roleError) {
+      console.error('❌ Error checking role:', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Error checking permissions: ' + roleError.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
     if (!hasAdminRole) {
+      console.error('❌ User is not admin');
       return new Response(
         JSON.stringify({ error: 'Forbidden - Admin access required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
+
+    console.log('✅ Admin access confirmed');
 
     const body = await req.json();
     const { file: base64File, filename } = body;
