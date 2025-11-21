@@ -344,6 +344,7 @@ serve(async (req) => {
 
     // 6. EXECUTAR REMOÇÃO se execute=true
     let revokedCount = 0;
+    let emailsSentCount = 0;
     if (execute && usersToRevoke.length > 0) {
       console.log('⚠️ [revoke-access] INICIANDO REMOÇÃO REAL DE ACESSOS...');
       
@@ -376,12 +377,33 @@ serve(async (req) => {
               console.error(`❌ Erro ao desativar subscription de ${user.email}:`, subError);
             }
           }
+
+          // Enviar email de notificação
+          try {
+            console.log(`📧 Enviando email de revogação para: ${user.email}`);
+            const { error: emailError } = await supabaseClient.functions.invoke('send-revocation-email', {
+              body: {
+                email: user.email,
+                fullName: user.full_name || 'Cliente'
+              }
+            });
+
+            if (emailError) {
+              console.error(`❌ Erro ao enviar email para ${user.email}:`, emailError);
+            } else {
+              emailsSentCount++;
+              console.log(`✅ Email enviado para: ${user.email}`);
+            }
+          } catch (emailError) {
+            console.error(`❌ Falha ao enviar email para ${user.email}:`, emailError);
+          }
         } catch (error) {
           console.error(`❌ Erro crítico ao processar ${user.email}:`, error);
         }
       }
 
       console.log(`✅ [revoke-access] REMOÇÃO CONCLUÍDA: ${revokedCount}/${usersToRevoke.length} usuários`);
+      console.log(`📧 [revoke-access] EMAILS ENVIADOS: ${emailsSentCount}/${usersToRevoke.length}`);
     }
 
     // 7. Gerar relatório
@@ -398,10 +420,11 @@ serve(async (req) => {
 ✅ Total de usuários com acesso (antes): ${profiles?.length || 0}
 ✅ Compradores legítimos da Black Friday: ${profiles?.length - usersToRevoke.length || 0}
 🔴 Usuários com acesso REMOVIDO: ${revokedCount}/${usersToRevoke.length}
+📧 Emails de notificação enviados: ${emailsSentCount}/${usersToRevoke.length}
 🛡️ Admins protegidos: ${adminUsersSet.size}
 
 ✅ EXECUÇÃO CONCLUÍDA!
-Os usuários listados abaixo tiveram seus acessos revogados.
+Os usuários listados abaixo tiveram seus acessos revogados e foram notificados por email.
         `.trim()
         : `
 📊 RELATÓRIO DRY-RUN - Remoção de Acessos Não Autorizados
