@@ -11,12 +11,17 @@ interface Order {
   customer_name: string;
   customer_email: string;
   product_name: string;
+  product_offer_name?: string;
+  checkout_link?: string;
+  utm_source?: string;
+  utm_campaign?: string;
   order_status: string;
   order_value: number;
   order_value_formatted: string;
   payment_method: string;
   created_at: string;
   access_granted: boolean;
+  is_eligible_offer?: boolean;
 }
 
 const AdminOrders = () => {
@@ -42,7 +47,11 @@ const AdminOrders = () => {
         customer_name: order.customer_name,
         customer_email: order.customer_email,
         product_name: order.product_name,
-        order_status: order.status,
+        product_offer_name: order.product_offer_name,
+        checkout_link: order.checkout_link,
+        utm_source: order.utm_source,
+        utm_campaign: order.utm_campaign,
+        order_status: order.order_status,
         order_value: Number(order.order_value),
         order_value_formatted: new Intl.NumberFormat('pt-BR', { 
           style: 'currency', 
@@ -50,7 +59,8 @@ const AdminOrders = () => {
         }).format(Number(order.order_value)),
         payment_method: order.payment_method || 'N/A',
         created_at: order.created_at,
-        access_granted: false
+        access_granted: order.access_granted || false,
+        is_eligible_offer: order.is_eligible_offer
       }));
       
       setOrders(formattedOrders);
@@ -178,6 +188,11 @@ const AdminOrders = () => {
                     <Badge className={getStatusColor(order.order_status)}>
                       {getStatusLabel(order.order_status)}
                     </Badge>
+                    {order.is_eligible_offer && (
+                      <Badge variant="outline" className="border-lumi-gold text-lumi-gold">
+                        🎉 Black Friday
+                      </Badge>
+                    )}
                     {order.access_granted && (
                       <Badge variant="outline" className="border-lumi-success text-lumi-success">
                         Acesso Concedido
@@ -189,6 +204,12 @@ const AdminOrders = () => {
                       <span>{order.customer_email}</span>
                       <span>{order.product_name}</span>
                     </div>
+                    {order.product_offer_name && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Oferta:</span>
+                        <span>{order.product_offer_name}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
                         <DollarSign className="h-3 w-3" />
@@ -200,6 +221,13 @@ const AdminOrders = () => {
                       </div>
                       <span className="capitalize">{order.payment_method}</span>
                     </div>
+                    {(order.utm_source || order.utm_campaign) && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-medium">Origem:</span>
+                        {order.utm_source && <span className="bg-muted px-2 py-0.5 rounded">{order.utm_source}</span>}
+                        {order.utm_campaign && <span className="bg-muted px-2 py-0.5 rounded">{order.utm_campaign}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
