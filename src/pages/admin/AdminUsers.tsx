@@ -18,6 +18,7 @@ import { UserRolesManager } from '@/components/admin/UserRolesManager';
 import { UserLimitsEditor } from '@/components/admin/UserLimitsEditor';
 import { AdminStatsCards } from '@/components/admin/AdminStatsCards';
 import { BulkActionsBar } from '@/components/admin/BulkActionsBar';
+import { BulkSubscriptionModal } from '@/components/admin/BulkSubscriptionModal';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { SubscriptionManager } from '@/components/admin/SubscriptionManager';
 import { UsageBar } from '@/components/admin/UsageBar';
@@ -76,6 +77,7 @@ const AdminUsers = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [isResendingEmails, setIsResendingEmails] = useState(false);
   const [isResendingAllEmails, setIsResendingAllEmails] = useState(false);
+  const [showBulkSubscriptionModal, setShowBulkSubscriptionModal] = useState(false);
   const { toast } = useToast();
   
   // Email progress modal states
@@ -295,6 +297,193 @@ const AdminUsers = () => {
     } catch (error) {
       console.error('❌ Erro ao desativar usuários:', error);
       toast({ title: 'Erro', description: 'Erro ao desativar usuários', variant: 'destructive' });
+    }
+  };
+
+  const handleBulkSendEmail = async () => {
+    const selectedUsersData = users.filter(u => selectedUsers.includes(u.id));
+    
+    if (!confirm(`Enviar emails de boas-vindas para ${selectedUsers.length} usuários?\n\nNovas senhas temporárias serão geradas.`)) {
+      return;
+    }
+
+    setEmailProgress({
+      total: selectedUsers.length,
+      sent: 0,
+      failed: 0,
+      current: "",
+      errors: []
+    });
+    setIsEmailComplete(false);
+    setShowEmailProgress(true);
+
+    let sent = 0;
+    let failed = 0;
+    const errors: Array<{ email: string; error: string }> = [];
+
+    for (const user of selectedUsersData) {
+      try {
+        setEmailProgress(prev => ({ ...prev, current: user.email }));
+        
+        const { error } = await supabase.functions.invoke('send-welcome-email', {
+          body: { 
+            email: user.email,
+            fullName: user.full_name || user.email.split('@')[0],
+            password: `Lumi${Math.random().toString(36).slice(-8)}`
+          }
+        });
+
+        if (error) throw error;
+        
+        sent++;
+        setEmailProgress(prev => ({ ...prev, sent }));
+      } catch (error: any) {
+        console.error(`Erro ao enviar email para ${user.email}:`, error);
+        failed++;
+        errors.push({ email: user.email, error: error.message });
+        setEmailProgress(prev => ({ ...prev, failed, errors }));
+      }
+    }
+
+    setIsEmailComplete(true);
+    setSelectedUsers([]);
+    toast({ 
+      title: 'Emails enviados',
+      description: `${sent} emails enviados com sucesso, ${failed} falharam`
+    });
+  };
+
+  const handleBulkExtendSubscription = () => {
+    setShowBulkSubscriptionModal(true);
+  };
+
+  const executeBulkSubscriptionUpdate = async (config: { planType: string; months: number }) => {
+    try {
+      const { planType, months } = config;
+      
+      for (const userId of selectedUsers) {
+        const currentUser = users.find(u => u.id === userId);
+        const currentSub = currentUser?.subscription;
+        const startDate = currentSub?.end_date ? new Date(currentSub.end_date) : new Date();
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + months);
+
+        // Upsert subscription
+        const { error: subError } = await supabase.from('subscriptions').upsert({
+          user_id: userId,
+          plan_type: planType,
+          duration_months: months,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          is_active: true,
+          auto_renew: false
+        }, { onConflict: 'user_id' });
+
+        if (subError) throw subError;
+
+        // Update limits based on plan
+        const limits = planType === 'basic' ? {
+          plan_type: 'basic',
+          creative_images_daily_limit: 10,
+          creative_images_monthly_limit: 300,
+          profile_analysis_daily_limit: 5,
+          carousels_monthly_limit: 3,
+          videos_monthly_limit: 0
+        } : {
+          plan_type: 'pro',
+          creative_images_daily_limit: 30,
+          creative_images_monthly_limit: 900,
+          profile_analysis_daily_limit: 10,
+          carousels_monthly_limit: 10,
+          videos_monthly_limit: 15
+        };
+
+        const { error: limitsError } = await supabase
+          .from('usage_limits')
+          .update(limits)
+          .eq('user_id', userId);
+
+        if (limitsError) throw limitsError;
+
+        // Update profile subscription_status
+        await supabase
+          .from('profiles')
+          .update({ subscription_status: 'active' })
+          .eq('id', userId);
+
+        // Log action
+        await supabase.rpc('log_admin_action', {
+          _target_user_id: userId,
+          _action: 'bulk_extend_subscription',
+          _details: { planType, months }
+        });
+      }
+
+      toast({ 
+        title: 'Sucesso',
+        description: `${selectedUsers.length} assinaturas estendidas!`
+      });
+      setSelectedUsers([]);
+      setShowBulkSubscriptionModal(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Erro bulk subscription:', error);
+      toast({ 
+        title: 'Erro',
+        description: 'Erro ao estender assinaturas',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedUsersData = users.filter(u => selectedUsers.includes(u.id));
+    
+    // Verificar se há admins na seleção
+    const hasAdmins = selectedUsersData.some(u => u.roles?.includes('admin'));
+    if (hasAdmins) {
+      toast({ 
+        title: 'Erro',
+        description: '❌ Não é possível deletar usuários com role Admin!',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Confirmação dupla
+    if (!confirm(`⚠️ ATENÇÃO: AÇÃO IRREVERSÍVEL!\n\nVocê está prestes a DELETAR PERMANENTEMENTE ${selectedUsers.length} usuários.\n\nTodos os dados serão perdidos:\n- Perfis\n- Conversas\n- Histórico de criações\n- Assinaturas\n- Tudo!\n\nDeseja continuar?`)) {
+      return;
+    }
+
+    const confirmation = prompt(`Digite "DELETAR" em maiúsculas para confirmar:`);
+    if (confirmation !== 'DELETAR') {
+      toast({ title: 'Operação cancelada' });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('bulk-delete-users', {
+        body: { userIds: selectedUsers }
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: string[], failed: Array<{ id: string, error: string }> };
+
+      toast({ 
+        title: 'Operação concluída',
+        description: `${result.success.length} usuários deletados, ${result.failed.length} falharam`
+      });
+
+      setSelectedUsers([]);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Erro ao deletar usuários:', error);
+      toast({ 
+        title: 'Erro',
+        description: 'Erro ao deletar usuários',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -1032,9 +1221,9 @@ const AdminUsers = () => {
         onClearSelection={() => setSelectedUsers([])}
         onActivate={handleBulkActivate}
         onDeactivate={handleBulkDeactivate}
-        onSendEmail={() => toast({ title: 'Em desenvolvimento' })}
-        onExtendSubscription={() => toast({ title: 'Em desenvolvimento' })}
-        onDelete={() => toast({ title: 'Em desenvolvimento' })}
+        onSendEmail={handleBulkSendEmail}
+        onExtendSubscription={handleBulkExtendSubscription}
+        onDelete={handleBulkDelete}
       />
 
       {/* Modals */}
@@ -1105,6 +1294,13 @@ const AdminUsers = () => {
         progress={emailProgress}
         isComplete={isEmailComplete}
         isLoading={isResendingEmails || isResendingAllEmails}
+      />
+
+      <BulkSubscriptionModal
+        open={showBulkSubscriptionModal}
+        onClose={() => setShowBulkSubscriptionModal(false)}
+        onConfirm={executeBulkSubscriptionUpdate}
+        selectedCount={selectedUsers.length}
       />
     </div>
   );
