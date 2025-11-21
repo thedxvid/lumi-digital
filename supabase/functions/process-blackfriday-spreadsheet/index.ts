@@ -157,8 +157,21 @@ serve(async (req) => {
 
     console.log('Total users with access_granted:', allUsers?.length || 0);
 
+    // Criar cliente admin com service role key para operações administrativas
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
     // Buscar emails de todos os usuários do auth
-    const { data: authUsersData, error: authError } = await supabaseClient.auth.admin.listUsers();
+    console.log('Fetching auth users with admin client...');
+    const { data: authUsersData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (authError) {
       console.error('Error fetching auth users:', authError);
