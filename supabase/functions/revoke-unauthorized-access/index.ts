@@ -310,7 +310,7 @@ serve(async (req) => {
       // Se userIds foram fornecidos (da planilha), usar apenas esses
       console.log('📊 [revoke-access] Using provided user IDs from spreadsheet');
       usersToRevoke = profiles
-        ?.filter(profile => userIds.includes(profile.id) && !adminUsersSet.has(profile.id))
+        ?.filter(profile => !userIds.includes(profile.id) && !adminUsersSet.has(profile.id))
         .map(profile => ({
           id: profile.id,
           email: authUsersMap.get(profile.id) || 'N/A',
