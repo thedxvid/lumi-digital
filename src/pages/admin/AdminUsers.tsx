@@ -23,6 +23,7 @@ import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { SubscriptionManager } from '@/components/admin/SubscriptionManager';
 import { UsageBar } from '@/components/admin/UsageBar';
 import { EmailProgressModal } from '@/components/admin/EmailProgressModal';
+import { VideoLimitsDebug } from '@/components/admin/VideoLimitsDebug';
 import { toast as sonnerToast } from 'sonner';
 
 interface User {

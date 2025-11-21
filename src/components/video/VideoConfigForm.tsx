@@ -198,19 +198,42 @@ export const VideoConfigForm = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🎬 [VideoForm] Form submitted with config:', {
+      mode,
+      api_provider: apiProvider,
+      prompt_length: prompt.trim().length,
+      images_count: inputImages.length,
+      aspect_ratio: aspectRatio,
+      duration,
+      resolution,
+      generate_audio: generateAudio,
+      enhance_prompt: enhancePrompt
+    });
+    
     // Validations
     if (mode === 'text-to-video' && prompt.trim().length < 10) {
+      console.warn('⚠️ [VideoForm] Prompt too short:', prompt.trim().length);
+      toast.error('Prompt muito curto. Mínimo 10 caracteres.');
       return;
     }
 
     if (mode === 'image-to-video') {
       if (inputImages.length === 0) {
+        console.warn('⚠️ [VideoForm] No images provided for image-to-video');
+        toast.error('Adicione pelo menos uma imagem para gerar o vídeo.');
         return;
       }
       if (selectedAPI?.requires_images && inputImages.length !== selectedAPI.requires_images) {
+        console.warn('⚠️ [VideoForm] Wrong number of images:', {
+          provided: inputImages.length,
+          required: selectedAPI.requires_images
+        });
+        toast.error(`Este modelo requer exatamente ${selectedAPI.requires_images} imagem(ns).`);
         return;
       }
     }
+
+    console.log('✅ [VideoForm] Validation passed - calling onGenerate');
 
     onGenerate({
       mode,

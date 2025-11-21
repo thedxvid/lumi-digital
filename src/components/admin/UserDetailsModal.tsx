@@ -9,6 +9,7 @@ import { Loader2, User, Crown, BarChart3, Shield, History, Lock } from 'lucide-r
 import { UsageBar } from './UsageBar';
 import { UserLimitsEditor } from './UserLimitsEditor';
 import { UserRolesManager } from './UserRolesManager';
+import { VideoLimitsDebug } from './VideoLimitsDebug';
 
 interface UserDetailsModalProps {
   userId: string;
@@ -259,6 +260,10 @@ export const UserDetailsModal = ({ userId, isOpen, onClose }: UserDetailsModalPr
                     )}
                   </CardContent>
                 </Card>
+                
+                {user.usage_limits && (
+                  <VideoLimitsDebug limits={user.usage_limits} />
+                )}
               </TabsContent>
 
               <TabsContent value="roles" className="space-y-4">
