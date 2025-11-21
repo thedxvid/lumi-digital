@@ -244,6 +244,10 @@ serve(async (req) => {
     console.log('✅ [revoke-access] Admin verified:', user.email);
     console.log('📊 [revoke-access] Total legitimate emails:', LEGITIMATE_BLACK_FRIDAY_EMAILS.length);
 
+    // Verificar se é para executar ou apenas dry-run
+    const { dryRun = true, execute = false } = await req.json();
+    console.log(`🎯 [revoke-access] Mode: ${execute ? 'EXECUÇÃO REAL' : 'DRY-RUN (simulação)'}`);
+
     // 1. Buscar todos os usuários com acesso
     const { data: profiles, error: profilesError } = await supabaseClient
       .from('profiles')
@@ -319,14 +323,68 @@ serve(async (req) => {
 
     console.log('🚨 [revoke-access] Users to revoke:', usersToRevoke.length);
 
-    // 6. Gerar relatório
+    // 6. EXECUTAR REMOÇÃO se execute=true
+    let revokedCount = 0;
+    if (execute && usersToRevoke.length > 0) {
+      console.log('⚠️ [revoke-access] INICIANDO REMOÇÃO REAL DE ACESSOS...');
+      
+      for (const user of usersToRevoke) {
+        try {
+          // Remover acesso do usuário
+          const { error: updateError } = await supabaseClient
+            .from('profiles')
+            .update({ 
+              access_granted: false,
+              subscription_status: 'revoked'
+            })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error(`❌ Erro ao remover acesso de ${user.email}:`, updateError);
+          } else {
+            revokedCount++;
+            console.log(`✅ Acesso removido: ${user.email}`);
+          }
+
+          // Desativar subscriptions ativas
+          if (user.has_active_subscription) {
+            const { error: subError } = await supabaseClient
+              .from('subscriptions')
+              .update({ is_active: false })
+              .eq('user_id', user.id);
+
+            if (subError) {
+              console.error(`❌ Erro ao desativar subscription de ${user.email}:`, subError);
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Erro crítico ao processar ${user.email}:`, error);
+        }
+      }
+
+      console.log(`✅ [revoke-access] REMOÇÃO CONCLUÍDA: ${revokedCount}/${usersToRevoke.length} usuários`);
+    }
+
+    // 7. Gerar relatório
     const report: DryRunReport = {
       total_users_with_access: profiles?.length || 0,
       legitimate_buyers: profiles?.length - usersToRevoke.length || 0,
       users_to_revoke: usersToRevoke.length,
       users_to_revoke_list: usersToRevoke,
       admin_users_protected: adminUsersSet.size,
-      summary: `
+      summary: execute 
+        ? `
+📊 RELATÓRIO DE EXECUÇÃO - Remoção de Acessos Não Autorizados
+
+✅ Total de usuários com acesso (antes): ${profiles?.length || 0}
+✅ Compradores legítimos da Black Friday: ${profiles?.length - usersToRevoke.length || 0}
+🔴 Usuários com acesso REMOVIDO: ${revokedCount}/${usersToRevoke.length}
+🛡️ Admins protegidos: ${adminUsersSet.size}
+
+✅ EXECUÇÃO CONCLUÍDA!
+Os usuários listados abaixo tiveram seus acessos revogados.
+        `.trim()
+        : `
 📊 RELATÓRIO DRY-RUN - Remoção de Acessos Não Autorizados
 
 ✅ Total de usuários com acesso: ${profiles?.length || 0}
@@ -337,8 +395,8 @@ serve(async (req) => {
 🔍 PRÓXIMOS PASSOS:
 - Revise a lista de usuários a remover abaixo
 - Confirme se nenhum comprador legítimo está na lista
-- Execute a função com execute=true para revogar acessos
-      `.trim()
+- Clique em "Executar Remoção" para revogar os acessos
+        `.trim()
     };
 
     console.log('📄 [revoke-access] Dry-run report generated');

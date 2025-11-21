@@ -31,13 +31,14 @@ const RevokeAccessDryRun = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [executing, setExecuting] = useState(false);
   const [report, setReport] = useState<DryRunReport | null>(null);
 
   const runDryRun = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('revoke-unauthorized-access', {
-        body: { dryRun: true }
+        body: { dryRun: true, execute: false }
       });
 
       if (error) throw error;
@@ -45,18 +46,59 @@ const RevokeAccessDryRun = () => {
       setReport(data);
       
       toast({
-        title: '✅ Dry-run executado',
+        title: '✅ Análise concluída',
         description: `${data.users_to_revoke} usuários serão afetados. Revise os detalhes abaixo.`,
       });
     } catch (error: any) {
-      console.error('Error running dry-run:', error);
+      console.error('Error running analysis:', error);
       toast({
-        title: 'Erro ao executar dry-run',
+        title: 'Erro ao executar análise',
         description: error.message,
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const executeRevocation = async () => {
+    if (!report || report.users_to_revoke === 0) {
+      toast({
+        title: 'Nenhuma ação necessária',
+        description: 'Não há usuários para remover.',
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `⚠️ ATENÇÃO! Esta ação irá remover o acesso de ${report.users_to_revoke} usuários.\n\nEsta ação NÃO pode ser desfeita automaticamente.\n\nDeseja continuar?`
+    );
+
+    if (!confirmed) return;
+
+    setExecuting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('revoke-unauthorized-access', {
+        body: { dryRun: false, execute: true }
+      });
+
+      if (error) throw error;
+
+      setReport(data);
+      
+      toast({
+        title: '✅ Remoção executada com sucesso',
+        description: `${data.users_to_revoke} usuários tiveram seus acessos removidos.`,
+      });
+    } catch (error: any) {
+      console.error('Error executing revocation:', error);
+      toast({
+        title: 'Erro ao executar remoção',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setExecuting(false);
     }
   };
 
@@ -82,8 +124,8 @@ const RevokeAccessDryRun = () => {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>⚠️ Atenção - Ação Crítica</AlertTitle>
         <AlertDescription>
-          Esta ferramenta identificará e permitirá remover o acesso de todos os usuários que NÃO estão nas planilhas de vendas válidas da Black Friday.
-          Execute o dry-run primeiro para verificar quem será afetado.
+          Esta ferramenta identificará e removerá o acesso de todos os usuários que NÃO estão nas planilhas de vendas válidas da Black Friday.
+          Revise cuidadosamente a lista antes de executar a remoção.
         </AlertDescription>
       </Alert>
 
@@ -91,21 +133,34 @@ const RevokeAccessDryRun = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileWarning className="h-5 w-5" />
-            Dry-Run - Simulação
+            Análise e Remoção de Acessos
           </CardTitle>
           <CardDescription>
-            Execute uma simulação para ver quais usuários serão afetados SEM fazer alterações reais no banco de dados
+            Identifique quais usuários NÃO estão nas planilhas válidas e execute a remoção dos acessos
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <Button
             onClick={runDryRun}
-            disabled={loading}
+            disabled={loading || executing}
             size="lg"
             className="w-full"
+            variant="outline"
           >
-            {loading ? '🔍 Analisando...' : '🔍 Executar Dry-Run'}
+            {loading ? '🔍 Analisando...' : '🔍 Analisar Usuários'}
           </Button>
+
+          {report && report.users_to_revoke > 0 && (
+            <Button
+              onClick={executeRevocation}
+              disabled={loading || executing}
+              size="lg"
+              className="w-full"
+              variant="destructive"
+            >
+              {executing ? '⚙️ Executando Remoção...' : `🚨 Executar Remoção (${report.users_to_revoke} usuários)`}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
