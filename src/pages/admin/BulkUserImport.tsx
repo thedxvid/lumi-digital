@@ -99,6 +99,7 @@ export default function BulkUserImport() {
     const processResults = {
       total: usersToProcess.length,
       created: 0,
+      updated: 0,
       failed: 0,
       emailsSent: 0,
       emailsFailed: 0,
@@ -126,16 +127,21 @@ export default function BulkUserImport() {
         const result = data?.results?.[0];
         
         if (result?.success) {
-          processResults.created++;
+          if (result.created) {
+            processResults.created++;
+          } else if (result.updated) {
+            processResults.updated++;
+          }
+          
           if (result.emailSent) processResults.emailsSent++;
           else processResults.emailsFailed++;
           
           processResults.details.push({
             email: user.email,
             nome: user.name,
-            status: 'Criado',
+            status: result.created ? 'Criado' : 'Atualizado',
             plano: `Basic - ${planConfig.durationMonths} meses`,
-            senha: result.temporaryPassword,
+            senha: result.password || '-',
             emailEnviado: result.emailSent ? 'Sim' : 'Não',
           });
         } else {
@@ -164,7 +170,7 @@ export default function BulkUserImport() {
 
     toast({
       title: 'Processamento concluído',
-      description: `${processResults.created} usuários criados, ${processResults.failed} falharam`,
+      description: `${processResults.created} criados, ${processResults.updated} atualizados, ${processResults.failed} falharam`,
     });
   };
 
@@ -410,7 +416,7 @@ export default function BulkUserImport() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <div className="text-2xl font-bold">{results.total}</div>
                   <p className="text-sm text-muted-foreground">Total</p>
@@ -419,12 +425,16 @@ export default function BulkUserImport() {
                   <div className="text-2xl font-bold text-green-600">{results.created}</div>
                   <p className="text-sm text-muted-foreground">Criados</p>
                 </div>
+                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{results.updated}</div>
+                  <p className="text-sm text-muted-foreground">Atualizados</p>
+                </div>
                 <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
                   <div className="text-2xl font-bold text-red-600">{results.failed}</div>
                   <p className="text-sm text-muted-foreground">Falharam</p>
                 </div>
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{results.emailsSent}</div>
+                <div className="text-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-amber-600">{results.emailsSent}</div>
                   <p className="text-sm text-muted-foreground">Emails Enviados</p>
                 </div>
               </div>
