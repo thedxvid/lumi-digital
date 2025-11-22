@@ -3,14 +3,11 @@ import { Check, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSubscription } from '@/hooks/useSubscription';
-import { pricingPlans, getPricePerMonth, getSavingsPercentage } from '@/data/pricingPlans';
-import type { DurationMonths } from '@/types/subscription';
+import { pricingPlans } from '@/data/pricingPlans';
 import { toast } from 'sonner';
 
 export default function Pricing() {
-  const [duration, setDuration] = useState<DurationMonths>(3);
   const { createSubscription, subscription, loading } = useSubscription();
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
@@ -20,7 +17,7 @@ export default function Pricing() {
     // TODO: Integrate with payment gateway (Stripe/Kiwify)
     toast.info('Integração de pagamento em desenvolvimento');
     
-    const success = await createSubscription(planType, duration);
+    const success = await createSubscription(planType, 1);
     
     if (success) {
       toast.success('Plano ativado! (Demo mode)');
@@ -41,32 +38,16 @@ export default function Pricing() {
     <div className="container mx-auto py-8 sm:py-12 px-4 min-h-screen overflow-y-auto">
       <div className="text-center mb-8 sm:mb-12">
         <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Escolha Seu Plano
+          Acesso Completo por 1 Ano
         </h1>
         <p className="text-muted-foreground text-lg mb-8">
           Comece a criar conteúdo incrível com IA hoje mesmo
         </p>
-
-        <Tabs value={duration.toString()} onValueChange={(v) => setDuration(Number(v) as DurationMonths)} className="w-fit mx-auto mb-8">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="1">1 Mês</TabsTrigger>
-            <TabsTrigger value="3">
-              3 Meses
-              <Badge variant="secondary" className="ml-2">-20%</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="6">
-              6 Meses
-              <Badge variant="secondary" className="ml-2">-30%</Badge>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         {pricingPlans.map((plan) => {
-          const price = plan.prices[duration];
-          const pricePerMonth = getPricePerMonth(price, duration);
-          const savings = duration > 1 ? getSavingsPercentage(plan.prices[1], price, duration) : 0;
+          const price = plan.prices[1];
           const isCurrentPlan = subscription?.plan_type === plan.type;
 
           // Skip free plan from rendering
@@ -80,7 +61,7 @@ export default function Pricing() {
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                 <Badge className="bg-gradient-to-r from-primary to-primary/60">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  Recomendado
+                  Oferta Especial
                 </Badge>
               </div>
 
@@ -92,19 +73,15 @@ export default function Pricing() {
                 <CardDescription>{plan.description}</CardDescription>
                 
                 <div className="mt-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold">R$ {price}</span>
-                    {duration > 1 && (
-                      <span className="text-muted-foreground">
-                        (R$ {pricePerMonth.toFixed(2)}/mês)
-                      </span>
-                    )}
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-5xl font-bold">R$ {price}</span>
+                    <span className="text-lg text-primary font-semibold">
+                      Acesso por 1 ano completo
+                    </span>
+                    <span className="text-muted-foreground">
+                      Apenas R$ 116,42/mês
+                    </span>
                   </div>
-                  {savings > 0 && (
-                    <Badge variant="outline" className="mt-2">
-                      Economize {savings}%
-                    </Badge>
-                  )}
                 </div>
               </CardHeader>
 
