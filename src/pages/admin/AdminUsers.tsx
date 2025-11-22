@@ -340,11 +340,28 @@ const AdminUsers = () => {
             continue;
           }
 
-          // 4. Atualizar usage_limits do lote
+          // 4. Criar usage_limits do lote (com todos os campos necessários)
           const limitsToUpsert = batch.map(userId => ({
             user_id: userId,
             plan_type: 'basic',
-            ...planLimits,
+            creative_images_daily_limit: 10,
+            creative_images_monthly_limit: 300,
+            profile_analysis_daily_limit: 5,
+            carousels_monthly_limit: 3,
+            videos_monthly_limit: 0,
+            sora_text_videos_lifetime_limit: 2,
+            kling_image_videos_lifetime_limit: 1,
+            video_credits: 0,
+            creative_images_daily_used: 0,
+            creative_images_monthly_used: 0,
+            profile_analysis_daily_used: 0,
+            carousels_monthly_used: 0,
+            videos_monthly_used: 0,
+            sora_text_videos_lifetime_used: 0,
+            kling_image_videos_lifetime_used: 0,
+            video_credits_used: 0,
+            last_daily_reset: new Date().toISOString(),
+            last_monthly_reset: new Date().toISOString(),
           }));
 
           const { error: limitsError } = await supabase
@@ -356,6 +373,8 @@ const AdminUsers = () => {
 
           if (limitsError) {
             console.error(`❌ Erro ao atualizar limits do lote ${batchNumber}:`, limitsError);
+            totalErrors += batch.length;
+            continue;
           }
 
           totalProcessed += batch.length;
@@ -424,6 +443,174 @@ const AdminUsers = () => {
         description: `${totalProcessed} processados antes do erro. ${error?.message || 'Erro desconhecido'}`,
         duration: 8000
       });
+    }
+  };
+
+  // CORREÇÃO 1: Criar usage_limits faltantes para usuários ativos
+  const handleFixMissingUsageLimits = async () => {
+    try {
+      sonnerToast.loading('Identificando usuários sem usage_limits...', { id: 'fix-limits' });
+
+      // Buscar usuários ativos com subscription basic que não têm usage_limits
+      const { data: activeUsers, error: usersError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('subscription_status', 'active');
+
+      if (usersError) throw usersError;
+
+      const { data: existingLimits, error: limitsError } = await supabase
+        .from('usage_limits')
+        .select('user_id');
+
+      if (limitsError) throw limitsError;
+
+      const existingUserIds = new Set(existingLimits?.map(l => l.user_id) || []);
+      const missingUsers = activeUsers?.filter(u => !existingUserIds.has(u.id)) || [];
+
+      if (missingUsers.length === 0) {
+        sonnerToast.success('Todos os usuários ativos já têm usage_limits!', { id: 'fix-limits' });
+        return;
+      }
+
+      sonnerToast.loading(`Criando usage_limits para ${missingUsers.length} usuários...`, { id: 'fix-limits' });
+
+      // Criar em lotes de 50
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < missingUsers.length; i += BATCH_SIZE) {
+        const batch = missingUsers.slice(i, i + BATCH_SIZE);
+        const limitsData = batch.map(user => ({
+          user_id: user.id,
+          plan_type: 'basic',
+          creative_images_daily_limit: 10,
+          creative_images_monthly_limit: 300,
+          profile_analysis_daily_limit: 5,
+          carousels_monthly_limit: 3,
+          videos_monthly_limit: 0,
+          sora_text_videos_lifetime_limit: 2,
+          kling_image_videos_lifetime_limit: 1,
+          video_credits: 0,
+          creative_images_daily_used: 0,
+          creative_images_monthly_used: 0,
+          profile_analysis_daily_used: 0,
+          carousels_monthly_used: 0,
+          videos_monthly_used: 0,
+          sora_text_videos_lifetime_used: 0,
+          kling_image_videos_lifetime_used: 0,
+          video_credits_used: 0,
+          last_daily_reset: new Date().toISOString(),
+          last_monthly_reset: new Date().toISOString(),
+        }));
+
+        const { error: insertError } = await supabase
+          .from('usage_limits')
+          .insert(limitsData);
+
+        if (insertError) throw insertError;
+      }
+
+      sonnerToast.success(`✅ ${missingUsers.length} usage_limits criados com sucesso!`, { id: 'fix-limits' });
+    } catch (error) {
+      console.error('Erro ao criar usage_limits:', error);
+      sonnerToast.error('Erro ao criar usage_limits faltantes', { id: 'fix-limits' });
+    }
+  };
+
+  // CORREÇÃO 2: Reenviar emails para usuários que não receberam
+  const handleResendMissingEmails = async () => {
+    try {
+      sonnerToast.loading('Identificando usuários que precisam receber email...', { id: 'resend-emails' });
+
+      // Buscar usuários ativos com subscription basic recente
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 2); // Últimas 2 horas
+
+      const { data: recentSubs, error: subsError } = await supabase
+        .from('subscriptions')
+        .select('user_id, end_date')
+        .eq('plan_type', 'basic')
+        .eq('is_active', true)
+        .gte('created_at', oneHourAgo.toISOString());
+
+      if (subsError) throw subsError;
+
+      if (!recentSubs || recentSubs.length === 0) {
+        sonnerToast.info('Nenhuma assinatura recente encontrada', { id: 'resend-emails' });
+        return;
+      }
+
+      const userIds = recentSubs.map(s => s.user_id);
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      if (usersError) throw usersError;
+
+      // Buscar emails do auth.users via função admin
+      const { data: authData } = await supabase.rpc('get_admin_user_details');
+      const authUsersMap = new Map(authData?.map((u: any) => [u.id, u.email]) || []);
+
+      const usersWithEmails = usersData?.map(user => {
+        const subscription = recentSubs.find(s => s.user_id === user.id);
+        return {
+          id: user.id,
+          email: authUsersMap.get(user.id) || '',
+          full_name: user.full_name,
+          endDate: subscription?.end_date || '',
+        };
+      }).filter(u => u.email) || [];
+
+      sonnerToast.loading(`Enviando emails para ${usersWithEmails.length} usuários...`, { id: 'resend-emails' });
+
+      let emailsSent = 0;
+      let emailsFailed = 0;
+
+      // Processar 2 emails por vez com delay de 1.1s entre lotes
+      const EMAIL_BATCH = 2;
+      for (let i = 0; i < usersWithEmails.length; i += EMAIL_BATCH) {
+        const emailBatch = usersWithEmails.slice(i, i + EMAIL_BATCH);
+        
+        await Promise.all(
+          emailBatch.map(async (user) => {
+            try {
+              await supabase.functions.invoke('send-reactivation-email', {
+                body: {
+                  email: user.email,
+                  fullName: user.full_name || 'Usuário',
+                  planType: 'basic',
+                  endDate: user.endDate,
+                }
+              });
+              emailsSent++;
+            } catch (error) {
+              console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
+              emailsFailed++;
+            }
+          })
+        );
+
+        // Delay de 1.1s entre lotes
+        if (i + EMAIL_BATCH < usersWithEmails.length) {
+          await new Promise(resolve => setTimeout(resolve, 1100));
+        }
+
+        // Atualizar progresso a cada 10 emails
+        if ((i + EMAIL_BATCH) % 10 === 0) {
+          sonnerToast.loading(
+            `Enviando emails: ${Math.min(i + EMAIL_BATCH, usersWithEmails.length)}/${usersWithEmails.length}`,
+            { id: 'resend-emails' }
+          );
+        }
+      }
+
+      sonnerToast.success(
+        `✅ Emails enviados!\n📧 Sucesso: ${emailsSent}, Falhas: ${emailsFailed}`,
+        { id: 'resend-emails' }
+      );
+    } catch (error) {
+      console.error('Erro ao reenviar emails:', error);
+      sonnerToast.error('Erro ao reenviar emails', { id: 'resend-emails' });
     }
   };
 
@@ -1118,6 +1305,22 @@ const AdminUsers = () => {
           >
             <Mail className="h-4 w-4 mr-2" />
             {isResendingAllEmails ? 'Reenviando...' : 'Reenviar para TODOS'}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={handleFixMissingUsageLimits}
+            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Criar Usage Limits
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={handleResendMissingEmails}
+            className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            Reenviar Emails Faltantes
           </Button>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
