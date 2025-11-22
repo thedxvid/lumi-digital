@@ -51,7 +51,7 @@ const LandingPage = () => {
     return () => clearInterval(timer);
   }, []);
   const handleGetStarted = () => {
-    window.open('https://pay.kiwify.com.br/3dXz4Vd', '_blank');
+    navigate('/auth');
   };
   const handleLoginRedirect = () => {
     navigate('/app');
