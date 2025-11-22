@@ -17,44 +17,23 @@ const VIDEO_APIS: VideoAPIConfig[] = [
   {
     id: 'fal_kling_v25_turbo',
     name: 'fal_kling_v25_turbo',
-    display_name: 'Kling v2.5 Turbo Pro',
+    display_name: 'Kling v2.5 Turbo Pro (Text-to-Video)',
     cost_per_8s: 0.60,
     description: 'Movimento fluido e visual cinematográfico (sem áudio)',
     provider: 'Kling AI',
     mode: 'text-to-video'
   },
-  {
-    id: 'fal_sora2_text_to_video',
-    name: 'fal_sora2_text_to_video',
-    display_name: 'Sora 2 by OpenAI (Text)',
-    cost_per_8s: 4.00,
-    description: 'Qualidade cinematográfica premium com áudio - Modelo da OpenAI',
-    provider: 'OpenAI',
-    mode: 'text-to-video',
-    endpoint: 'https://fal.run/fal-ai/sora-2/text-to-video'
-  },
   // Image-to-Video APIs
   {
     id: 'fal_kling_v25_image_to_video',
     name: 'fal_kling_v25_image_to_video',
-    display_name: 'Kling v2.5 Turbo Pro (Imagem)',
+    display_name: 'Kling v2.5 Turbo Pro (Image-to-Video)',
     cost_per_8s: 0.60,
     description: 'Gera vídeo a partir de 1 imagem (sem áudio)',
     provider: 'Kling AI',
     mode: 'image-to-video',
     requires_images: 1,
     endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video'
-  },
-  {
-    id: 'fal_sora2_image_to_video',
-    name: 'fal_sora2_image_to_video',
-    display_name: 'Sora 2 by OpenAI (Imagem)',
-    cost_per_8s: 4.00,
-    description: 'Qualidade cinematográfica premium com áudio - Modelo da OpenAI',
-    provider: 'OpenAI',
-    mode: 'image-to-video',
-    requires_images: 1,
-    endpoint: 'https://fal.run/fal-ai/sora-2/image-to-video'
   }
 ];
 
@@ -159,14 +138,10 @@ export const VideoConfigForm = ({
       return;
     }
 
-    // Detectar se Sora 2 está ativo para usar modo especial
-    const isSora2 = apiProvider === 'fal_sora2_image_to_video' || apiProvider === 'fal_sora2_text_to_video';
-    const enhanceMode = isSora2 ? 'enhance-sora' : 'enhance';
-
     setEnhancingPrompt(true);
     try {
       const { data, error } = await supabase.functions.invoke('suggest-safe-prompt', {
-        body: { prompt: prompt.trim(), mode: enhanceMode }
+        body: { prompt: prompt.trim(), mode: 'enhance' }
       });
 
       if (error) {
@@ -182,10 +157,7 @@ export const VideoConfigForm = ({
 
       if (data?.suggested) {
         setPrompt(data.suggested);
-        const message = isSora2 
-          ? 'Prompt otimizado para Sora 2! ✨' 
-          : 'Prompt melhorado! Traduzido para inglês e otimizado com técnicas cinematográficas.';
-        toast.success(message, { duration: 5000 });
+        toast.success('Prompt melhorado! Traduzido para inglês e otimizado com técnicas cinematográficas.', { duration: 5000 });
       }
     } catch (error) {
       console.error('Error enhancing prompt:', error);
@@ -252,29 +224,8 @@ export const VideoConfigForm = ({
     ? prompt.trim().length >= 10
     : inputImages.length > 0 && (!selectedAPI?.requires_images || inputImages.length === selectedAPI.requires_images);
 
-  // Detectar se Sora 2 está ativo
-  const isSora2Active = apiProvider === 'fal_sora2_image_to_video' || apiProvider === 'fal_sora2_text_to_video';
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Sora 2 Warning */}
-      {isSora2Active && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg space-y-2">
-          <div className="flex items-start gap-2">
-            <Sparkles className="h-5 w-5 text-amber-500 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                Sora 2 - Filtros Rigorosos Ativos
-              </p>
-              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                O Sora 2 bloqueia prompts com marcas, produtos específicos e cores detalhadas de objetos.
-                Use o botão "Melhorar Prompt" para otimizar automaticamente! ✨
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <Card className="p-6">
         <div className="space-y-4">
           {/* Mode Selector */}
@@ -353,20 +304,17 @@ export const VideoConfigForm = ({
                   onClick={handleEnhancePrompt}
                   disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
                   data-enhance-prompt
-                  className={isSora2Active 
-                    ? "w-full sm:w-auto sm:flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                    : "w-full sm:w-auto sm:flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                  }
+                  className="w-full sm:w-auto sm:flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                 >
                   {enhancingPrompt ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {isSora2Active ? 'Otimizando...' : 'Melhorando...'}
+                      Melhorando...
                     </>
                   ) : (
                     <>
                       <Wand2 className="h-4 w-4 mr-2" />
-                      {isSora2Active ? 'Otimizar Sora 2' : 'Melhorar Prompt'}
+                      Melhorar Prompt
                     </>
                   )}
                 </Button>

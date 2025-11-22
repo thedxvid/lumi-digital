@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 interface CreditsExhaustedModalProps {
   open: boolean;
   onClose: () => void;
-  videoType: 'sora' | 'kling';
+  videoType: 'kling';
   remainingCredits: number;
 }
 
@@ -24,17 +24,11 @@ export const CreditsExhaustedModal = ({
     onClose();
   };
 
-  const videoInfo = videoType === 'sora' 
-    ? {
-        title: 'Vídeos Sora Esgotados',
-        description: 'Você usou seus 2 vídeos grátis do Sora 2 (text-to-video + image-to-video)',
-        icon: '🎥'
-      }
-    : {
-        title: 'Vídeo Kling Esgotado',
-        description: 'Você usou seu 1 vídeo grátis do Kling v2.5 (text-to-video + image-to-video)',
-        icon: '🎬'
-      };
+  const videoInfo = {
+    title: 'Vídeo Kling Esgotado',
+    description: 'Você usou seu 1 vídeo grátis do Kling v2.5 (text-to-video + image-to-video)',
+    icon: '🎬'
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -66,7 +60,7 @@ export const CreditsExhaustedModal = ({
             <div className="space-y-2">
               {[
                 'Pacotes a partir de R$ 59,90',
-                'Créditos unificados: use em qualquer API (Sora ou Kling)',
+                'Créditos unificados para Kling',
                 'Créditos não expiram',
                 'Sem mensalidade extra',
                 'Compre apenas quando precisar'

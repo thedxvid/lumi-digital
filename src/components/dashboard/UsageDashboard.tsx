@@ -45,7 +45,7 @@ export default function UsageDashboard() {
   const features: Array<{
     icon: any;
     name: string;
-    type: 'creative_images' | 'profile_analysis' | 'carousels' | 'videos_sora_text' | 'videos_kling_image';
+    type: 'creative_images' | 'profile_analysis' | 'carousels' | 'videos_kling_image';
     daily?: { used: number; limit: number };
     monthly?: { used: number; limit: number };
     lifetime?: { used: number; limit: number };
@@ -87,17 +87,7 @@ export default function UsageDashboard() {
     },
     {
       icon: Video,
-      name: 'Vídeos Sora (text-to-video)',
-      type: 'videos_sora_text',
-      lifetime: {
-        used: limits.sora_text_videos_lifetime_used,
-        limit: limits.sora_text_videos_lifetime_limit,
-      },
-      color: 'text-red-500',
-    },
-    {
-      icon: Video,
-      name: 'Vídeos Kling (image-to-video)',
+      name: 'Vídeos Kling',
       type: 'videos_kling_image',
       lifetime: {
         used: limits.kling_image_videos_lifetime_used,
@@ -190,7 +180,7 @@ export default function UsageDashboard() {
                   </div>
                 )}
 
-                {limits.video_credits > 0 && (feature.type === 'videos_sora_text' || feature.type === 'videos_kling_image') && (
+                {limits.video_credits > 0 && (feature.type === 'videos_kling_image') && (
                   <div className="pt-2 border-t">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Créditos Extras</span>

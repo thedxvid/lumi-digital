@@ -32,8 +32,8 @@ export function UsageLimitBarSidebar() {
     {
       icon: Film,
       name: 'Vídeos',
-      used: (limits.sora_text_videos_lifetime_used || 0) + (limits.kling_image_videos_lifetime_used || 0) + limits.video_credits_used,
-      limit: (limits.sora_text_videos_lifetime_limit || 2) + (limits.kling_image_videos_lifetime_limit || 1) + limits.video_credits,
+      used: (limits.kling_image_videos_lifetime_used || 0) + limits.video_credits_used,
+      limit: (limits.kling_image_videos_lifetime_limit || 1) + limits.video_credits,
       color: 'text-green-600',
     },
   ];
