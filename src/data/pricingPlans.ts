@@ -6,9 +6,9 @@ export const pricingPlans: PlanConfig[] = [
     name: 'Plano Básico',
     description: 'Tudo que você precisa para criar conteúdo profissional',
     prices: {
-      1: 97,
-      3: 231,
-      6: 402,
+      1: 1397,
+      3: 1397,
+      6: 1397,
     },
     features: [
       'Chat ilimitado com IA',
@@ -17,10 +17,10 @@ export const pricingPlans: PlanConfig[] = [
       '5 análises de perfil por dia',
       '150 análises de perfil por mês',
       '3 carrosséis por mês',
-      '🎥 2 vídeos Sora grátis (text-to-video)',
-      '🎬 1 vídeo Kling grátis (image-to-video)',
+      '🎬 Vídeos Kling (image-to-video)',
       '⚡ Compre mais créditos quando precisar',
       'Suporte prioritário',
+      '✨ Acesso por 1 ano completo',
     ],
     limits: {
       creativeDailyImages: 10,

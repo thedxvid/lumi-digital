@@ -336,17 +336,23 @@ const LandingPage = () => {
         <div className="container mx-auto">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Escolha Seu Plano
+              Acesso Completo por 1 Ano
             </h2>
             <p className="text-lg sm:text-xl text-muted-foreground mb-8">
               Transforme seu conhecimento em renda digital com a LUMI
             </p>
           </div>
           
-          {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {/* Pricing Card */}
+          <div className="max-w-2xl mx-auto">
             {/* Plano Básico */}
-            <Card className="relative border-2 border-border hover:border-lumi-gold/50 transition-all duration-300 p-6 sm:p-8">
+            <Card className="relative border-2 border-lumi-gold hover:border-lumi-gold transition-all duration-300 p-6 sm:p-8 shadow-2xl shadow-lumi-gold/20">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-gradient-to-r from-lumi-gold to-amber-500 text-black px-4 py-1 text-sm font-semibold">
+                  ⭐ OFERTA ESPECIAL
+                </Badge>
+              </div>
+
               <div className="text-center space-y-6">
                 <div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">Plano Básico</h3>
@@ -354,32 +360,12 @@ const LandingPage = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <div className="flex items-baseline justify-center gap-2">
-                      <span className="text-3xl font-bold text-lumi-gold">R$ 97</span>
-                      <span className="text-muted-foreground">/mês</span>
+                  <div className="p-6 bg-lumi-gold/10 rounded-lg border-2 border-lumi-gold/30">
+                    <div className="flex items-baseline justify-center gap-2 mb-2">
+                      <span className="text-5xl font-bold text-lumi-gold">R$ 1.397</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Plano mensal</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="p-3 bg-muted/30 rounded-lg text-left">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-semibold">3 meses</span>
-                        <Badge variant="secondary" className="text-xs">Economize 21%</Badge>
-                      </div>
-                      <p className="text-xl font-bold text-lumi-gold">R$ 77/mês</p>
-                      <p className="text-xs text-muted-foreground">Total: R$ 231</p>
-                    </div>
-
-                    <div className="p-3 bg-lumi-gold/5 rounded-lg border border-lumi-gold/20 text-left">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-semibold">6 meses</span>
-                        <Badge className="bg-lumi-gold text-black text-xs">Economize 31%</Badge>
-                      </div>
-                      <p className="text-xl font-bold text-lumi-gold">R$ 67/mês</p>
-                      <p className="text-xs text-muted-foreground">Total: R$ 402</p>
-                    </div>
+                    <p className="text-lg text-lumi-gold-dark font-semibold">Acesso por 1 ano completo</p>
+                    <p className="text-sm text-muted-foreground mt-2">Apenas R$ 116,42/mês</p>
                   </div>
                 </div>
 
@@ -391,95 +377,22 @@ const LandingPage = () => {
                     '5 análises de perfil/dia',
                     '150 análises/mês',
                     '3 carrosséis/mês',
+                    '🎬 Vídeos Kling (image-to-video)',
                     'Suporte prioritário',
+                    '✨ Acesso por 1 ano completo',
                   ].map((feature, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-lumi-gold flex-shrink-0" />
                       <span className="text-sm text-foreground">{feature}</span>
                     </div>
                   ))}
-                  <div className="flex items-center gap-2 opacity-50">
-                    <span className="text-sm text-muted-foreground line-through">Geração de vídeos</span>
-                  </div>
                 </div>
 
                 <Button 
                   onClick={handleGetStarted}
-                  className="w-full bg-gradient-to-r from-muted to-muted/80 hover:from-lumi-gold/20 hover:to-lumi-gold/10 text-foreground"
+                  className="w-full bg-gradient-to-r from-lumi-gold to-amber-500 hover:from-amber-500 hover:to-lumi-gold text-black font-semibold shadow-lg shadow-lumi-gold/30 text-lg py-6"
                 >
                   Começar Agora
-                </Button>
-              </div>
-            </Card>
-
-            {/* Plano PRO */}
-            <Card className="relative border-2 border-lumi-gold/50 hover:border-lumi-gold transition-all duration-300 p-6 sm:p-8 shadow-lg shadow-lumi-gold/10">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-gradient-to-r from-lumi-gold to-amber-500 text-black px-4 py-1 text-sm font-semibold">
-                  ⭐ MAIS POPULAR
-                </Badge>
-              </div>
-
-              <div className="text-center space-y-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-lumi-gold mb-2">Plano PRO</h3>
-                  <p className="text-sm text-muted-foreground">Para profissionais que precisam de mais poder</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="p-4 bg-lumi-gold/10 rounded-lg border border-lumi-gold/30">
-                    <div className="flex items-baseline justify-center gap-2">
-                      <span className="text-3xl font-bold text-lumi-gold">R$ 197</span>
-                      <span className="text-muted-foreground">/mês</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Plano mensal</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="p-3 bg-lumi-gold/5 rounded-lg text-left border border-lumi-gold/20">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-semibold">3 meses</span>
-                        <Badge className="bg-lumi-gold/20 text-lumi-gold-dark text-xs">Economize 20%</Badge>
-                      </div>
-                      <p className="text-xl font-bold text-lumi-gold">R$ 157/mês</p>
-                      <p className="text-xs text-muted-foreground">Total: R$ 471</p>
-                    </div>
-
-                    <div className="p-3 bg-lumi-gold/10 rounded-lg border-2 border-lumi-gold/40 text-left">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-semibold">6 meses</span>
-                        <Badge className="bg-gradient-to-r from-lumi-gold to-amber-500 text-black text-xs">Economize 30%</Badge>
-                      </div>
-                      <p className="text-xl font-bold text-lumi-gold">R$ 137/mês</p>
-                      <p className="text-xs text-muted-foreground">Total: R$ 822</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-left pt-4 border-t border-lumi-gold/20">
-                  {[
-                    'Tudo do Plano Básico',
-                    '30 imagens criativas/dia',
-                    '900 imagens/mês',
-                    '10 análises de perfil/dia',
-                    '300 análises/mês',
-                    '10 carrosséis/mês',
-                    '15 vídeos/mês (até 8s, 1080p)',
-                    'Suporte VIP',
-                    'Acesso antecipado',
-                  ].map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-lumi-gold flex-shrink-0" />
-                      <span className="text-sm text-foreground">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Button 
-                  onClick={handleGetStarted}
-                  className="w-full bg-gradient-to-r from-lumi-gold to-amber-500 hover:from-amber-500 hover:to-lumi-gold text-black font-semibold shadow-lg shadow-lumi-gold/30"
-                >
-                  Começar com PRO
                 </Button>
               </div>
             </Card>
@@ -492,7 +405,7 @@ const LandingPage = () => {
                 🎬 Precisa de mais vídeos?
               </h4>
               <p className="text-sm text-muted-foreground mb-4">
-                Usuários PRO podem comprar pacotes extras de vídeos:
+                Compre pacotes extras de vídeos quando precisar:
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <div className="text-center">
@@ -551,10 +464,10 @@ const LandingPage = () => {
               Sua Transformação Digital Começa Agora
             </h2>
             <p className="text-lg sm:text-xl text-white/90 mb-2">
-              De <span className="line-through">R$ 497</span> por apenas <span className="font-bold text-2xl sm:text-3xl text-lumi-gold">R$ 297</span>
+              Apenas <span className="font-bold text-2xl sm:text-3xl text-lumi-gold">R$ 1.397</span>
             </p>
             <p className="text-base sm:text-lg text-white/90 mb-6 sm:mb-8">
-              ou <strong>12x de R$ 30,72</strong> sem juros
+              ou <strong>12x de R$ 116,42</strong> sem juros - Acesso por 1 ano completo
             </p>
             
             <Button size="lg" onClick={handleGetStarted} className="w-full sm:w-auto bg-gradient-to-r from-lumi-gold to-amber-500 hover:from-amber-500 hover:to-lumi-gold text-black text-lg sm:text-xl px-8 sm:px-12 py-4 sm:py-6 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 mb-6 sm:mb-8 min-h-[48px] mx-4 sm:mx-0">
