@@ -4,8 +4,6 @@ import { Video, Sparkles, Film } from 'lucide-react';
 
 interface VideoLimitsDebugProps {
   limits: {
-    sora_text_videos_lifetime_limit?: number;
-    sora_text_videos_lifetime_used?: number;
     kling_image_videos_lifetime_limit?: number;
     kling_image_videos_lifetime_used?: number;
     video_credits?: number;
@@ -14,10 +12,9 @@ interface VideoLimitsDebugProps {
 }
 
 export const VideoLimitsDebug = ({ limits }: VideoLimitsDebugProps) => {
-  const soraAvailable = (limits.sora_text_videos_lifetime_limit || 0) - (limits.sora_text_videos_lifetime_used || 0);
   const klingAvailable = (limits.kling_image_videos_lifetime_limit || 0) - (limits.kling_image_videos_lifetime_used || 0);
   const extraCredits = (limits.video_credits || 0) - (limits.video_credits_used || 0);
-  const totalAvailable = soraAvailable + klingAvailable + extraCredits;
+  const totalAvailable = klingAvailable + extraCredits;
 
   const getStatusColor = (available: number, total: number) => {
     if (available === 0) return 'destructive';
@@ -42,33 +39,6 @@ export const VideoLimitsDebug = ({ limits }: VideoLimitsDebugProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Sora Credits */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Sora (Text-to-Video)</span>
-            </div>
-            <Badge variant={getStatusColor(soraAvailable, limits.sora_text_videos_lifetime_limit || 0)}>
-              {soraAvailable}/{limits.sora_text_videos_lifetime_limit || 0}
-            </Badge>
-          </div>
-          <div className="w-full bg-secondary rounded-full h-2">
-            <div
-              className="bg-primary h-2 rounded-full transition-all"
-              style={{
-                width: `${((limits.sora_text_videos_lifetime_limit || 0) > 0 
-                  ? (soraAvailable / (limits.sora_text_videos_lifetime_limit || 1)) * 100 
-                  : 0)}%`
-              }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Usado: {limits.sora_text_videos_lifetime_used || 0} | 
-            Restante: {soraAvailable}
-          </p>
-        </div>
-
         {/* Kling Credits */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">

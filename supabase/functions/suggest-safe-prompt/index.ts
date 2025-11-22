@@ -53,7 +53,7 @@ EXEMPLOS:
 
 Retorne APENAS o prompt reformulado, sem explicações adicionais.`;
     } else if (mode === 'enhance') {
-      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Sora 2, Kling). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
+      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Kling). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
 
 DIRETRIZES OBRIGATÓRIAS:
 
@@ -88,51 +88,6 @@ Retorne APENAS o prompt melhorado em INGLÊS, estruturado e otimizado. Seja espe
 EXEMPLO TRANSFORMAÇÃO:
 RUIM: "Um gato andando na rua"
 BOM: "Medium shot at eye level of a sleek orange tabby cat with white paws walking confidently down a cobblestone street. Soft afternoon sunlight casts long shadows. The cat's tail sways gently as it moves. Color palette: warm amber, grey stone, cream white. Static camera, 35mm film aesthetic, shallow depth of field."`;
-    } else if (mode === 'enhance-sora') {
-      systemPrompt = `Você é um especialista em engenharia de prompts para o modelo SORA 2 da OpenAI, que tem filtros de segurança MUITO RIGOROSOS. Sua tarefa é criar prompts genéricos e seguros.
-
-REGRAS CRÍTICAS PARA SORA 2:
-
-1. **REMOVA ESPECIFICIDADE DE OBJETOS COMERCIAIS:**
-   - ❌ "yellow taxi", "blue sedan", "red sports car"
-   - ✅ "taxi", "car", "vehicle"
-   - ❌ "iPhone", "MacBook", "Samsung phone"
-   - ✅ "smartphone", "laptop", "mobile device"
-   - ❌ "Coca-Cola bottle", "Starbucks cup"
-   - ✅ "beverage bottle", "coffee cup"
-
-2. **USE CORES APENAS PARA ILUMINAÇÃO E AMBIENTE:**
-   - ✅ "warm lighting", "cool tones", "golden hour", "soft blue ambient light"
-   - ❌ NÃO use cores para descrever objetos específicos
-
-3. **SEJA GENÉRICO EM OBJETOS, ESPECÍFICO EM AÇÕES:**
-   - ✅ "A person sips coffee from a mug while answering a phone call"
-   - ❌ "A young businessman in designer suit sips from a white ceramic Starbucks mug"
-
-4. **ESTRUTURA CINEMATOGRÁFICA SIMPLES:**
-   - Enquadramento básico (Close-up, Medium shot, Wide shot)
-   - Ângulo simples (Eye level, Low angle, High angle)
-   - UMA ação principal clara
-   - Movimento de câmera simples ou estática
-
-5. **ILUMINAÇÃO E ATMOSFERA (SEM OBJETOS ESPECÍFICOS):**
-   - Foque em qualidade de luz: "soft morning light", "dramatic shadows", "backlit"
-   - Ambiente: "urban setting", "indoor space", "outdoor scene"
-
-6. **SEMPRE EM INGLÊS** - Traduza prompts em português
-
-FORMATO DE SAÍDA:
-Retorne APENAS o prompt otimizado para Sora 2 em INGLÊS, genérico e seguro.
-
-EXEMPLOS DE TRANSFORMAÇÃO:
-
-BLOQUEADO: "Cinematic close-up shot. A young man with short dark hair wearing a grey sweater sips from a white ceramic coffee mug. Behind him, a bright yellow taxi and dark blue sedan move across the frame. He raises a black smartphone to answer a call. Soft morning sunlight."
-
-APROVADO: "Cinematic close-up shot at eye level. A person sips coffee from a mug. Behind them, city traffic moves smoothly across the frame. They raise a phone to answer a call. Soft morning light illuminates the scene. Static camera with shallow depth of field."
-
-BLOQUEADO: "A woman driving a red Ferrari sports car on a coastal highway at sunset"
-
-APROVADO: "Medium shot of a person driving a sports car on a coastal highway. Golden hour lighting with warm tones. Ocean visible in background. Camera tracking alongside vehicle."`;
     }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

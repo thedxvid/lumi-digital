@@ -817,8 +817,6 @@ export type Database = {
           plan_type: string
           profile_analysis_daily_limit: number
           profile_analysis_daily_used: number
-          sora_text_videos_lifetime_limit: number | null
-          sora_text_videos_lifetime_used: number | null
           updated_at: string | null
           user_id: string
           video_credits: number
@@ -842,8 +840,6 @@ export type Database = {
           plan_type: string
           profile_analysis_daily_limit?: number
           profile_analysis_daily_used?: number
-          sora_text_videos_lifetime_limit?: number | null
-          sora_text_videos_lifetime_used?: number | null
           updated_at?: string | null
           user_id: string
           video_credits?: number
@@ -867,8 +863,6 @@ export type Database = {
           plan_type?: string
           profile_analysis_daily_limit?: number
           profile_analysis_daily_used?: number
-          sora_text_videos_lifetime_limit?: number | null
-          sora_text_videos_lifetime_used?: number | null
           updated_at?: string | null
           user_id?: string
           video_credits?: number
