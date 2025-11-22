@@ -265,20 +265,121 @@ const AdminUsers = () => {
 
   const handleBulkActivate = async () => {
     console.log('🎯 handleBulkActivate chamado. Usuários selecionados:', selectedUsers);
+    
+    if (!confirm(`Ativar ${selectedUsers.length} usuários?\n\nIsso irá:\n✓ Conceder acesso à plataforma\n✓ Criar assinatura Básica (3 meses)\n✓ Configurar limites de uso\n✓ Enviar email de reativação`)) {
+      return;
+    }
+
     try {
-      const { error } = await supabase
+      sonnerToast.loading('Ativando usuários...', { id: 'bulk-activate' });
+
+      // 1. Atualizar profiles
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ access_granted: true, subscription_status: 'active' })
         .in('id', selectedUsers);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      toast({ title: 'Sucesso', description: `${selectedUsers.length} usuários ativados` });
+      // 2. Criar/atualizar subscriptions e usage_limits para cada usuário
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 3); // 3 meses
+
+      const planLimits = {
+        creative_images_daily_limit: 10,
+        creative_images_monthly_limit: 300,
+        profile_analysis_daily_limit: 5,
+        carousels_monthly_limit: 3,
+        videos_monthly_limit: 0,
+      };
+
+      // Processar subscriptions: desativar antigas e criar novas
+      // Primeiro, desativar todas as subscriptions ativas desses usuários
+      const { error: deactivateError } = await supabase
+        .from('subscriptions')
+        .update({ is_active: false })
+        .in('user_id', selectedUsers)
+        .eq('is_active', true);
+
+      if (deactivateError) console.error('Aviso ao desativar subscriptions antigas:', deactivateError);
+
+      // Então, inserir novas subscriptions
+      const subscriptionsToInsert = selectedUsers.map(userId => ({
+        user_id: userId,
+        plan_type: 'basic',
+        duration_months: 3,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        is_active: true,
+      }));
+
+      const { error: subError } = await supabase
+        .from('subscriptions')
+        .insert(subscriptionsToInsert);
+
+      if (subError) throw subError;
+
+      // Processar usage_limits em lote
+      const limitsToUpsert = selectedUsers.map(userId => ({
+        user_id: userId,
+        plan_type: 'basic',
+        ...planLimits,
+      }));
+
+      const { error: limitsError } = await supabase
+        .from('usage_limits')
+        .upsert(limitsToUpsert, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        });
+
+      if (limitsError) throw limitsError;
+
+      // 3. Enviar emails de reativação
+      sonnerToast.loading('Enviando emails de reativação...', { id: 'bulk-activate' });
+      
+      const selectedUsersData = users.filter(u => selectedUsers.includes(u.id));
+      let emailsSent = 0;
+      let emailsFailed = 0;
+
+      for (const user of selectedUsersData) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-reactivation-email', {
+            body: {
+              email: user.email,
+              fullName: user.full_name || 'Usuário',
+              planType: 'basic',
+              endDate: endDate.toISOString(),
+            }
+          });
+
+          if (emailError) {
+            console.error(`❌ Erro ao enviar email para ${user.email}:`, emailError);
+            emailsFailed++;
+          } else {
+            emailsSent++;
+          }
+        } catch (error) {
+          console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
+          emailsFailed++;
+        }
+      }
+
+      sonnerToast.success('Usuários Ativados!', {
+        id: 'bulk-activate',
+        description: `${selectedUsers.length} usuários ativados. Emails: ${emailsSent} enviados, ${emailsFailed} falhas.`,
+        duration: 5000
+      });
+
       setSelectedUsers([]);
       fetchUsers();
     } catch (error) {
       console.error('❌ Erro ao ativar usuários:', error);
-      toast({ title: 'Erro', description: 'Erro ao ativar usuários', variant: 'destructive' });
+      sonnerToast.error('Erro ao ativar usuários', {
+        id: 'bulk-activate',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
     }
   };
 
