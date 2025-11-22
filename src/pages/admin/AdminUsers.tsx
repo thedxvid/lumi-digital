@@ -78,6 +78,8 @@ const AdminUsers = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [isResendingEmails, setIsResendingEmails] = useState(false);
   const [isResendingAllEmails, setIsResendingAllEmails] = useState(false);
+  const [isFixingLimits, setIsFixingLimits] = useState(false);
+  const [isResendingMissingEmails, setIsResendingMissingEmails] = useState(false);
   const [showBulkSubscriptionModal, setShowBulkSubscriptionModal] = useState(false);
   const { toast } = useToast();
   
@@ -449,6 +451,7 @@ const AdminUsers = () => {
   // CORREÇÃO 1: Criar usage_limits faltantes para usuários ativos
   const handleFixMissingUsageLimits = async () => {
     try {
+      setIsFixingLimits(true);
       sonnerToast.loading('Identificando usuários sem usage_limits...', { id: 'fix-limits' });
 
       // Buscar usuários ativos com subscription basic que não têm usage_limits
@@ -469,7 +472,10 @@ const AdminUsers = () => {
       const missingUsers = activeUsers?.filter(u => !existingUserIds.has(u.id)) || [];
 
       if (missingUsers.length === 0) {
-        sonnerToast.success('Todos os usuários ativos já têm usage_limits!', { id: 'fix-limits' });
+        sonnerToast.success('✅ Todos os usuários ativos já têm usage_limits!', { 
+          id: 'fix-limits',
+          duration: 5000 
+        });
         return;
       }
 
@@ -477,6 +483,7 @@ const AdminUsers = () => {
 
       // Criar em lotes de 50
       const BATCH_SIZE = 50;
+      let totalCreated = 0;
       for (let i = 0; i < missingUsers.length; i += BATCH_SIZE) {
         const batch = missingUsers.slice(i, i + BATCH_SIZE);
         const limitsData = batch.map(user => ({
@@ -507,37 +514,63 @@ const AdminUsers = () => {
           .insert(limitsData);
 
         if (insertError) throw insertError;
+        
+        totalCreated += batch.length;
+        sonnerToast.loading(
+          `Criando usage_limits: ${totalCreated}/${missingUsers.length}...`,
+          { id: 'fix-limits' }
+        );
       }
 
-      sonnerToast.success(`✅ ${missingUsers.length} usage_limits criados com sucesso!`, { id: 'fix-limits' });
+      sonnerToast.success(
+        `✅ ${missingUsers.length} usage_limits criados com sucesso!`,
+        { 
+          id: 'fix-limits',
+          duration: 8000,
+          description: 'Todos os usuários ativos agora têm seus limites configurados.'
+        }
+      );
     } catch (error) {
       console.error('Erro ao criar usage_limits:', error);
-      sonnerToast.error('Erro ao criar usage_limits faltantes', { id: 'fix-limits' });
+      sonnerToast.error('Erro ao criar usage_limits faltantes', { 
+        id: 'fix-limits',
+        duration: 5000,
+        description: 'Tente novamente ou verifique os logs.'
+      });
+    } finally {
+      setIsFixingLimits(false);
     }
   };
 
   // CORREÇÃO 2: Reenviar emails para usuários que não receberam
   const handleResendMissingEmails = async () => {
     try {
+      setIsResendingMissingEmails(true);
       sonnerToast.loading('Identificando usuários que precisam receber email...', { id: 'resend-emails' });
 
       // Buscar usuários ativos com subscription basic recente
-      const oneHourAgo = new Date();
-      oneHourAgo.setHours(oneHourAgo.getHours() - 2); // Últimas 2 horas
+      const twoHoursAgo = new Date();
+      twoHoursAgo.setHours(twoHoursAgo.getHours() - 2); // Últimas 2 horas
 
       const { data: recentSubs, error: subsError } = await supabase
         .from('subscriptions')
         .select('user_id, end_date')
         .eq('plan_type', 'basic')
         .eq('is_active', true)
-        .gte('created_at', oneHourAgo.toISOString());
+        .gte('created_at', twoHoursAgo.toISOString());
 
       if (subsError) throw subsError;
 
       if (!recentSubs || recentSubs.length === 0) {
-        sonnerToast.info('Nenhuma assinatura recente encontrada', { id: 'resend-emails' });
+        sonnerToast.info('Nenhuma assinatura recente encontrada', { 
+          id: 'resend-emails',
+          duration: 5000,
+          description: 'Não há assinaturas criadas nas últimas 2 horas.'
+        });
         return;
       }
+
+      sonnerToast.loading(`Buscando dados de ${recentSubs.length} usuários...`, { id: 'resend-emails' });
 
       const userIds = recentSubs.map(s => s.user_id);
       const { data: usersData, error: usersError } = await supabase
@@ -561,7 +594,19 @@ const AdminUsers = () => {
         };
       }).filter(u => u.email) || [];
 
-      sonnerToast.loading(`Enviando emails para ${usersWithEmails.length} usuários...`, { id: 'resend-emails' });
+      if (usersWithEmails.length === 0) {
+        sonnerToast.warning('Nenhum email para enviar', {
+          id: 'resend-emails',
+          duration: 5000,
+          description: 'Não foi possível encontrar emails válidos.'
+        });
+        return;
+      }
+
+      sonnerToast.loading(
+        `Enviando emails para ${usersWithEmails.length} usuários (rate limit: 2/seg)...`,
+        { id: 'resend-emails' }
+      );
 
       let emailsSent = 0;
       let emailsFailed = 0;
@@ -605,12 +650,22 @@ const AdminUsers = () => {
       }
 
       sonnerToast.success(
-        `✅ Emails enviados!\n📧 Sucesso: ${emailsSent}, Falhas: ${emailsFailed}`,
-        { id: 'resend-emails' }
+        `✅ Emails enviados!`,
+        {
+          id: 'resend-emails',
+          duration: 8000,
+          description: `📧 Sucesso: ${emailsSent}, Falhas: ${emailsFailed}`
+        }
       );
     } catch (error) {
       console.error('Erro ao reenviar emails:', error);
-      sonnerToast.error('Erro ao reenviar emails', { id: 'resend-emails' });
+      sonnerToast.error('Erro ao reenviar emails', { 
+        id: 'resend-emails',
+        duration: 5000,
+        description: 'Tente novamente ou verifique os logs.'
+      });
+    } finally {
+      setIsResendingMissingEmails(false);
     }
   };
 
@@ -1309,18 +1364,20 @@ const AdminUsers = () => {
           <Button 
             variant="outline"
             onClick={handleFixMissingUsageLimits}
+            disabled={isFixingLimits}
             className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
           >
             <Settings className="h-4 w-4 mr-2" />
-            Criar Usage Limits
+            {isFixingLimits ? 'Criando...' : 'Criar Usage Limits'}
           </Button>
           <Button 
             variant="outline"
             onClick={handleResendMissingEmails}
+            disabled={isResendingMissingEmails}
             className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
           >
             <Mail className="h-4 w-4 mr-2" />
-            Reenviar Emails Faltantes
+            {isResendingMissingEmails ? 'Enviando...' : 'Reenviar Emails Faltantes'}
           </Button>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
