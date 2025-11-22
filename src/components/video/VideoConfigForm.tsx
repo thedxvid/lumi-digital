@@ -86,10 +86,11 @@ export const VideoConfigForm = ({
     if (newMode !== 'image-to-video' || !preloadedImage) {
       setInputImages([]);
     }
-    // Set default API for the mode
-    const defaultAPI = VIDEO_APIS.find(api => api.mode === newMode);
-    if (defaultAPI) {
-      setApiProvider(defaultAPI.id);
+    // Always set the correct API for the mode - now we only have one API per mode
+    if (newMode === 'image-to-video') {
+      setApiProvider('fal_kling_v25_image_to_video');
+    } else {
+      setApiProvider('fal_kling_v25_turbo');
     }
   };
 
