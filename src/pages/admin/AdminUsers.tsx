@@ -411,33 +411,28 @@ const AdminUsers = () => {
       let emailsSent = 0;
       let emailsFailed = 0;
 
-      // Processar 2 emails por vez com delay de 1s entre lotes (respeita rate limit)
-      const EMAIL_BATCH = 2;
-      for (let i = 0; i < selectedUsersData.length; i += EMAIL_BATCH) {
-        const emailBatch = selectedUsersData.slice(i, i + EMAIL_BATCH);
+      // Enviar emails sequencialmente com delay de 550ms (garantindo máximo de 2/segundo)
+      for (let i = 0; i < selectedUsersData.length; i++) {
+        const user = selectedUsersData[i];
         
-        await Promise.all(
-          emailBatch.map(async (user) => {
-            try {
-              await supabase.functions.invoke('send-reactivation-email', {
-                body: {
-                  email: user.email,
-                  fullName: user.full_name || 'Usuário',
-                  planType: 'basic',
-                  endDate: endDate.toISOString(),
-                }
-              });
-              emailsSent++;
-            } catch (error) {
-              console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
-              emailsFailed++;
+        try {
+          await supabase.functions.invoke('send-reactivation-email', {
+            body: {
+              email: user.email,
+              fullName: user.full_name || 'Usuário',
+              planType: 'basic',
+              endDate: endDate.toISOString(),
             }
-          })
-        );
+          });
+          emailsSent++;
+        } catch (error) {
+          console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
+          emailsFailed++;
+        }
 
-        // Delay de 1.1s entre lotes para garantir rate limit de 2/s
-        if (i + EMAIL_BATCH < selectedUsersData.length) {
-          await new Promise(resolve => setTimeout(resolve, 1100));
+        // Delay de 550ms entre cada email para respeitar rate limit de 2/s
+        if (i < selectedUsersData.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 550));
         }
       }
 
@@ -692,47 +687,42 @@ const AdminUsers = () => {
       let emailsSent = 0;
       let emailsFailed = 0;
 
-      // Processar 2 emails por vez com delay de 1.1s entre lotes
-      const EMAIL_BATCH = 2;
-      for (let i = 0; i < usersWithEmails.length; i += EMAIL_BATCH) {
-        const emailBatch = usersWithEmails.slice(i, i + EMAIL_BATCH);
+      // Enviar emails sequencialmente com delay de 550ms (garantindo máximo de 2/segundo)
+      for (let i = 0; i < usersWithEmails.length; i++) {
+        const user = usersWithEmails[i];
         
-        await Promise.all(
-          emailBatch.map(async (user: any) => {
-            try {
-              console.log(`📧 Enviando email para: ${user.email}`);
-              const { error } = await supabase.functions.invoke('send-reactivation-email', {
-                body: {
-                  email: user.email,
-                  fullName: user.full_name,
-                  planType: 'basic',
-                  endDate: user.endDate,
-                }
-              });
-              
-              if (error) {
-                console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
-                emailsFailed++;
-              } else {
-                console.log(`✅ Email enviado para: ${user.email}`);
-                emailsSent++;
-              }
-            } catch (error) {
-              console.error(`❌ Exceção ao enviar email para ${user.email}:`, error);
-              emailsFailed++;
+        try {
+          console.log(`📧 Enviando email para: ${user.email}`);
+          const { error } = await supabase.functions.invoke('send-reactivation-email', {
+            body: {
+              email: user.email,
+              fullName: user.full_name,
+              planType: 'basic',
+              endDate: user.endDate,
             }
-          })
-        );
+          });
+          
+          if (error) {
+            console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
+            emailsFailed++;
+          } else {
+            console.log(`✅ Email enviado para: ${user.email}`);
+            emailsSent++;
+          }
+        } catch (error) {
+          console.error(`❌ Exceção ao enviar email para ${user.email}:`, error);
+          emailsFailed++;
+        }
 
-        // Delay de 1.1s entre lotes
-        if (i + EMAIL_BATCH < usersWithEmails.length) {
-          await new Promise(resolve => setTimeout(resolve, 1100));
+        // Delay de 550ms entre cada email para respeitar rate limit de 2/s
+        if (i < usersWithEmails.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 550));
         }
 
         // Atualizar progresso a cada 10 emails
-        if ((i + EMAIL_BATCH) % 10 === 0) {
+        if ((i + 1) % 10 === 0) {
           sonnerToast.loading(
-            `Enviando emails: ${Math.min(i + EMAIL_BATCH, usersWithEmails.length)}/${usersWithEmails.length}`,
+            `Enviando emails: ${i + 1}/${usersWithEmails.length}`,
             { id: 'resend-emails' }
           );
         }
