@@ -270,18 +270,15 @@ const AdminUsers = () => {
       return;
     }
 
+    const BATCH_SIZE = 50; // Processar em lotes de 50
+    let totalProcessed = 0;
+    let totalErrors = 0;
+
     try {
-      sonnerToast.loading('Ativando usuários...', { id: 'bulk-activate' });
+      const totalBatches = Math.ceil(selectedUsers.length / BATCH_SIZE);
+      
+      sonnerToast.loading(`Ativando lote 1 de ${totalBatches}...`, { id: 'bulk-activate' });
 
-      // 1. Atualizar profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ access_granted: true, subscription_status: 'active' })
-        .in('id', selectedUsers);
-
-      if (profileError) throw profileError;
-
-      // 2. Criar/atualizar subscriptions e usage_limits para cada usuário
       const startDate = new Date();
       const endDate = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + 3); // 3 meses
@@ -294,49 +291,87 @@ const AdminUsers = () => {
         videos_monthly_limit: 0,
       };
 
-      // Processar subscriptions: desativar antigas e criar novas
-      // Primeiro, desativar todas as subscriptions ativas desses usuários
-      const { error: deactivateError } = await supabase
-        .from('subscriptions')
-        .update({ is_active: false })
-        .in('user_id', selectedUsers)
-        .eq('is_active', true);
-
-      if (deactivateError) console.error('Aviso ao desativar subscriptions antigas:', deactivateError);
-
-      // Então, inserir novas subscriptions
-      const subscriptionsToInsert = selectedUsers.map(userId => ({
-        user_id: userId,
-        plan_type: 'basic',
-        duration_months: 3,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        is_active: true,
-      }));
-
-      const { error: subError } = await supabase
-        .from('subscriptions')
-        .insert(subscriptionsToInsert);
-
-      if (subError) throw subError;
-
-      // Processar usage_limits em lote
-      const limitsToUpsert = selectedUsers.map(userId => ({
-        user_id: userId,
-        plan_type: 'basic',
-        ...planLimits,
-      }));
-
-      const { error: limitsError } = await supabase
-        .from('usage_limits')
-        .upsert(limitsToUpsert, { 
-          onConflict: 'user_id',
-          ignoreDuplicates: false 
+      // Processar em lotes
+      for (let i = 0; i < selectedUsers.length; i += BATCH_SIZE) {
+        const batch = selectedUsers.slice(i, i + BATCH_SIZE);
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+        
+        sonnerToast.loading(`Ativando lote ${batchNumber} de ${totalBatches} (${batch.length} usuários)...`, { 
+          id: 'bulk-activate' 
         });
 
-      if (limitsError) throw limitsError;
+        try {
+          // 1. Atualizar profiles do lote
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ access_granted: true, subscription_status: 'active' })
+            .in('id', batch);
 
-      // 3. Enviar emails de reativação
+          if (profileError) {
+            console.error(`❌ Erro ao atualizar profiles do lote ${batchNumber}:`, profileError);
+            totalErrors += batch.length;
+            continue;
+          }
+
+          // 2. Desativar subscriptions antigas do lote
+          await supabase
+            .from('subscriptions')
+            .update({ is_active: false })
+            .in('user_id', batch)
+            .eq('is_active', true);
+
+          // 3. Criar novas subscriptions do lote
+          const subscriptionsToInsert = batch.map(userId => ({
+            user_id: userId,
+            plan_type: 'basic',
+            duration_months: 3,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            is_active: true,
+          }));
+
+          const { error: subError } = await supabase
+            .from('subscriptions')
+            .insert(subscriptionsToInsert);
+
+          if (subError) {
+            console.error(`❌ Erro ao criar subscriptions do lote ${batchNumber}:`, subError);
+            totalErrors += batch.length;
+            continue;
+          }
+
+          // 4. Atualizar usage_limits do lote
+          const limitsToUpsert = batch.map(userId => ({
+            user_id: userId,
+            plan_type: 'basic',
+            ...planLimits,
+          }));
+
+          const { error: limitsError } = await supabase
+            .from('usage_limits')
+            .upsert(limitsToUpsert, { 
+              onConflict: 'user_id',
+              ignoreDuplicates: false 
+            });
+
+          if (limitsError) {
+            console.error(`❌ Erro ao atualizar limits do lote ${batchNumber}:`, limitsError);
+          }
+
+          totalProcessed += batch.length;
+          
+          // Pequeno delay entre lotes
+          if (i + BATCH_SIZE < selectedUsers.length) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+
+        } catch (batchError) {
+          console.error(`❌ Erro no lote ${batchNumber}:`, batchError);
+          totalErrors += batch.length;
+        }
+      }
+
+      // 5. Enviar emails de reativação (em background)
       sonnerToast.loading('Enviando emails de reativação...', { id: 'bulk-activate' });
       
       const selectedUsersData = users.filter(u => selectedUsers.includes(u.id));
@@ -345,7 +380,7 @@ const AdminUsers = () => {
 
       for (const user of selectedUsersData) {
         try {
-          const { error: emailError } = await supabase.functions.invoke('send-reactivation-email', {
+          await supabase.functions.invoke('send-reactivation-email', {
             body: {
               email: user.email,
               fullName: user.full_name || 'Usuário',
@@ -353,32 +388,28 @@ const AdminUsers = () => {
               endDate: endDate.toISOString(),
             }
           });
-
-          if (emailError) {
-            console.error(`❌ Erro ao enviar email para ${user.email}:`, emailError);
-            emailsFailed++;
-          } else {
-            emailsSent++;
-          }
+          emailsSent++;
         } catch (error) {
           console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
           emailsFailed++;
         }
       }
 
-      sonnerToast.success('Usuários Ativados!', {
+      sonnerToast.success('Ativação Concluída!', {
         id: 'bulk-activate',
-        description: `${selectedUsers.length} usuários ativados. Emails: ${emailsSent} enviados, ${emailsFailed} falhas.`,
-        duration: 5000
+        description: `${totalProcessed} usuários ativados${totalErrors > 0 ? `, ${totalErrors} erros` : ''}. Emails: ${emailsSent} enviados${emailsFailed > 0 ? `, ${emailsFailed} falhas` : ''}.`,
+        duration: 8000
       });
 
       setSelectedUsers([]);
-      fetchUsers();
-    } catch (error) {
+      await fetchUsers();
+
+    } catch (error: any) {
       console.error('❌ Erro ao ativar usuários:', error);
-      sonnerToast.error('Erro ao ativar usuários', {
+      sonnerToast.error('Erro ao Ativar Usuários', {
         id: 'bulk-activate',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: `${totalProcessed} processados antes do erro. ${error?.message || 'Erro desconhecido'}`,
+        duration: 8000
       });
     }
   };
