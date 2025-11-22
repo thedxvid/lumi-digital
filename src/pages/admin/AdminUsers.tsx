@@ -371,27 +371,40 @@ const AdminUsers = () => {
         }
       }
 
-      // 5. Enviar emails de reativação (em background)
+      // 5. Enviar emails de reativação (respeitando rate limit de 2/segundo)
       sonnerToast.loading('Enviando emails de reativação...', { id: 'bulk-activate' });
       
       const selectedUsersData = users.filter(u => selectedUsers.includes(u.id));
       let emailsSent = 0;
       let emailsFailed = 0;
 
-      for (const user of selectedUsersData) {
-        try {
-          await supabase.functions.invoke('send-reactivation-email', {
-            body: {
-              email: user.email,
-              fullName: user.full_name || 'Usuário',
-              planType: 'basic',
-              endDate: endDate.toISOString(),
+      // Processar 2 emails por vez com delay de 1s entre lotes (respeita rate limit)
+      const EMAIL_BATCH = 2;
+      for (let i = 0; i < selectedUsersData.length; i += EMAIL_BATCH) {
+        const emailBatch = selectedUsersData.slice(i, i + EMAIL_BATCH);
+        
+        await Promise.all(
+          emailBatch.map(async (user) => {
+            try {
+              await supabase.functions.invoke('send-reactivation-email', {
+                body: {
+                  email: user.email,
+                  fullName: user.full_name || 'Usuário',
+                  planType: 'basic',
+                  endDate: endDate.toISOString(),
+                }
+              });
+              emailsSent++;
+            } catch (error) {
+              console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
+              emailsFailed++;
             }
-          });
-          emailsSent++;
-        } catch (error) {
-          console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
-          emailsFailed++;
+          })
+        );
+
+        // Delay de 1.1s entre lotes para garantir rate limit de 2/s
+        if (i + EMAIL_BATCH < selectedUsersData.length) {
+          await new Promise(resolve => setTimeout(resolve, 1100));
         }
       }
 
