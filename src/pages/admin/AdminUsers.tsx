@@ -552,6 +552,8 @@ const AdminUsers = () => {
       const twoHoursAgo = new Date();
       twoHoursAgo.setHours(twoHoursAgo.getHours() - 2); // Últimas 2 horas
 
+      console.log('🔍 Buscando assinaturas desde:', twoHoursAgo.toISOString());
+
       const { data: recentSubs, error: subsError } = await supabase
         .from('subscriptions')
         .select('user_id, end_date')
@@ -559,7 +561,12 @@ const AdminUsers = () => {
         .eq('is_active', true)
         .gte('created_at', twoHoursAgo.toISOString());
 
-      if (subsError) throw subsError;
+      if (subsError) {
+        console.error('❌ Erro ao buscar subscriptions:', subsError);
+        throw subsError;
+      }
+
+      console.log('📊 Assinaturas recentes encontradas:', recentSubs?.length || 0);
 
       if (!recentSubs || recentSubs.length === 0) {
         sonnerToast.info('Nenhuma assinatura recente encontrada', { 
@@ -573,32 +580,38 @@ const AdminUsers = () => {
       sonnerToast.loading(`Buscando dados de ${recentSubs.length} usuários...`, { id: 'resend-emails' });
 
       const userIds = recentSubs.map(s => s.user_id);
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', userIds);
+      
+      // Buscar dados completos dos usuários usando get_admin_user_details
+      const { data: allUsers, error: usersError } = await supabase.rpc('get_admin_user_details');
 
-      if (usersError) throw usersError;
+      if (usersError) {
+        console.error('❌ Erro ao buscar users:', usersError);
+        throw usersError;
+      }
 
-      // Buscar emails do auth.users via função admin
-      const { data: authData } = await supabase.rpc('get_admin_user_details');
-      const authUsersMap = new Map(authData?.map((u: any) => [u.id, u.email]) || []);
+      console.log('📊 Total de usuários retornados:', allUsers?.length || 0);
 
-      const usersWithEmails = usersData?.map(user => {
-        const subscription = recentSubs.find(s => s.user_id === user.id);
-        return {
-          id: user.id,
-          email: authUsersMap.get(user.id) || '',
-          full_name: user.full_name,
-          endDate: subscription?.end_date || '',
-        };
-      }).filter(u => u.email) || [];
+      // Filtrar apenas os usuários com assinaturas recentes
+      const usersWithEmails = allUsers
+        ?.filter((u: any) => userIds.includes(u.id))
+        .map((u: any) => {
+          const subscription = recentSubs.find(s => s.user_id === u.id);
+          return {
+            id: u.id,
+            email: u.email || '',
+            full_name: u.full_name || 'Usuário',
+            endDate: subscription?.end_date || '',
+          };
+        })
+        .filter((u: any) => u.email) || [];
+
+      console.log('✅ Usuários com emails válidos:', usersWithEmails.length);
 
       if (usersWithEmails.length === 0) {
         sonnerToast.warning('Nenhum email para enviar', {
           id: 'resend-emails',
           duration: 5000,
-          description: 'Não foi possível encontrar emails válidos.'
+          description: 'Não foi possível encontrar emails válidos para os usuários.'
         });
         return;
       }
@@ -617,19 +630,27 @@ const AdminUsers = () => {
         const emailBatch = usersWithEmails.slice(i, i + EMAIL_BATCH);
         
         await Promise.all(
-          emailBatch.map(async (user) => {
+          emailBatch.map(async (user: any) => {
             try {
-              await supabase.functions.invoke('send-reactivation-email', {
+              console.log(`📧 Enviando email para: ${user.email}`);
+              const { error } = await supabase.functions.invoke('send-reactivation-email', {
                 body: {
                   email: user.email,
-                  fullName: user.full_name || 'Usuário',
+                  fullName: user.full_name,
                   planType: 'basic',
                   endDate: user.endDate,
                 }
               });
-              emailsSent++;
+              
+              if (error) {
+                console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
+                emailsFailed++;
+              } else {
+                console.log(`✅ Email enviado para: ${user.email}`);
+                emailsSent++;
+              }
             } catch (error) {
-              console.error(`❌ Erro ao enviar email para ${user.email}:`, error);
+              console.error(`❌ Exceção ao enviar email para ${user.email}:`, error);
               emailsFailed++;
             }
           })
@@ -657,12 +678,12 @@ const AdminUsers = () => {
           description: `📧 Sucesso: ${emailsSent}, Falhas: ${emailsFailed}`
         }
       );
-    } catch (error) {
-      console.error('Erro ao reenviar emails:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao reenviar emails:', error);
       sonnerToast.error('Erro ao reenviar emails', { 
         id: 'resend-emails',
         duration: 5000,
-        description: 'Tente novamente ou verifique os logs.'
+        description: error?.message || 'Tente novamente ou verifique os logs do console.'
       });
     } finally {
       setIsResendingMissingEmails(false);
