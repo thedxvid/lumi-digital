@@ -22,6 +22,7 @@ import { BulkSubscriptionModal } from '@/components/admin/BulkSubscriptionModal'
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { SubscriptionManager } from '@/components/admin/SubscriptionManager';
 import { UsageBar } from '@/components/admin/UsageBar';
+import { UsageLimitsProgressModal } from '@/components/admin/UsageLimitsProgressModal';
 import { EmailProgressModal } from '@/components/admin/EmailProgressModal';
 import { VideoLimitsDebug } from '@/components/admin/VideoLimitsDebug';
 import { toast as sonnerToast } from 'sonner';
@@ -80,6 +81,17 @@ const AdminUsers = () => {
   const [isResendingAllEmails, setIsResendingAllEmails] = useState(false);
   const [isFixingLimits, setIsFixingLimits] = useState(false);
   const [isResendingMissingEmails, setIsResendingMissingEmails] = useState(false);
+  
+  // Progress modal state
+  const [progressModalOpen, setProgressModalOpen] = useState(false);
+  const [progressData, setProgressData] = useState({
+    totalUsers: 0,
+    currentBatch: 0,
+    totalBatches: 0,
+    processedCount: 0,
+    errors: [] as string[],
+    stage: 'identifying' as 'identifying' | 'creating' | 'complete' | 'error'
+  });
   const [showBulkSubscriptionModal, setShowBulkSubscriptionModal] = useState(false);
   const { toast } = useToast();
   
@@ -452,7 +464,15 @@ const AdminUsers = () => {
   const handleFixMissingUsageLimits = async () => {
     try {
       setIsFixingLimits(true);
-      sonnerToast.loading('Identificando usuários sem usage_limits...', { id: 'fix-limits' });
+      setProgressModalOpen(true);
+      setProgressData({
+        totalUsers: 0,
+        currentBatch: 0,
+        totalBatches: 0,
+        processedCount: 0,
+        errors: [],
+        stage: 'identifying'
+      });
 
       // Buscar usuários ativos com subscription basic que não têm usage_limits
       const { data: activeUsers, error: usersError } = await supabase
@@ -472,20 +492,38 @@ const AdminUsers = () => {
       const missingUsers = activeUsers?.filter(u => !existingUserIds.has(u.id)) || [];
 
       if (missingUsers.length === 0) {
+        setProgressData(prev => ({ ...prev, stage: 'complete' }));
         sonnerToast.success('✅ Todos os usuários ativos já têm usage_limits!', { 
-          id: 'fix-limits',
           duration: 5000 
         });
+        setTimeout(() => setProgressModalOpen(false), 3000);
         return;
       }
 
-      sonnerToast.loading(`Criando usage_limits para ${missingUsers.length} usuários...`, { id: 'fix-limits' });
+      // Preparar batches
+      const BATCH_SIZE = 50;
+      const totalBatches = Math.ceil(missingUsers.length / BATCH_SIZE);
+      
+      setProgressData(prev => ({
+        ...prev,
+        totalUsers: missingUsers.length,
+        totalBatches,
+        stage: 'creating'
+      }));
 
       // Criar em lotes de 50
-      const BATCH_SIZE = 50;
       let totalCreated = 0;
+      const errors: string[] = [];
+      
       for (let i = 0; i < missingUsers.length; i += BATCH_SIZE) {
+        const currentBatchNum = Math.floor(i / BATCH_SIZE) + 1;
         const batch = missingUsers.slice(i, i + BATCH_SIZE);
+        
+        setProgressData(prev => ({
+          ...prev,
+          currentBatch: currentBatchNum
+        }));
+
         const limitsData = batch.map(user => ({
           user_id: user.id,
           plan_type: 'basic',
@@ -509,33 +547,63 @@ const AdminUsers = () => {
           last_monthly_reset: new Date().toISOString(),
         }));
 
-        const { error: insertError } = await supabase
-          .from('usage_limits')
-          .insert(limitsData);
+        try {
+          const { error: insertError } = await supabase
+            .from('usage_limits')
+            .insert(limitsData);
 
-        if (insertError) throw insertError;
+          if (insertError) {
+            errors.push(`Batch ${currentBatchNum}: ${insertError.message}`);
+            console.error(`❌ Erro no batch ${currentBatchNum}:`, insertError);
+          } else {
+            totalCreated += batch.length;
+          }
+        } catch (batchError: any) {
+          errors.push(`Batch ${currentBatchNum}: ${batchError.message}`);
+          console.error(`❌ Erro no batch ${currentBatchNum}:`, batchError);
+        }
         
-        totalCreated += batch.length;
-        sonnerToast.loading(
-          `Criando usage_limits: ${totalCreated}/${missingUsers.length}...`,
-          { id: 'fix-limits' }
+        setProgressData(prev => ({
+          ...prev,
+          processedCount: totalCreated,
+          errors
+        }));
+
+        // Small delay between batches
+        if (i + BATCH_SIZE < missingUsers.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+
+      setProgressData(prev => ({
+        ...prev,
+        stage: errors.length > 0 ? 'error' : 'complete'
+      }));
+
+      if (errors.length === 0) {
+        sonnerToast.success(
+          `✅ ${missingUsers.length} usage_limits criados!`,
+          { duration: 5000 }
+        );
+      } else {
+        sonnerToast.warning(
+          `${totalCreated} criados, ${errors.length} erros`,
+          { duration: 5000 }
         );
       }
 
-      sonnerToast.success(
-        `✅ ${missingUsers.length} usage_limits criados com sucesso!`,
-        { 
-          id: 'fix-limits',
-          duration: 8000,
-          description: 'Todos os usuários ativos agora têm seus limites configurados.'
-        }
-      );
-    } catch (error) {
+      setTimeout(() => setProgressModalOpen(false), 5000);
+      
+    } catch (error: any) {
       console.error('Erro ao criar usage_limits:', error);
+      setProgressData(prev => ({
+        ...prev,
+        stage: 'error',
+        errors: [...prev.errors, error.message || 'Erro desconhecido']
+      }));
       sonnerToast.error('Erro ao criar usage_limits faltantes', { 
-        id: 'fix-limits',
         duration: 5000,
-        description: 'Tente novamente ou verifique os logs.'
+        description: error.message || 'Tente novamente ou verifique os logs.'
       });
     } finally {
       setIsFixingLimits(false);
@@ -1654,6 +1722,12 @@ const AdminUsers = () => {
       />
 
       {/* Modals */}
+      <UsageLimitsProgressModal
+        isOpen={progressModalOpen}
+        onClose={() => setProgressModalOpen(false)}
+        {...progressData}
+      />
+
       <AddUserModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
