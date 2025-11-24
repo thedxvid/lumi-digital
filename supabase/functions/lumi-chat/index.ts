@@ -1,11 +1,24 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const ChatRequestSchema = z.object({
+  message: z.string().min(1, 'Mensagem não pode estar vazia').max(10000, 'Mensagem muito longa'),
+  conversationHistory: z.array(z.object({
+    role: z.string(),
+    content: z.string()
+  })).optional().default([]),
+  images: z.array(z.string().url('URL de imagem inválida')).max(5, 'Máximo 5 imagens').optional().default([]),
+  agentId: z.string().optional(),
+  productId: z.string().optional()
+});
 
 interface ChatRequest {
   message: string;
@@ -51,11 +64,22 @@ serve(async (req) => {
       console.log(`📦 Contexto base carregado com ${defaultProducts.length} produto(s) padrão`);
     }
 
-    const { message, conversationHistory = [], images = [], agentId, productId } = await req.json() as ChatRequest;
-
-    if (!message || typeof message !== 'string') {
-      throw new Error('Message is required and must be a string');
+    // Validate input with zod
+    const rawInput = await req.json();
+    const validationResult = ChatRequestSchema.safeParse(rawInput);
+    
+    if (!validationResult.success) {
+      console.error('❌ Validation error:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Dados inválidos',
+          details: validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const { message, conversationHistory, images, agentId, productId } = validationResult.data;
 
     console.log('Processando requisição do chat:', { 
       message: message.substring(0, 100) + '...', 
