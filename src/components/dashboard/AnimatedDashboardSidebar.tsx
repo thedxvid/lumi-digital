@@ -38,9 +38,18 @@ export function AnimatedDashboardSidebar() {
   const [contentProductionOpen, setContentProductionOpen] = useState(true);
   const [supportOpen, setSupportOpen] = useState(false);
   const { signOut, user } = useAuth();
-  const { isAdmin } = useAdminAuth();
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Debug admin status
+  useEffect(() => {
+    console.log('🚀 [AnimatedSidebar] Admin Status:', { 
+      isAdmin, 
+      adminLoading, 
+      shouldShow: !adminLoading && isAdmin 
+    });
+  }, [isAdmin, adminLoading]);
 
   // Inicializar CSS variable para padding do conteúdo
   useEffect(() => {
@@ -260,7 +269,7 @@ export function AnimatedDashboardSidebar() {
             </div>
 
             {/* Links de Admin */}
-            {isAdmin && (
+            {!adminLoading && isAdmin && (
               <>
                 {open && (
                   <div className="mt-6 mb-2 px-2">
