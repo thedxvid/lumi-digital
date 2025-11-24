@@ -344,6 +344,16 @@ serve(async (req) => {
     const creditsAfter = (updatedLimits?.video_credits || 0) - (updatedLimits?.video_credits_used || 0);
     const klingLifetimeAfter = updatedLimits?.kling_image_videos_lifetime_used || 0;
 
+    // Track API cost
+    const costUsd = api_provider.includes('kling') ? 0.60 : 0.02;
+    await supabaseClient.from('api_cost_tracking').insert({
+      user_id: user.id,
+      feature_type: 'video',
+      api_provider: api_provider,
+      cost_usd: costUsd,
+      metadata: { mode, prompt: prompt?.substring(0, 100), duration, resolution }
+    });
+
     // Log de sucesso
     await supabaseClient.from('video_generation_log').insert({
       user_id: user.id,

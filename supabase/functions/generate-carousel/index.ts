@@ -362,6 +362,15 @@ CRITICAL:
 
     console.log("Carousel generated successfully:", carouselData.id);
 
+    // Track API cost
+    await supabase.from('api_cost_tracking').insert({
+      user_id: user.id,
+      feature_type: 'carousel',
+      api_provider: 'lovable_ai',
+      cost_usd: 0.015,
+      metadata: { title, imageCount, theme }
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
