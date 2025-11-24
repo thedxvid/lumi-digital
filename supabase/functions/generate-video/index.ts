@@ -32,6 +32,81 @@ serve(async (req) => {
 
     console.log('Generating video:', { mode, api_provider, has_images: !!input_images });
 
+    // ============ VERIFICAÇÃO DE CRÉDITOS ANTES DA GERAÇÃO ============
+    // Criar cliente Supabase para verificar créditos
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Autenticação necessária' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Usuário não autenticado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Buscar limites atuais para logging
+    const { data: currentLimits } = await supabaseClient
+      .from('usage_limits')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    const creditsBeforeAttempt = currentLimits?.video_credits || 0;
+    const creditsUsedBefore = currentLimits?.video_credits_used || 0;
+    const klingLifetimeBefore = currentLimits?.kling_image_videos_lifetime_used || 0;
+
+    // Reservar crédito ANTES de gerar o vídeo
+    const { data: reserveResult, error: reserveError } = await supabaseClient.rpc('reserve_video_credit', {
+      p_user_id: user.id,
+      p_api_provider: api_provider
+    });
+
+    console.log('Reserve credit result:', reserveResult);
+
+    if (reserveError || !reserveResult?.success) {
+      const errorMsg = reserveResult?.error || 'Erro ao reservar crédito';
+      
+      // Log da tentativa falha
+      await supabaseClient.from('video_generation_log').insert({
+        user_id: user.id,
+        api_provider,
+        mode,
+        prompt: prompt || null,
+        credits_before: creditsBeforeAttempt - creditsUsedBefore,
+        credits_after: creditsBeforeAttempt - creditsUsedBefore,
+        kling_lifetime_before: klingLifetimeBefore,
+        kling_lifetime_after: klingLifetimeBefore,
+        success: false,
+        error_message: errorMsg,
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        user_agent: req.headers.get('user-agent')
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          error: errorMsg === 'Créditos insuficientes' 
+            ? 'Você não tem créditos suficientes para gerar vídeos. Compre mais créditos ou aguarde a renovação do seu plano.'
+            : errorMsg
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const creditType = reserveResult.credit_type;
+    console.log('Credit reserved successfully:', creditType);
+
     // Validations
     if (mode === 'text-to-video' && (!prompt || prompt.trim().length < 10)) {
       return new Response(
@@ -149,6 +224,29 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error('Fal.ai API error:', response.status, errorText);
       
+      // Devolver crédito em caso de falha
+      console.log('Rolling back credit due to API error');
+      await supabaseClient.rpc('rollback_video_credit', {
+        p_user_id: user.id,
+        p_credit_type: creditType
+      });
+
+      // Log da falha
+      await supabaseClient.from('video_generation_log').insert({
+        user_id: user.id,
+        api_provider,
+        mode,
+        prompt: prompt || null,
+        credits_before: creditsBeforeAttempt - creditsUsedBefore,
+        credits_after: creditsBeforeAttempt - creditsUsedBefore, // crédito devolvido
+        kling_lifetime_before: klingLifetimeBefore,
+        kling_lifetime_after: klingLifetimeBefore,
+        success: false,
+        error_message: `API Error ${response.status}: ${errorText}`,
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        user_agent: req.headers.get('user-agent')
+      });
+      
       // Handle rate limit
       if (response.status === 429) {
         return new Response(
@@ -204,53 +302,31 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Video generated successfully:', data.video?.url);
 
-    // Decrementar lifetime limits ou créditos extras baseado na API usada
-    try {
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-      
-      const authHeader = req.headers.get('Authorization');
-      if (authHeader) {
-        const { data: { user } } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
-        
-        if (user) {
-          const { data: limits } = await supabaseClient
-            .from('usage_limits')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-          
-          if (limits) {
-            const updates: Record<string, number> = {};
-            
-            // Kling Text-to-Video ou Image-to-Video
-            if (api_provider.includes('kling')) {
-              if ((limits.kling_image_videos_lifetime_used || 0) < (limits.kling_image_videos_lifetime_limit || 0)) {
-                updates.kling_image_videos_lifetime_used = (limits.kling_image_videos_lifetime_used || 0) + 1;
-                console.log('Using Kling lifetime credit');
-              } else if ((limits.video_credits_used || 0) < (limits.video_credits || 0)) {
-                updates.video_credits_used = (limits.video_credits_used || 0) + 1;
-                console.log('Using extra video credit for Kling');
-              }
-            }
-            
-            if (Object.keys(updates).length > 0) {
-              await supabaseClient
-                .from('usage_limits')
-                .update(updates)
-                .eq('user_id', user.id);
-                
-              console.log('Usage limits updated:', updates);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error updating usage limits:', error);
-      // Não falhar a requisição se a atualização de limites falhar
-    }
+    // Buscar limites atualizados após o decremento
+    const { data: updatedLimits } = await supabaseClient
+      .from('usage_limits')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    const creditsAfter = (updatedLimits?.video_credits || 0) - (updatedLimits?.video_credits_used || 0);
+    const klingLifetimeAfter = updatedLimits?.kling_image_videos_lifetime_used || 0;
+
+    // Log de sucesso
+    await supabaseClient.from('video_generation_log').insert({
+      user_id: user.id,
+      api_provider,
+      mode,
+      prompt: prompt || null,
+      credits_before: creditsBeforeAttempt - creditsUsedBefore,
+      credits_after: creditsAfter,
+      kling_lifetime_before: klingLifetimeBefore,
+      kling_lifetime_after: klingLifetimeAfter,
+      success: true,
+      video_url: data.video?.url,
+      ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+      user_agent: req.headers.get('user-agent')
+    });
 
     // Generate thumbnail URL from video (frame at 0.5s)
     const videoUrl = data.video?.url;
@@ -269,6 +345,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in generate-video function:', error);
+    
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Erro ao gerar vídeo' 

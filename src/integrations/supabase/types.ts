@@ -1013,6 +1013,63 @@ export type Database = {
         }
         Relationships: []
       }
+      video_generation_log: {
+        Row: {
+          api_provider: string
+          attempt_timestamp: string
+          created_at: string | null
+          credits_after: number | null
+          credits_before: number
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          kling_lifetime_after: number | null
+          kling_lifetime_before: number | null
+          mode: string
+          prompt: string | null
+          success: boolean
+          user_agent: string | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          api_provider: string
+          attempt_timestamp?: string
+          created_at?: string | null
+          credits_after?: number | null
+          credits_before: number
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          kling_lifetime_after?: number | null
+          kling_lifetime_before?: number | null
+          mode: string
+          prompt?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          api_provider?: string
+          attempt_timestamp?: string
+          created_at?: string | null
+          credits_after?: number | null
+          credits_before?: number
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          kling_lifetime_after?: number | null
+          kling_lifetime_before?: number | null
+          mode?: string
+          prompt?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       video_history: {
         Row: {
           api_used: string | null
@@ -1247,8 +1304,16 @@ export type Database = {
         Args: { _action: string; _details?: Json; _target_user_id: string }
         Returns: string
       }
+      reserve_video_credit: {
+        Args: { p_api_provider: string; p_user_id: string }
+        Returns: Json
+      }
       reset_daily_limits: { Args: never; Returns: undefined }
       reset_monthly_limits: { Args: never; Returns: undefined }
+      rollback_video_credit: {
+        Args: { p_credit_type: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
