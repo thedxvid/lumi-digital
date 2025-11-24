@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { Users, ShoppingCart, DollarSign, Activity, AlertCircle, FileWarning } from 'lucide-react';
 import { AgentAnalytics } from '@/components/admin/AgentAnalytics';
+import { ApiCostDashboard } from '@/components/admin/ApiCostDashboard';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -181,6 +182,11 @@ const AdminDashboard = () => {
 
       {/* Agent Analytics */}
       <AgentAnalytics />
+
+      {/* API Cost Dashboard */}
+      <div className="mt-8">
+        <ApiCostDashboard />
+      </div>
 
       {/* Recent Activity */}
       <Card>

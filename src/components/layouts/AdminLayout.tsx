@@ -2,6 +2,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { RealTimeCostMonitor } from '@/components/admin/RealTimeCostMonitor';
 import { 
   Users, 
   ShoppingCart, 
@@ -27,7 +28,7 @@ const AdminLayout = () => {
     { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
     { icon: Bot, label: 'Agentes', path: '/admin/agents' },
     { icon: Activity, label: 'Atividades', path: '/admin/logs' },
-    { icon: DollarSign, label: 'Custos API', path: '/admin/api-costs' },
+    { icon: DollarSign, label: 'Custos de API', path: '/admin/api-costs' },
     { icon: Settings, label: 'Configurações', path: '/admin/settings' },
   ];
 
@@ -95,6 +96,14 @@ const AdminLayout = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
+        {/* Header with Real-Time Cost Monitor */}
+        <div className="border-b border-border bg-card px-6 py-3 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Painel Administrativo
+          </div>
+          <RealTimeCostMonitor />
+        </div>
+
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>

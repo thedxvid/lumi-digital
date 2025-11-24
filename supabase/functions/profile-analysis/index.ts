@@ -274,6 +274,15 @@ Analise profundamente este perfil na imagem anexada e forneça insights acionáv
     const analysisResult = JSON.parse(toolCall.function.arguments);
     console.log('✅ Análise processada com sucesso');
 
+    // Track API cost
+    await supabase.from('api_cost_tracking').insert({
+      user_id: user.id,
+      feature_type: 'profile_analysis',
+      api_provider: 'lovable_ai',
+      cost_usd: 0.005,
+      metadata: { platform: data.platform, profileType: data.profileType }
+    });
+
     return new Response(
       JSON.stringify(analysisResult),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
