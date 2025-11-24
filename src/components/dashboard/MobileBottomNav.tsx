@@ -1,13 +1,11 @@
 import * as React from "react";
-import { Home, MessageSquare, BookUser, History, HelpCircle, Shield } from "lucide-react";
+import { Home, MessageSquare, BookUser, History, HelpCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { SupportButton } from "@/components/ui/support-button";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 export function MobileBottomNav() {
   const [supportOpen, setSupportOpen] = React.useState(false);
-  const { isAdmin, loading: adminLoading } = useAdminAuth();
 
   const links = [
     {
@@ -57,24 +55,6 @@ export function MobileBottomNav() {
               </NavLink>
             );
           })}
-          
-          {/* Link Admin - só para admins */}
-          {!adminLoading && isAdmin && (
-            <NavLink
-              to="/admin"
-              className={({ isActive }) =>
-                cn(
-                  "flex flex-col items-center justify-center gap-0.5 px-1.5 py-1.5 rounded-md transition-colors flex-1 max-w-[70px]",
-                  isActive
-                    ? "text-lumi-gold"
-                    : "text-muted-foreground hover:text-foreground"
-                )
-              }
-            >
-              <Shield className="h-5 w-5 flex-shrink-0" />
-              <span className="text-[9px] font-medium leading-tight text-center">Admin</span>
-            </NavLink>
-          )}
           
           {/* Botão de Suporte */}
           <button
