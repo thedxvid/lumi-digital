@@ -1,8 +1,9 @@
 import * as React from "react";
-import { Lightbulb, Menu, Home, MessageSquare, Images, History, Settings, BookUser, Video } from "lucide-react";
+import { Lightbulb, Menu, Home, MessageSquare, Images, History, Settings, BookUser, Video, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate, NavLink } from "react-router-dom";
 import { toast } from "sonner";
 import { LogOut } from "lucide-react";
@@ -13,6 +14,7 @@ import { MobileUsageLimitBar } from "./UsageLimitBar";
 export function MobileHeader() {
   const [open, setOpen] = React.useState(false);
   const { signOut, user } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
   const navigate = useNavigate();
 
   const navigationLinks = [
@@ -94,6 +96,30 @@ export function MobileHeader() {
                   );
                 })}
               </div>
+
+              {/* Admin Section */}
+              {!adminLoading && isAdmin && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">
+                    Administração
+                  </p>
+                  <NavLink
+                    to="/admin"
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors",
+                        isActive
+                          ? "bg-lumi-gold/10 text-lumi-gold font-medium"
+                          : "text-foreground hover:bg-muted"
+                      )
+                    }
+                  >
+                    <Shield className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-sm">Painel Admin</span>
+                  </NavLink>
+                </div>
+              )}
 
               {/* User Info */}
               {user && (
