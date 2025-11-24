@@ -5,11 +5,13 @@ import { DollarSign } from 'lucide-react';
 import { useApiCosts } from '@/hooks/useApiCosts';
 import { supabase } from '@/integrations/supabase/client';
 import { useCostProjection } from '@/hooks/useCostProjection';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const RealTimeCostMonitor = () => {
   const { stats, settings, refetch } = useApiCosts();
   const projection = useCostProjection();
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Real-time subscription
   useEffect(() => {
@@ -51,18 +53,22 @@ export const RealTimeCostMonitor = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Badge variant={variant} className="cursor-pointer gap-1 px-3 py-1.5 text-sm">
+        <Badge variant={variant} className="cursor-pointer gap-1 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm">
           <div className={`h-2 w-2 rounded-full ${bgColor} animate-pulse`} />
           <DollarSign className="h-3 w-3" />
-          ${stats.today.toFixed(2)}
+          {isMobile ? (
+            <span className="font-semibold">${stats.today.toFixed(2)}</span>
+          ) : (
+            <span>${stats.today.toFixed(2)}</span>
+          )}
         </Badge>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md md:max-w-lg">
         <DialogHeader>
           <DialogTitle>Monitoramento em Tempo Real</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-lg border p-3">
               <div className="text-xs text-muted-foreground">Hoje</div>
               <div className="text-2xl font-bold">${stats.today.toFixed(2)}</div>

@@ -121,15 +121,15 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Administrativo</h1>
-        <p className="text-muted-foreground">Visão geral do sistema LUMI</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard Administrativo</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Visão geral do sistema LUMI</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {statCards.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-xl md:text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground">
                 {stat.description}
               </p>
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
           <Button
             onClick={() => navigate('/admin/revoke-access')}
             size="lg"
-            className="w-full"
+            className="w-full text-sm md:text-base"
             variant="destructive"
           >
             🔍 Analisar e Remover Acessos
