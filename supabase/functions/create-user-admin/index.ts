@@ -1,11 +1,23 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const CreateUserSchema = z.object({
+  email: z.string().email('Email inválido').max(255, 'Email muito longo'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(128, 'Senha muito longa'),
+  full_name: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome muito longo'),
+  role: z.enum(['user', 'admin'], { errorMap: () => ({ message: 'Role inválida' }) }),
+  access_granted: z.boolean(),
+  plan_type: z.enum(['free', 'basic', 'pro', 'premium']).optional().default('basic'),
+  duration_months: z.number().int().min(1).max(12).optional().default(3)
+});
 
 interface CreateUserRequest {
   email: string;
@@ -34,32 +46,33 @@ const handler = async (req: Request): Promise<Response> => {
     // Criar cliente com service role key para operações administrativas
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { 
-      email, 
-      password, 
-      full_name, 
-      role, 
+    // Validate input with zod
+    const rawInput = await req.json();
+    const validationResult = CreateUserSchema.safeParse(rawInput);
+    
+    if (!validationResult.success) {
+      console.error('❌ Validation error:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Dados inválidos',
+          details: validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const {
+      email,
+      password,
+      full_name,
+      role,
       access_granted,
-      plan_type = 'basic',
-      duration_months = 3
-    }: CreateUserRequest = await req.json();
+      plan_type,
+      duration_months
+    } = validationResult.data;
 
     console.log('🔧 Criando usuário:', { email, full_name, role, access_granted });
-
-    // Validações detalhadas
-    if (!email || !password || !full_name) {
-      throw new Error('Email, senha e nome completo são obrigatórios');
-    }
-
-    if (password.length < 6) {
-      throw new Error('Senha deve ter pelo menos 6 caracteres');
-    }
-
-    // Verificar se email é válido
-    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      throw new Error('Email inválido');
-    }
 
     // Verificar se o usuário já existe
     const { data: existingUser, error: checkError } = await supabase.auth.admin.listUsers();

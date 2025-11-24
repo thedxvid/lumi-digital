@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const FAL_KEY = Deno.env.get('FAL_KEY');
 
@@ -9,26 +10,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation schema
+const VideoGenerationSchema = z.object({
+  mode: z.enum(['text-to-video', 'image-to-video']).optional().default('text-to-video'),
+  prompt: z.string().max(2000, 'Prompt muito longo').optional(),
+  input_images: z.array(z.string().url('URL de imagem inválida')).optional(),
+  aspect_ratio: z.enum(['16:9', '9:16', '1:1']).optional().default('16:9'),
+  duration: z.string().regex(/^\d+s$/, 'Duração inválida').optional().default('8s'),
+  resolution: z.string().optional().default('720p'),
+  generate_audio: z.boolean().optional().default(true),
+  negative_prompt: z.string().max(1000).optional(),
+  enhance_prompt: z.boolean().optional().default(true),
+  seed: z.number().int().optional(),
+  auto_fix: z.boolean().optional().default(true),
+  api_provider: z.string().optional().default('fal_kling_v25_turbo')
+});
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate input with zod
+    const rawInput = await req.json();
+    const validationResult = VideoGenerationSchema.safeParse(rawInput);
+    
+    if (!validationResult.success) {
+      console.error('❌ Validation error:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Dados inválidos',
+          details: validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { 
-      mode = 'text-to-video',
+      mode,
       prompt, 
       input_images,
-      aspect_ratio = '16:9', 
-      duration = '8s', 
-      resolution = '720p',
-      generate_audio = true,
+      aspect_ratio, 
+      duration, 
+      resolution,
+      generate_audio,
       negative_prompt,
-      enhance_prompt = true,
+      enhance_prompt,
       seed,
-      auto_fix = true,
-      api_provider = 'fal_kling_v25_turbo'
-    } = await req.json();
+      auto_fix,
+      api_provider
+    } = validationResult.data;
 
     console.log('Generating video:', { mode, api_provider, has_images: !!input_images });
 
