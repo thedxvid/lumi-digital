@@ -1,6 +1,7 @@
 import { Home, MessageSquare, Mic, History, BookUser, Shield } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useEffect } from 'react';
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -14,7 +15,14 @@ export function DashboardSidebar({
   const location = useLocation();
   const { isAdmin, loading } = useAdminAuth();
   
-  console.log('🔧 [DashboardSidebar] Render:', { isAdmin, loading });
+  useEffect(() => {
+    console.log('🔧 [DashboardSidebar] Admin Status Changed:', { 
+      isAdmin, 
+      loading, 
+      shouldShowAdmin: !loading && isAdmin,
+      timestamp: new Date().toISOString()
+    });
+  }, [isAdmin, loading]);
   
   const mainNavigation = [{
     name: 'Visão Geral',
@@ -92,7 +100,7 @@ export function DashboardSidebar({
             </div>
 
             {/* Admin Section */}
-            {isAdmin && (
+            {!loading && isAdmin && (
               <div className="mb-6 mt-6 pt-6 border-t border-border">
                 <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Administração
