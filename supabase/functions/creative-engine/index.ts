@@ -214,6 +214,23 @@ OUTPUT SIZE: ${width}x${height} pixels`;
     // Return base image only + suggested copy (if generated)
     const description = data.choices?.[0]?.message?.content || 'Creative base generated successfully'
 
+    // Track API cost
+    const authHeader = req.headers.get('authorization')
+    if (authHeader) {
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2')
+      const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
+      const { data: { user } } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
+      if (user) {
+        await supabaseClient.from('api_cost_tracking').insert({
+          user_id: user.id,
+          feature_type: 'creative_image',
+          api_provider: 'lovable_ai',
+          cost_usd: 0.0015,
+          metadata: { format: config?.format, prompt: prompt.substring(0, 100) }
+        })
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         baseImage,

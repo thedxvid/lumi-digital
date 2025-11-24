@@ -12,7 +12,8 @@ import {
   Activity,
   Home,
   Bot,
-  Upload
+  Upload,
+  DollarSign
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -26,6 +27,7 @@ const AdminLayout = () => {
     { icon: ShoppingCart, label: 'Pedidos', path: '/admin/orders' },
     { icon: Bot, label: 'Agentes', path: '/admin/agents' },
     { icon: Activity, label: 'Atividades', path: '/admin/logs' },
+    { icon: DollarSign, label: 'Custos API', path: '/admin/api-costs' },
     { icon: Settings, label: 'Configurações', path: '/admin/settings' },
   ];
 

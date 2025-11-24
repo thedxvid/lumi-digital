@@ -95,6 +95,96 @@ export type Database = {
         }
         Relationships: []
       }
+      api_cost_settings: {
+        Row: {
+          alert_daily_danger: number
+          alert_daily_warning: number
+          alert_monthly_projected: number
+          alert_weekly_danger: number
+          alert_weekly_warning: number
+          cost_per_carousel: number
+          cost_per_chat_message: number
+          cost_per_creative_image: number
+          cost_per_fal_video: number
+          cost_per_kling_video: number
+          cost_per_profile_analysis: number
+          created_at: string
+          fal_ai_balance_usd: number | null
+          id: string
+          lovable_ai_balance_usd: number | null
+          tracking_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          alert_daily_danger?: number
+          alert_daily_warning?: number
+          alert_monthly_projected?: number
+          alert_weekly_danger?: number
+          alert_weekly_warning?: number
+          cost_per_carousel?: number
+          cost_per_chat_message?: number
+          cost_per_creative_image?: number
+          cost_per_fal_video?: number
+          cost_per_kling_video?: number
+          cost_per_profile_analysis?: number
+          created_at?: string
+          fal_ai_balance_usd?: number | null
+          id?: string
+          lovable_ai_balance_usd?: number | null
+          tracking_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          alert_daily_danger?: number
+          alert_daily_warning?: number
+          alert_monthly_projected?: number
+          alert_weekly_danger?: number
+          alert_weekly_warning?: number
+          cost_per_carousel?: number
+          cost_per_chat_message?: number
+          cost_per_creative_image?: number
+          cost_per_fal_video?: number
+          cost_per_kling_video?: number
+          cost_per_profile_analysis?: number
+          created_at?: string
+          fal_ai_balance_usd?: number | null
+          id?: string
+          lovable_ai_balance_usd?: number | null
+          tracking_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      api_cost_tracking: {
+        Row: {
+          api_provider: string
+          cost_usd: number
+          created_at: string
+          feature_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          api_provider: string
+          cost_usd: number
+          created_at?: string
+          feature_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          api_provider?: string
+          cost_usd?: number
+          created_at?: string
+          feature_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       carousel_history: {
         Row: {
           call_to_action: string | null
@@ -1287,6 +1377,16 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_cost_stats: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          api_provider: string
+          daily_avg: number
+          feature_type: string
+          operation_count: number
+          total_cost: number
+        }[]
+      }
       get_user_streak: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
@@ -1304,6 +1404,7 @@ export type Database = {
         Args: { _action: string; _details?: Json; _target_user_id: string }
         Returns: string
       }
+      refresh_daily_costs: { Args: never; Returns: undefined }
       reserve_video_credit: {
         Args: { p_api_provider: string; p_user_id: string }
         Returns: Json
