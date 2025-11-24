@@ -30,6 +30,8 @@ import AdminSettings from '@/pages/admin/AdminSettings';
 import CreateBatchUsers from '@/pages/admin/CreateBatchUsers';
 import BulkUserImport from '@/pages/admin/BulkUserImport';
 import RevokeAccessDryRun from '@/pages/admin/RevokeAccessDryRun';
+import ApiCostSettings from '@/pages/admin/ApiCostSettings';
+import ApiCosts from '@/pages/admin/ApiCosts';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProtectedAdminRoute } from '@/components/ProtectedAdminRoute';
 
@@ -75,6 +77,8 @@ function App() {
             <Route path="agents" element={<AdminAgents />} />
             <Route path="logs" element={<AdminLogs />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="api-costs" element={<ApiCosts />} />
+            <Route path="api-costs/settings" element={<ApiCostSettings />} />
           </Route>
 
           {/* Redirect to Home if no route matches */}

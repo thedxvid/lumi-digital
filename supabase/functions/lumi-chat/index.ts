@@ -502,6 +502,25 @@ Este é um sistema de agentes especializados em marketing digital e empreendedor
     const completion = await response.json();
     const assistantMessage = completion.choices[0]?.message?.content || '';
 
+    // Track API cost
+    try {
+      const authHeader = req.headers.get('authorization');
+      if (authHeader) {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (user) {
+          await supabase.from('api_cost_tracking').insert({
+            user_id: user.id,
+            feature_type: 'chat',
+            api_provider: 'lovable_ai',
+            cost_usd: 0.0001,
+            metadata: { agentId: agentId || 'default', messageLength: message.length }
+          });
+        }
+      }
+    } catch (costError) {
+      console.error('Failed to track cost (non-critical):', costError);
+    }
+
     // Retornar resposta completa como JSON
     return new Response(JSON.stringify({
       response: assistantMessage,
