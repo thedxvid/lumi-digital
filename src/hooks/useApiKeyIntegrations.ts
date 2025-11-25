@@ -18,6 +18,7 @@ export interface UserApiKey {
 export const useApiKeyIntegrations = () => {
   const [keys, setKeys] = useState<UserApiKey[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
 
   const loadKeys = async () => {
@@ -46,6 +47,7 @@ export const useApiKeyIntegrations = () => {
   }, []);
 
   const saveKey = async (provider: string, apiKey: string) => {
+    setSaving(true);
     try {
       console.log('🔐 [saveKey] Starting save process:', { provider, keyLength: apiKey.length });
       
@@ -130,6 +132,8 @@ export const useApiKeyIntegrations = () => {
       console.error('❌ [saveKey] Fatal error:', error);
       toast.error(error.message || 'Erro ao salvar API key');
       return false;
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -190,6 +194,7 @@ export const useApiKeyIntegrations = () => {
   return {
     keys,
     loading,
+    saving,
     validating,
     saveKey,
     validateKey,
