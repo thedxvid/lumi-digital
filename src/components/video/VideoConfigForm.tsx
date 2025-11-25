@@ -5,15 +5,19 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, Wand2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Sparkles, Wand2, Lock } from 'lucide-react';
 import type { VideoConfig, VideoAPIConfig, VideoMode } from '@/types/video';
 import { VideoModeSelector } from './VideoModeSelector';
 import { VideoImageUploader } from './VideoImageUploader';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApiKeyIntegrations } from '@/hooks/useApiKeyIntegrations';
+import { useNavigate } from 'react-router-dom';
 
 const VIDEO_APIS: VideoAPIConfig[] = [
-  // Text-to-Video APIs
+  // ===== KLING (Disponível para todos) =====
   {
     id: 'fal_kling_v25_turbo',
     name: 'fal_kling_v25_turbo',
@@ -21,9 +25,9 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     cost_per_8s: 0.60,
     description: 'Movimento fluido e visual cinematográfico (sem áudio)',
     provider: 'Kling AI',
-    mode: 'text-to-video'
+    mode: 'text-to-video',
+    requires_user_key: false
   },
-  // Image-to-Video APIs
   {
     id: 'fal_kling_v25_image_to_video',
     name: 'fal_kling_v25_image_to_video',
@@ -33,7 +37,32 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     provider: 'Kling AI',
     mode: 'image-to-video',
     requires_images: 1,
-    endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video'
+    endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
+    requires_user_key: false
+  },
+  
+  // ===== VEO 3 (Apenas BYOK) =====
+  {
+    id: 'fal_veo3_fast',
+    name: 'fal_veo3_fast',
+    display_name: 'Veo 3 Fast (Text-to-Video)',
+    cost_per_8s: 0.50,
+    description: 'Google Veo 3: ultra-rápido e realista',
+    provider: 'Google Veo',
+    mode: 'text-to-video',
+    requires_user_key: true
+  },
+  {
+    id: 'fal_veo3_image_to_video',
+    name: 'fal_veo3_image_to_video',
+    display_name: 'Veo 3 Fast (Image-to-Video)',
+    cost_per_8s: 0.50,
+    description: 'Transforma imagens em vídeo com Veo 3',
+    provider: 'Google Veo',
+    mode: 'image-to-video',
+    requires_images: 1,
+    endpoint: 'https://fal.run/fal-ai/veo3/fast/image-to-video',
+    requires_user_key: true
   }
 ];
 
@@ -50,6 +79,8 @@ export const VideoConfigForm = ({
   preloadedImage = null,
   initialMode = 'text-to-video'
 }: VideoConfigFormProps) => {
+  const navigate = useNavigate();
+  const { keys, loading: loadingKeys } = useApiKeyIntegrations();
   const [mode, setMode] = useState<VideoMode>(initialMode);
   const [prompt, setPrompt] = useState('');
   const [inputImages, setInputImages] = useState<string[]>(preloadedImage ? [preloadedImage] : []);
@@ -64,6 +95,13 @@ export const VideoConfigForm = ({
     initialMode === 'image-to-video' ? 'fal_kling_v25_image_to_video' : 'fal_kling_v25_turbo'
   );
 
+  // Verificar se usuário tem API key válida do fal.ai
+  const hasFalApiKey = keys.some(k => 
+    k.provider === 'fal_ai' && 
+    k.is_active && 
+    k.is_valid
+  );
+
   // Update state when preloadedImage changes
   useEffect(() => {
     console.log('📸 VideoConfigForm - Preloaded image:', preloadedImage?.substring(0, 50));
@@ -75,8 +113,29 @@ export const VideoConfigForm = ({
     }
   }, [preloadedImage]);
 
-  // Filter APIs based on mode
-  const availableAPIs = VIDEO_APIS.filter(api => api.mode === mode);
+  // Reset para modelo padrão se tentar usar Veo 3 sem BYOK
+  useEffect(() => {
+    const selectedAPI = VIDEO_APIS.find(api => api.id === apiProvider);
+    if (selectedAPI?.requires_user_key && !hasFalApiKey) {
+      console.log('🚫 Resetando para modelo padrão - Veo 3 requer BYOK');
+      if (mode === 'image-to-video') {
+        setApiProvider('fal_kling_v25_image_to_video');
+      } else {
+        setApiProvider('fal_kling_v25_turbo');
+      }
+      toast.info('Veo 3 requer conexão com sua API Fal.ai', {
+        description: 'Conecte sua API nas Configurações para usar este modelo'
+      });
+    }
+  }, [hasFalApiKey, apiProvider, mode]);
+
+  // Filter APIs based on mode and BYOK availability
+  const availableAPIs = VIDEO_APIS.filter(api => {
+    if (api.mode !== mode) return false;
+    // Veo 3 só aparece se tiver BYOK
+    if (api.requires_user_key && !hasFalApiKey) return false;
+    return true;
+  });
 
   // Update API provider when mode changes
   const handleModeChange = (newMode: VideoMode) => {
@@ -323,6 +382,27 @@ export const VideoConfigForm = ({
             </div>
           </div>
 
+          {/* Alerta BYOK para Veo 3 */}
+          {!hasFalApiKey && !loadingKeys && (
+            <Alert className="border-primary/30 bg-primary/5">
+              <Lock className="h-4 w-4 text-primary" />
+              <AlertTitle className="text-primary font-semibold">
+                🔓 Desbloqueie o Veo 3 Fast
+              </AlertTitle>
+              <AlertDescription className="text-foreground/80">
+                Conecte sua API key do Fal.ai para usar os modelos Google Veo 3 (text-to-video e image-to-video) sem limites!
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-primary underline ml-1"
+                  onClick={() => navigate('/app/settings')}
+                  type="button"
+                >
+                  Conectar agora
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* API Provider */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Modelo de IA</Label>
@@ -333,9 +413,18 @@ export const VideoConfigForm = ({
               <SelectContent>
                 {availableAPIs.map((api) => (
                   <SelectItem key={api.id} value={api.id}>
-                    <div>
-                      <div className="font-medium">{api.display_name}</div>
-                      <div className="text-xs text-muted-foreground">{api.description}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <div className="font-medium flex items-center gap-2">
+                          {api.display_name}
+                          {api.requires_user_key && (
+                            <Badge variant="secondary" className="text-xs">
+                              Requer BYOK
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{api.description}</div>
+                      </div>
                     </div>
                   </SelectItem>
                 ))}

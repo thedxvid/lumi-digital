@@ -61,4 +61,5 @@ export interface VideoAPIConfig {
   mode: VideoMode;
   requires_images?: 1 | 2;
   endpoint?: string;
+  requires_user_key?: boolean;
 }
