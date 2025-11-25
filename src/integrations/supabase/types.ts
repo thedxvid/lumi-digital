@@ -1001,6 +1001,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_api_keys: {
+        Row: {
+          api_key_encrypted: string
+          created_at: string | null
+          credits_used_count: number | null
+          id: string
+          is_active: boolean | null
+          is_valid: boolean | null
+          last_validated_at: string | null
+          provider: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          created_at?: string | null
+          credits_used_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_valid?: boolean | null
+          last_validated_at?: string | null
+          provider: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          created_at?: string | null
+          credits_used_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_valid?: boolean | null
+          last_validated_at?: string | null
+          provider?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_goals: {
         Row: {
           created_at: string | null
@@ -1359,6 +1398,14 @@ export type Database = {
     Functions: {
       calculate_subscription_end_date: {
         Args: { duration_months: number; start_date: string }
+        Returns: string
+      }
+      decrypt_api_key: {
+        Args: { encrypted_text: string; encryption_key: string }
+        Returns: string
+      }
+      encrypt_api_key: {
+        Args: { encryption_key: string; key_text: string }
         Returns: string
       }
       get_admin_user_details: {

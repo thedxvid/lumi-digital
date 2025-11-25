@@ -88,6 +88,44 @@ serve(async (req) => {
       );
     }
 
+    // ============ BYOK: CHECK IF USER HAS OWN API KEY ============
+    const encryptionKey = 'lumi-api-key-secret-2024';
+    
+    const { data: userKeyData } = await supabaseClient
+      .from('user_api_keys')
+      .select('api_key_encrypted, is_active, is_valid')
+      .eq('user_id', user.id)
+      .eq('provider', 'fal_ai')
+      .eq('is_active', true)
+      .single();
+
+    let userApiKey: string | null = null;
+    let isUsingUserKey = false;
+
+    if (userKeyData && userKeyData.is_valid) {
+      // Decrypt user's key
+      const { data: decryptedKey, error: decryptError } = await supabaseClient.rpc('decrypt_api_key', {
+        encrypted_text: userKeyData.api_key_encrypted,
+        encryption_key: encryptionKey
+      });
+
+      if (!decryptError && decryptedKey) {
+        userApiKey = decryptedKey;
+        isUsingUserKey = true;
+        console.log('✅ Using user\'s own Fal.ai API key');
+      }
+    }
+
+    // Select API key: user's key or platform's key
+    const FAL_API_KEY = userApiKey || FAL_KEY;
+    
+    if (!FAL_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'API key não configurada' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Buscar limites atuais para logging
     const { data: currentLimits } = await supabaseClient
       .from('usage_limits')
@@ -99,45 +137,52 @@ serve(async (req) => {
     const creditsUsedBefore = currentLimits?.video_credits_used || 0;
     const klingLifetimeBefore = currentLimits?.kling_image_videos_lifetime_used || 0;
 
-    // Reservar crédito ANTES de gerar o vídeo
-    const { data: reserveResult, error: reserveError } = await supabaseClient.rpc('reserve_video_credit', {
-      p_user_id: user.id,
-      p_api_provider: api_provider
-    });
-
-    console.log('Reserve credit result:', reserveResult);
-
-    if (reserveError || !reserveResult?.success) {
-      const errorMsg = reserveResult?.error || 'Erro ao reservar crédito';
-      
-      // Log da tentativa falha
-      await supabaseClient.from('video_generation_log').insert({
-        user_id: user.id,
-        api_provider,
-        mode,
-        prompt: prompt || null,
-        credits_before: creditsBeforeAttempt - creditsUsedBefore,
-        credits_after: creditsBeforeAttempt - creditsUsedBefore,
-        kling_lifetime_before: klingLifetimeBefore,
-        kling_lifetime_after: klingLifetimeBefore,
-        success: false,
-        error_message: errorMsg,
-        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
-        user_agent: req.headers.get('user-agent')
+    // ONLY reserve credits if NOT using user's own key
+    let creditType: string | null = null;
+    
+    if (!isUsingUserKey) {
+      // Reservar crédito ANTES de gerar o vídeo (somente se usando key da plataforma)
+      const { data: reserveResult, error: reserveError } = await supabaseClient.rpc('reserve_video_credit', {
+        p_user_id: user.id,
+        p_api_provider: api_provider
       });
 
-      return new Response(
-        JSON.stringify({ 
-          error: errorMsg === 'Créditos insuficientes' 
-            ? 'Você não tem créditos suficientes para gerar vídeos. Compre mais créditos ou aguarde a renovação do seu plano.'
-            : errorMsg
-        }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      console.log('Reserve credit result:', reserveResult);
 
-    const creditType = reserveResult.credit_type;
-    console.log('Credit reserved successfully:', creditType);
+      if (reserveError || !reserveResult?.success) {
+        const errorMsg = reserveResult?.error || 'Erro ao reservar crédito';
+        
+        // Log da tentativa falha
+        await supabaseClient.from('video_generation_log').insert({
+          user_id: user.id,
+          api_provider,
+          mode,
+          prompt: prompt || null,
+          credits_before: creditsBeforeAttempt - creditsUsedBefore,
+          credits_after: creditsBeforeAttempt - creditsUsedBefore,
+          kling_lifetime_before: klingLifetimeBefore,
+          kling_lifetime_after: klingLifetimeBefore,
+          success: false,
+          error_message: errorMsg,
+          ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          user_agent: req.headers.get('user-agent')
+        });
+
+        return new Response(
+          JSON.stringify({ 
+            error: errorMsg === 'Créditos insuficientes' 
+              ? 'Você não tem créditos suficientes para gerar vídeos. Compre mais créditos ou aguarde a renovação do seu plano.'
+              : errorMsg
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      creditType = reserveResult.credit_type;
+      console.log('Credit reserved successfully:', creditType);
+    } else {
+      console.log('Skipping credit reservation - using user\'s own API key');
+    }
 
     // Validations
     if (mode === 'text-to-video' && (!prompt || prompt.trim().length < 10)) {
@@ -184,6 +229,9 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Use user's key or platform key
+    const apiKeyToUse = FAL_API_KEY;
 
     // Preparar body específico para cada API e modo
     let requestBody: any;
@@ -246,7 +294,7 @@ serve(async (req) => {
     const response = await fetch(selectedAPI.endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `${selectedAPI.authPrefix} ${selectedAPI.key}`,
+        'Authorization': `${selectedAPI.authPrefix} ${apiKeyToUse}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
@@ -256,12 +304,14 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error('Fal.ai API error:', response.status, errorText);
       
-      // Devolver crédito em caso de falha
-      console.log('Rolling back credit due to API error');
-      await supabaseClient.rpc('rollback_video_credit', {
-        p_user_id: user.id,
-        p_credit_type: creditType
-      });
+      // Devolver crédito em caso de falha (SOMENTE se usou créditos da plataforma)
+      if (!isUsingUserKey && creditType) {
+        console.log('Rolling back credit due to API error');
+        await supabaseClient.rpc('rollback_video_credit', {
+          p_user_id: user.id,
+          p_credit_type: creditType
+        });
+      }
 
       // Log da falha
       await supabaseClient.from('video_generation_log').insert({
@@ -344,15 +394,28 @@ serve(async (req) => {
     const creditsAfter = (updatedLimits?.video_credits || 0) - (updatedLimits?.video_credits_used || 0);
     const klingLifetimeAfter = updatedLimits?.kling_image_videos_lifetime_used || 0;
 
-    // Track API cost
-    const costUsd = api_provider.includes('kling') ? 0.60 : 0.02;
-    await supabaseClient.from('api_cost_tracking').insert({
-      user_id: user.id,
-      feature_type: 'video',
-      api_provider: api_provider,
-      cost_usd: costUsd,
-      metadata: { mode, prompt: prompt?.substring(0, 100), duration, resolution }
-    });
+    // Track API cost (only if using platform key)
+    if (!isUsingUserKey) {
+      const costUsd = api_provider.includes('kling') ? 0.60 : 0.02;
+      await supabaseClient.from('api_cost_tracking').insert({
+        user_id: user.id,
+        feature_type: 'video',
+        api_provider: api_provider,
+        cost_usd: costUsd,
+        metadata: { mode, prompt: prompt?.substring(0, 100), duration, resolution }
+      });
+    }
+
+    // Update usage count for user's own key
+    if (isUsingUserKey) {
+      await supabaseClient
+        .from('user_api_keys')
+        .update({
+          credits_used_count: supabaseClient.rpc('increment', { x: 1 })
+        })
+        .eq('user_id', user.id)
+        .eq('provider', 'fal_ai');
+    }
 
     // Log de sucesso
     await supabaseClient.from('video_generation_log').insert({
@@ -380,7 +443,8 @@ serve(async (req) => {
           ...data.video,
           thumbnail_url: thumbnailUrl
         },
-        message: 'Vídeo gerado com sucesso!' 
+        message: 'Vídeo gerado com sucesso!',
+        using_user_key: isUsingUserKey
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

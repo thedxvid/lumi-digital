@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuthErrors } from '@/hooks/useAuthErrors';
+import { ApiKeyIntegrations } from '../settings/ApiKeyIntegrations';
 
 export function SettingsContent() {
   const { user } = useAuth();
@@ -271,6 +272,9 @@ export function SettingsContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Minhas Integrações */}
+      <ApiKeyIntegrations />
 
       {/* Notificações - Componente completo */}
       <NotificationSettings />
