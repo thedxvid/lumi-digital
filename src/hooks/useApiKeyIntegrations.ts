@@ -47,43 +47,87 @@ export const useApiKeyIntegrations = () => {
 
   const saveKey = async (provider: string, apiKey: string) => {
     try {
+      console.log('🔐 [saveKey] Starting save process:', { provider, keyLength: apiKey.length });
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('❌ [saveKey] No user found');
         toast.error('Você precisa estar autenticado');
         return false;
       }
+
+      console.log('✅ [saveKey] User authenticated:', user.id);
 
       // Use a simple encryption key (in production, this should be from env)
       const encryptionKey = 'lumi-api-key-secret-2024';
 
       // Call encryption function
+      console.log('🔒 [saveKey] Calling encrypt_api_key RPC...');
       const { data: encryptedKey, error: encryptError } = await supabase.rpc('encrypt_api_key', {
         key_text: apiKey,
         encryption_key: encryptionKey
       });
 
-      if (encryptError) throw encryptError;
+      if (encryptError) {
+        console.error('❌ [saveKey] Encryption error:', encryptError);
+        throw encryptError;
+      }
+
+      console.log('✅ [saveKey] Key encrypted successfully');
+
+      // Check if key already exists
+      const { data: existingKey } = await supabase
+        .from('user_api_keys')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('provider', provider)
+        .single();
+
+      console.log('🔍 [saveKey] Existing key check:', existingKey ? 'Found' : 'Not found');
 
       // Save to database
-      const { error } = await supabase
-        .from('user_api_keys')
-        .upsert({
-          user_id: user.id,
-          provider,
-          api_key_encrypted: encryptedKey,
-          is_active: true,
-          is_valid: null, // Will be validated next
-        }, {
-          onConflict: 'user_id,provider'
-        });
+      if (existingKey) {
+        console.log('📝 [saveKey] Updating existing key...');
+        const { error } = await supabase
+          .from('user_api_keys')
+          .update({
+            api_key_encrypted: encryptedKey,
+            is_active: true,
+            is_valid: null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('provider', provider);
 
-      if (error) throw error;
+        if (error) {
+          console.error('❌ [saveKey] Update error:', error);
+          throw error;
+        }
+      } else {
+        console.log('➕ [saveKey] Inserting new key...');
+        const { error } = await supabase
+          .from('user_api_keys')
+          .insert({
+            user_id: user.id,
+            provider,
+            api_key_encrypted: encryptedKey,
+            is_active: true,
+            is_valid: null,
+            credits_used_count: 0
+          });
 
+        if (error) {
+          console.error('❌ [saveKey] Insert error:', error);
+          throw error;
+        }
+      }
+
+      console.log('✅ [saveKey] Key saved successfully');
       await loadKeys();
       toast.success('API Key salva com sucesso!');
       return true;
     } catch (error: any) {
-      console.error('Error saving API key:', error);
+      console.error('❌ [saveKey] Fatal error:', error);
       toast.error(error.message || 'Erro ao salvar API key');
       return false;
     }
