@@ -200,17 +200,37 @@ serve(async (req) => {
     }
 
     // Configuração das APIs disponíveis
-    const apiConfigs: Record<string, { endpoint: string, key: string | undefined, authPrefix: string }> = {
+    const apiConfigs: Record<string, { 
+      endpoint: string, 
+      key: string | undefined, 
+      authPrefix: string,
+      requiresUserKey?: boolean
+    }> = {
       fal_kling_v25_turbo: {
         endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/text-to-video',
         key: FAL_KEY,
-        authPrefix: 'Key'
+        authPrefix: 'Key',
+        requiresUserKey: false
       },
-      // Image-to-Video APIs
       fal_kling_v25_image_to_video: {
         endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
         key: FAL_KEY,
-        authPrefix: 'Key'
+        authPrefix: 'Key',
+        requiresUserKey: false
+      },
+      
+      // ===== VEO 3 - APENAS BYOK =====
+      fal_veo3_fast: {
+        endpoint: 'https://fal.run/fal-ai/veo3/fast',
+        key: FAL_KEY, // Nunca será usado
+        authPrefix: 'Key',
+        requiresUserKey: true
+      },
+      fal_veo3_image_to_video: {
+        endpoint: 'https://fal.run/fal-ai/veo3/fast/image-to-video',
+        key: FAL_KEY, // Nunca será usado
+        authPrefix: 'Key',
+        requiresUserKey: true
       }
     };
 
@@ -223,7 +243,19 @@ serve(async (req) => {
       );
     }
 
-    if (!selectedAPI.key) {
+    // 🚨 PROTEÇÃO CRÍTICA: Veo 3 só pode ser usado com API key do usuário
+    if (selectedAPI.requiresUserKey && !isUsingUserKey) {
+      console.error('❌ BLOCKED: Attempt to use Veo 3 without user API key');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Este modelo requer que você conecte sua própria API key do Fal.ai nas Configurações → Integrações. Isso garante uso ilimitado sem consumir créditos da plataforma.',
+          requires_byok: true
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!selectedAPI.key && !isUsingUserKey) {
       return new Response(
         JSON.stringify({ error: `Chave da API ${api_provider} não está configurada` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -236,8 +268,35 @@ serve(async (req) => {
     // Preparar body específico para cada API e modo
     let requestBody: any;
     
+    // === VEO 3 TEXT-TO-VIDEO ===
+    if (api_provider === 'fal_veo3_fast') {
+      requestBody = {
+        prompt,
+        aspect_ratio,
+        duration: parseInt(duration.replace('s', '')), // Veo espera número
+        negative_prompt: negative_prompt || 'blur, distortion, low quality'
+      };
+    }
+    
+    // === VEO 3 IMAGE-TO-VIDEO ===
+    else if (api_provider === 'fal_veo3_image_to_video') {
+      if (!input_images || input_images.length < 1) {
+        return new Response(
+          JSON.stringify({ error: 'Veo 3 Image-to-Video requer 1 imagem' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      requestBody = {
+        prompt: prompt || 'Animate this image',
+        image_url: input_images[0],
+        duration: parseInt(duration.replace('s', '')),
+        negative_prompt: negative_prompt || 'blur, distortion, low quality'
+      };
+    }
+    
     // Handle image-to-video mode
-    if (mode === 'image-to-video') {
+    else if (mode === 'image-to-video') {
       if (api_provider === 'fal_kling_v25_image_to_video') {
         // Kling Image-to-Video requires 1 image
         if (!input_images || input_images.length < 1) {

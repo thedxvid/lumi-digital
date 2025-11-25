@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { useApiKeyIntegrations } from '@/hooks/useApiKeyIntegrations';
-import { ExternalLink, Settings, CheckCircle2, XCircle, Video, Zap, Shield, DollarSign } from 'lucide-react';
+import { ExternalLink, Settings, CheckCircle2, XCircle, Video, Zap, Shield, DollarSign, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   Accordion,
@@ -168,6 +168,13 @@ export default function VideoAddons() {
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-lg">
+              <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+              <div>
+                <p className="font-semibold text-foreground">Acesso Exclusivo ao Veo 3</p>
+                <p className="text-sm text-muted-foreground">Google Veo 3 Fast (text + image-to-video)</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-lg">
               <DollarSign className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-semibold text-foreground">Você Controla seus Gastos</p>
@@ -185,7 +192,7 @@ export default function VideoAddons() {
               <Shield className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-semibold text-foreground">Mesma Qualidade</p>
-                <p className="text-sm text-muted-foreground">Kling v2.5 Pro (mesmo da plataforma)</p>
+                <p className="text-sm text-muted-foreground">Kling v2.5 Pro + Veo 3</p>
               </div>
             </div>
           </div>
@@ -209,9 +216,9 @@ export default function VideoAddons() {
             <AccordionItem value="item-2">
               <AccordionTrigger>Qual modelo de IA será utilizado?</AccordionTrigger>
               <AccordionContent>
-                O sistema usa automaticamente o modelo Kling v2.5 da Fal.ai, o mesmo que a plataforma 
-                utiliza. O modelo é selecionado com base no tipo de geração (text-to-video ou image-to-video) 
-                que você escolher no formulário.
+                Com sua API conectada, você terá acesso a: <strong>Kling v2.5 Pro</strong> (mesmo da plataforma) 
+                e <strong>Google Veo 3 Fast</strong> (exclusivo para BYOK). O modelo é selecionado por você 
+                no formulário de geração, com base no tipo de geração (text-to-video ou image-to-video).
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3">
