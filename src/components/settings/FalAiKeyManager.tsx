@@ -8,7 +8,7 @@ import { useApiKeyIntegrations } from '@/hooks/useApiKeyIntegrations';
 import { Video, Check, X, Loader2, ExternalLink, AlertCircle } from 'lucide-react';
 
 export function FalAiKeyManager() {
-  const { keys, loading, validating, saveKey, validateKey, deleteKey, maskApiKey } = useApiKeyIntegrations();
+  const { keys, loading, saving, validating, saveKey, validateKey, deleteKey, maskApiKey } = useApiKeyIntegrations();
   const [apiKey, setApiKey] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
@@ -118,10 +118,15 @@ export function FalAiKeyManager() {
                 />
                 <Button 
                   onClick={handleSave}
-                  disabled={!apiKey.trim() || validating}
+                  disabled={!apiKey.trim() || saving || validating}
                   className="bg-lumi-purple hover:bg-lumi-purple/90"
                 >
-                  {validating ? (
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : validating ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     'Conectar'
