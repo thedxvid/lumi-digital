@@ -104,7 +104,7 @@ export default function VideoAddons() {
             </div>
             <ul className="ml-11 space-y-1 text-muted-foreground">
               <li>• Acesse <a href="https://fal.ai" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">fal.ai</a> e crie uma conta gratuita</li>
-              <li>• Adicione créditos à sua conta (sugestão: $5 ≈ 8 vídeos)</li>
+              <li>• Adicione créditos à sua conta (mínimo: $10)</li>
               <li>• Os preços são diretos da Fal.ai (~$0.60 por vídeo de 8s)</li>
             </ul>
           </div>
