@@ -113,6 +113,7 @@ export const useSubscription = () => {
           profile_analysis_daily_limit: 5,
           carousels_monthly_limit: 3,
           videos_monthly_limit: 0,
+          kling_image_videos_lifetime_limit: 2,
         };
       default:
         return {
@@ -121,6 +122,7 @@ export const useSubscription = () => {
           profile_analysis_daily_limit: 0,
           carousels_monthly_limit: 0,
           videos_monthly_limit: 0,
+          kling_image_videos_lifetime_limit: 0,
         };
     }
   };

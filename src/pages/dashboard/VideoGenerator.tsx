@@ -114,7 +114,7 @@ const VideoGenerator = () => {
       <div className="min-w-0 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words overflow-wrap-anywhere">Gerador de Vídeos</h1>
-          <p className="text-muted-foreground">Crie vídeos profissionais com IA </p>
+          <p className="text-muted-foreground">Crie vídeos profissionais com IA</p>
         </div>
         <Button 
           onClick={() => navigate('/app/video-addons')}
@@ -124,6 +124,37 @@ const VideoGenerator = () => {
           Comprar Créditos
         </Button>
       </div>
+
+      {/* BYOK Status Indicator */}
+      {limits && (
+        <Alert className="bg-primary/5 border-primary/20">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              {limits.kling_image_videos_lifetime_limit > 0 && (
+                <p className="text-sm">
+                  <span className="font-semibold">Créditos Kling:</span>{' '}
+                  {(limits.kling_image_videos_lifetime_limit || 0) - (limits.kling_image_videos_lifetime_used || 0)}/{limits.kling_image_videos_lifetime_limit} restantes
+                </p>
+              )}
+              {limits.video_credits > 0 && (
+                <p className="text-sm">
+                  <span className="font-semibold">Créditos Extras:</span>{' '}
+                  {limits.video_credits - limits.video_credits_used}/{limits.video_credits} restantes
+                </p>
+              )}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate('/app/settings')}
+              className="ml-4 flex-shrink-0"
+            >
+              🔑 Conectar Fal.ai
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Policy Violation Alert */}
       {policyViolation && (
