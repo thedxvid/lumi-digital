@@ -7,32 +7,42 @@ const corsHeaders = {
 };
 
 interface KiwifyWebhookPayload {
-  order_id: string;
-  order_ref: string;
-  product_id: string;
-  product_name: string;
-  product_type: string;
+  // Campos do formato flat (abandoned, etc.)
+  id?: string;
+  email?: string;
+  name?: string;
+  first_name?: string;
+  phone?: string;
+  status?: string; // "abandoned", "paid", etc.
+  offer_name?: string;
+  
+  // Campos do formato aninhado (paid)
+  order_id?: string;
+  order_ref?: string;
+  product_id?: string;
+  product_name?: string;
+  product_type?: string;
   checkout_link?: string;
-  webhook_event_type?: string; // Tipo específico do evento (order_approved, order_rejected, etc.)
-  approved_date?: string; // Data de aprovação
-  access_url?: string; // URL de acesso à área de membros
+  webhook_event_type?: string;
+  approved_date?: string;
+  access_url?: string;
   Product?: {
     product_id: string;
     product_name: string;
     product_offer_id?: string;
     product_offer_name?: string;
   };
-  Customer: {
+  Customer?: {
     email: string;
     first_name: string;
     last_name: string;
     mobile: string;
   };
-  Producer: {
+  Producer?: {
     email: string;
     name: string;
   };
-  Commissions: {
+  Commissions?: {
     charge_amount?: number;
     currency?: string;
     product_base_price?: number;
@@ -71,15 +81,77 @@ interface KiwifyWebhookPayload {
     };
   };
   subscription_id?: string;
-  order_status: 'paid' | 'waiting_payment' | 'refused' | 'refunded' | 'chargeback' | 'cancelled';
-  payment_method: string;
-  installments_number: number;
-  installment_value: number;
-  order_value: number;
-  order_value_formatted: string;
+  order_status?: 'paid' | 'waiting_payment' | 'refused' | 'refunded' | 'chargeback' | 'cancelled' | 'abandoned';
+  payment_method?: string;
+  installments_number?: number;
+  installment_value?: number;
+  order_value?: number;
+  order_value_formatted?: string;
   subscription_status?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Função para mapear status do formato flat para padrão
+function mapStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    'abandoned': 'abandoned',
+    'paid': 'paid',
+    'approved': 'paid',
+    'waiting_payment': 'waiting_payment',
+    'refused': 'refused',
+    'refunded': 'refunded',
+    'chargeback': 'chargeback',
+    'cancelled': 'cancelled'
+  };
+  return statusMap[status] || status;
+}
+
+// Função para normalizar payload independente do formato
+function normalizePayload(rawPayload: any): KiwifyWebhookPayload {
+  // Detectar formato flat (abandoned, etc.)
+  if (rawPayload.status && !rawPayload.order_status) {
+    console.log('🔄 Detectado formato flat - normalizando...');
+    
+    // Converter formato flat para estrutura padrão
+    return {
+      order_id: rawPayload.id || '',
+      order_ref: rawPayload.id || '',
+      order_status: mapStatus(rawPayload.status) as any,
+      product_id: rawPayload.product_id || '',
+      product_name: rawPayload.product_name || '',
+      product_type: '',
+      checkout_link: rawPayload.checkout_link,
+      Customer: {
+        email: rawPayload.email || '',
+        first_name: rawPayload.first_name || rawPayload.name?.split(' ')[0] || '',
+        last_name: rawPayload.name?.split(' ').slice(1).join(' ') || '',
+        mobile: rawPayload.phone || ''
+      },
+      Product: {
+        product_id: rawPayload.product_id || '',
+        product_name: rawPayload.product_name || '',
+        product_offer_id: '',
+        product_offer_name: rawPayload.offer_name || ''
+      },
+      Producer: {
+        email: '',
+        name: ''
+      },
+      Commissions: {},
+      payment_method: '',
+      installments_number: 0,
+      installment_value: 0,
+      order_value: 0,
+      order_value_formatted: 'R$ 0,00',
+      created_at: rawPayload.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  }
+  
+  // Formato aninhado - usar como está
+  console.log('✅ Formato aninhado detectado');
+  return rawPayload as KiwifyWebhookPayload;
 }
 
 serve(async (req) => {
@@ -107,11 +179,24 @@ serve(async (req) => {
       is_local: true
     });
 
-    const payload: KiwifyWebhookPayload = await req.json();
+    const rawPayload = await req.json();
+    console.log('📦 Payload RAW recebido:', JSON.stringify(rawPayload, null, 2));
     
-    console.log('📦 Payload completo recebido:', JSON.stringify(payload, null, 2));
+    // Normalizar payload para formato padrão
+    const payload = normalizePayload(rawPayload);
+    
     console.log('📦 Tipo de evento:', payload.webhook_event_type || 'não especificado');
     console.log('📦 Status do pedido:', payload.order_status);
+    
+    // Validação defensiva - verificar se tem email
+    if (!payload.Customer?.email) {
+      console.log('⚠️ Payload sem email de cliente - ignorando');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Payload sem email - ignorado' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+    
     console.log('Kiwify webhook received:', {
       order_id: payload.order_id,
       webhook_event_type: payload.webhook_event_type,
@@ -137,8 +222,14 @@ serve(async (req) => {
       case 'chargeback':
         await handleRefundedOrder(payload, supabaseClient);
         break;
+      case 'abandoned':
+        console.log('🛒 Carrinho abandonado - registrando para remarketing');
+        console.log('📧 Email:', payload.Customer.email);
+        console.log('📦 Oferta:', payload.Product?.product_offer_name);
+        // Apenas logar - não processar nada
+        break;
       default:
-        console.log('Unhandled order status:', payload.order_status);
+        console.log('⚠️ Status não tratado:', payload.order_status);
     }
 
     return new Response(
@@ -207,12 +298,12 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       offerName: eligibility.offerInfo.offerName,
       offerId: eligibility.offerInfo.offerId,
       checkoutLink: eligibility.offerInfo.checkoutLink,
-      email: payload.Customer.email
+      email: payload.Customer!.email
     });
     
     if (!eligibility.isEligible) {
       console.log('❌ Oferta não elegível - compra será IGNORADA:', eligibility.reason);
-      console.log('❌ Email do cliente:', payload.Customer.email);
+      console.log('❌ Email do cliente:', payload.Customer!.email);
       console.log('❌ Nome da oferta:', eligibility.offerInfo.offerName);
       
       // NÃO salvar nada no banco, apenas retornar
@@ -230,10 +321,10 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       is_local: true
     });
 
-    console.log(`Verificando usuário: ${payload.Customer.email}`);
+    console.log(`Verificando usuário: ${payload.Customer!.email}`);
     
     const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
-    const existingUser = users?.find((u: any) => u.email === payload.Customer.email);
+    const existingUser = users?.find((u: any) => u.email === payload.Customer!.email);
     
     console.log(`Usuário existente: ${existingUser ? 'Sim (ID: ' + existingUser.id + ')' : 'Não'}`);
     
@@ -247,14 +338,14 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         isNewUser = true;
         
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-          email: payload.Customer.email,
+          email: payload.Customer!.email,
           password: password,
           email_confirm: true,
           user_metadata: {
-            full_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
-            first_name: payload.Customer.first_name || '',
-            last_name: payload.Customer.last_name || '',
-            mobile: payload.Customer.mobile || '',
+            full_name: `${payload.Customer!.first_name || ''} ${payload.Customer!.last_name || ''}`.trim() || 'Nome não informado',
+            first_name: payload.Customer!.first_name || '',
+            last_name: payload.Customer!.last_name || '',
+            mobile: payload.Customer!.mobile || '',
             source: 'kiwify_purchase'
           }
         });
@@ -265,9 +356,9 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         }
         
         userId = newUser.user.id;
-        console.log(`New user created: ${userId} for email: ${payload.Customer.email}`);
+        console.log(`New user created: ${userId} for email: ${payload.Customer!.email}`);
       } else {
-        console.log(`Existing user found: ${userId} for email: ${payload.Customer.email}`);
+        console.log(`Existing user found: ${userId} for email: ${payload.Customer!.email}`);
       }
       
       console.log('✅ Usuário processado com sucesso');
@@ -302,7 +393,7 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         .from('profiles')
         .upsert({
           id: userId,
-          full_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
+          full_name: `${payload.Customer!.first_name || ''} ${payload.Customer!.last_name || ''}`.trim() || 'Nome não informado',
           access_granted: true,
           subscription_status: 'active'
         });
@@ -405,9 +496,9 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
           installment_value: payload.installment_value || 0,
           order_value: payload.order_value || 0,
           order_value_formatted: payload.order_value_formatted || 'R$ 0,00',
-          customer_email: payload.Customer.email,
-          customer_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
-          customer_mobile: payload.Customer.mobile || null,
+          customer_email: payload.Customer!.email,
+          customer_name: `${payload.Customer!.first_name || ''} ${payload.Customer!.last_name || ''}`.trim() || 'Nome não informado',
+          customer_mobile: payload.Customer!.mobile || null,
           created_at: payload.created_at,
           updated_at: payload.updated_at,
           webhook_data: payload,
@@ -433,8 +524,8 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       if (isNewUser && password) {
         const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
           body: {
-            email: payload.Customer.email,
-            fullName: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Cliente',
+            email: payload.Customer!.email,
+            fullName: `${payload.Customer!.first_name || ''} ${payload.Customer!.last_name || ''}`.trim() || 'Cliente',
             password: password
           }
         });
@@ -506,9 +597,9 @@ async function handlePendingOrder(payload: KiwifyWebhookPayload, supabase: any) 
         installment_value: payload.installment_value || 0,
         order_value: payload.order_value || 0,
         order_value_formatted: payload.order_value_formatted || 'R$ 0,00',
-        customer_email: payload.Customer.email,
-        customer_name: `${payload.Customer.first_name || ''} ${payload.Customer.last_name || ''}`.trim() || 'Nome não informado',
-        customer_mobile: payload.Customer.mobile || null,
+        customer_email: payload.Customer!.email,
+        customer_name: `${payload.Customer!.first_name || ''} ${payload.Customer!.last_name || ''}`.trim() || 'Nome não informado',
+        customer_mobile: payload.Customer!.mobile || null,
         created_at: payload.created_at,
         updated_at: payload.updated_at,
         webhook_data: payload,
