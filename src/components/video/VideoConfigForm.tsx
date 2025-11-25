@@ -129,6 +129,23 @@ export const VideoConfigForm = ({
     }
   }, [hasFalApiKey, apiProvider, mode]);
 
+  // Sincronizar apiProvider quando mode muda - garante que sempre há um modelo selecionado
+  useEffect(() => {
+    const validForMode = VIDEO_APIS.filter(api => 
+      api.mode === mode && (!api.requires_user_key || hasFalApiKey)
+    );
+    const currentIsValid = validForMode.some(api => api.id === apiProvider);
+    
+    if (!currentIsValid && validForMode.length > 0) {
+      // Seleciona o primeiro modelo disponível para o modo
+      const defaultApi = mode === 'image-to-video' 
+        ? 'fal_kling_v25_image_to_video' 
+        : 'fal_kling_v25_turbo';
+      console.log('🔄 Sincronizando modelo de IA:', defaultApi);
+      setApiProvider(defaultApi);
+    }
+  }, [mode, apiProvider, hasFalApiKey]);
+
   // Filter APIs based on mode and BYOK availability
   const availableAPIs = VIDEO_APIS.filter(api => {
     if (api.mode !== mode) return false;
@@ -243,6 +260,11 @@ export const VideoConfigForm = ({
     });
     
     // Validations
+    if (!apiProvider) {
+      toast.error('Selecione um modelo de IA');
+      return;
+    }
+
     if (mode === 'text-to-video' && prompt.trim().length < 10) {
       console.warn('⚠️ [VideoForm] Prompt too short:', prompt.trim().length);
       toast.error('Prompt muito curto. Mínimo 10 caracteres.');
@@ -405,10 +427,17 @@ export const VideoConfigForm = ({
 
           {/* API Provider */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Modelo de IA</Label>
+            <Label className="text-base font-semibold flex items-center gap-2">
+              Modelo de IA
+              {!apiProvider && (
+                <span className="text-sm font-normal text-amber-500 dark:text-amber-400">
+                  (selecione o modelo!)
+                </span>
+              )}
+            </Label>
             <Select value={apiProvider} onValueChange={setApiProvider} disabled={loading}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Selecione um modelo de IA" />
               </SelectTrigger>
               <SelectContent>
                 {availableAPIs.map((api) => (
