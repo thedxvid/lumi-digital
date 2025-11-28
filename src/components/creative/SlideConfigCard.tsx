@@ -42,7 +42,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
               </Label>
               
               <Select 
-                value={slide.imageMode} 
+                value={uploadedImagesCount === 0 && slide.imageMode !== 'generate' ? 'generate' : slide.imageMode} 
                 onValueChange={(value: any) => onChange({ ...slide, imageMode: value })}
                 disabled={disabled}
               >
@@ -56,22 +56,24 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       <span>Gerar nova imagem com IA</span>
                     </div>
                   </SelectItem>
-                  {uploadedImagesCount > 0 && (
-                    <>
-                      <SelectItem value="upload">
-                        <div className="flex items-center gap-2">
-                          <ImageIcon className="w-4 h-4" />
-                          <span>Usar uma foto que enviei</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="generate-with-reference">
-                        <div className="flex items-center gap-2">
-                          <Edit className="w-4 h-4" />
-                          <span>Gerar usando minhas fotos de referência</span>
-                        </div>
-                      </SelectItem>
-                    </>
-                  )}
+                  <SelectItem value="upload" disabled={uploadedImagesCount === 0}>
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      <span>Usar uma foto que enviei</span>
+                      {uploadedImagesCount === 0 && (
+                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="generate-with-reference" disabled={uploadedImagesCount === 0}>
+                    <div className="flex items-center gap-2">
+                      <Edit className="w-4 h-4" />
+                      <span>Gerar usando minhas fotos de referência</span>
+                      {uploadedImagesCount === 0 && (
+                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
+                      )}
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
