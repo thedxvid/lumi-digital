@@ -374,6 +374,9 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         .upsert({
           user_id: userId,
           role: 'user'
+        }, {
+          onConflict: 'user_id,role',
+          ignoreDuplicates: true
         });
 
       if (roleError) {
