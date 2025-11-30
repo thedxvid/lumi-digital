@@ -57,10 +57,17 @@ const Auth = () => {
     setIsSubmitting(true);
 
     try {
+      console.log('🔐 Tentando login...', { email });
       const { error } = await signIn(email, password);
+      console.log('📊 Resultado do login:', { 
+        hasError: !!error, 
+        errorMessage: error?.message,
+        errorName: error?.name 
+      });
       
       if (error) {
         const friendlyError = translateError(error);
+        console.error('❌ Erro de login traduzido:', friendlyError);
         toast.error(friendlyError);
         
         // Definir erro específico
