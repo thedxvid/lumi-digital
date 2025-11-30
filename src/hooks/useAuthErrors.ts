@@ -6,6 +6,11 @@ export const useAuthErrors = () => {
     
     const message = error.message.toLowerCase();
     
+    // Erros de servidor indisponível (503)
+    if (message.includes('503') || error.name === 'AuthRetryableFetchError' || message === '{}') {
+      return 'Servidor temporariamente indisponível. Por favor, aguarde alguns segundos e tente novamente.';
+    }
+    
     // Erros de credenciais
     if (message.includes('invalid login credentials') || message.includes('invalid credentials')) {
       return 'Email ou senha incorretos. Verifique e tente novamente.';
