@@ -77,11 +77,25 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
 
       if (error) {
         console.error('❌ Erro na Edge Function:', error);
-        throw new Error(`Erro na Edge Function: ${error.message}`);
+        const errorMsg = error.message || 'Erro desconhecido';
+        
+        // Tratar mensagens específicas
+        if (errorMsg.includes('already been registered') || errorMsg.includes('Já existe um usuário')) {
+          throw new Error('Este email já está cadastrado no sistema');
+        }
+        
+        throw new Error(errorMsg);
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Erro desconhecido ao criar usuário');
+        const errorMsg = data?.error || 'Erro desconhecido ao criar usuário';
+        
+        // Tratar mensagens específicas
+        if (errorMsg.includes('already been registered') || errorMsg.includes('Já existe um usuário')) {
+          throw new Error('Este email já está cadastrado no sistema');
+        }
+        
+        throw new Error(errorMsg);
       }
 
       console.log('✅ Usuário criado com sucesso');
