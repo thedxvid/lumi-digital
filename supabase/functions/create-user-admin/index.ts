@@ -101,6 +101,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (authError) {
       console.error('❌ Erro ao criar usuário na auth:', authError);
+      
+      // Tratar erro de email duplicado
+      if (authError.message?.includes('already been registered') || authError.code === 'email_exists') {
+        throw new Error('Já existe um usuário cadastrado com este email');
+      }
+      
       throw new Error(`Erro ao criar usuário: ${authError.message}`);
     }
 
