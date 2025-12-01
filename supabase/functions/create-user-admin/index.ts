@@ -12,7 +12,7 @@ const corsHeaders = {
 const CreateUserSchema = z.object({
   email: z.string().email('Email inválido').max(255, 'Email muito longo'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(128, 'Senha muito longa'),
-  full_name: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome muito longo'),
+  full_name: z.string().max(100, 'Nome muito longo').optional(),
   role: z.enum(['user', 'admin'], { errorMap: () => ({ message: 'Role inválida' }) }),
   access_granted: z.boolean(),
   plan_type: z.enum(['free', 'basic', 'pro', 'premium']).optional().default('basic'),
@@ -22,7 +22,7 @@ const CreateUserSchema = z.object({
 interface CreateUserRequest {
   email: string;
   password: string;
-  full_name: string;
+  full_name?: string;
   role: 'user' | 'admin';
   access_granted: boolean;
   plan_type?: 'basic' | 'pro';
@@ -72,7 +72,10 @@ const handler = async (req: Request): Promise<Response> => {
       duration_months
     } = validationResult.data;
 
-    console.log('🔧 Criando usuário:', { email, full_name, role, access_granted });
+    // Usar email como nome se full_name não fornecido
+    const displayName = full_name || email.split('@')[0];
+
+    console.log('🔧 Criando usuário:', { email, full_name: displayName, role, access_granted });
 
     // Verificar se o usuário já existe
     const { data: existingUser, error: checkError } = await supabase.auth.admin.listUsers();
@@ -92,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
       password,
       email_confirm: true, // Confirmar email automaticamente
       user_metadata: {
-        full_name
+        full_name: displayName
       }
     });
 
@@ -117,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
       .update({
         access_granted,
         subscription_status: access_granted ? 'active' : 'inactive',
-        full_name
+        full_name: displayName
       })
       .eq('id', authUser.user.id);
 
