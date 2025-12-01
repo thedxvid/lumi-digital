@@ -23,7 +23,6 @@ type DurationMonths = 1 | 3 | 6;
 const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) => {
   const [formData, setFormData] = useState({
     email: '',
-    fullName: '',
     role: 'user' as UserRole,
     accessGranted: true,
     planType: 'basic' as PlanType,
@@ -45,10 +44,10 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.fullName) {
+    if (!formData.email) {
       toast({
         title: 'Erro',
-        description: 'Email e nome completo são obrigatórios',
+        description: 'Email é obrigatório',
         variant: 'destructive'
       });
       return;
@@ -67,7 +66,6 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
         body: {
           email: formData.email,
           password: generatedPassword,
-          full_name: formData.fullName,
           role: formData.role,
           access_granted: formData.accessGranted,
           plan_type: formData.planType,
@@ -95,7 +93,7 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
         const { data: emailData, error: emailError } = await supabase.functions.invoke('send-welcome-email', {
           body: {
             email: formData.email,
-            name: formData.fullName,
+            name: formData.email.split('@')[0],
             password: generatedPassword,
             product_name: 'LUMI - Plataforma de IA para Negócios Digitais'
           }
@@ -129,7 +127,6 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
       // Reset form
       setFormData({
         email: '',
-        fullName: '',
         role: 'user',
         accessGranted: true,
         planType: 'basic',
@@ -170,18 +167,6 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Nome Completo</Label>
-            <Input
-              id="fullName"
-              type="text"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange('fullName', e.target.value)}
-              placeholder="Digite o nome completo"
-              disabled={loading}
-            />
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
