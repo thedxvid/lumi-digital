@@ -800,6 +800,13 @@ const AdminUsers = () => {
 
   const handleBulkDeactivate = async () => {
     console.log('🎯 handleBulkDeactivate chamado. Usuários selecionados:', selectedUsers);
+    
+    if (!confirm(`Tem certeza que deseja desativar ${selectedUsers.length} usuários?`)) {
+      return;
+    }
+
+    sonnerToast.loading(`Desativando ${selectedUsers.length} usuários...`, { id: 'bulk-deactivate' });
+
     try {
       const { error } = await supabase
         .from('profiles')
@@ -808,12 +815,20 @@ const AdminUsers = () => {
 
       if (error) throw error;
 
-      toast({ title: 'Sucesso', description: `${selectedUsers.length} usuários desativados` });
+      sonnerToast.success('Usuários Desativados!', {
+        id: 'bulk-deactivate',
+        description: `${selectedUsers.length} usuários desativados com sucesso`,
+        duration: 5000
+      });
       setSelectedUsers([]);
       fetchUsers();
     } catch (error) {
       console.error('❌ Erro ao desativar usuários:', error);
-      toast({ title: 'Erro', description: 'Erro ao desativar usuários', variant: 'destructive' });
+      sonnerToast.error('Erro ao Desativar', {
+        id: 'bulk-deactivate',
+        description: 'Não foi possível desativar os usuários',
+        duration: 5000
+      });
     }
   };
 
@@ -881,8 +896,11 @@ const AdminUsers = () => {
   };
 
   const executeBulkSubscriptionUpdate = async (config: { planType: string; months: number }) => {
+    sonnerToast.loading(`Estendendo ${selectedUsers.length} assinaturas...`, { id: 'bulk-extend' });
+
     try {
       const { planType, months } = config;
+      let processed = 0;
       
       for (const userId of selectedUsers) {
         const currentUser = users.find(u => u.id === userId);
@@ -940,21 +958,25 @@ const AdminUsers = () => {
           _action: 'bulk_extend_subscription',
           _details: { planType, months }
         });
+
+        processed++;
+        sonnerToast.loading(`Processando ${processed}/${selectedUsers.length}...`, { id: 'bulk-extend' });
       }
 
-      toast({ 
-        title: 'Sucesso',
-        description: `${selectedUsers.length} assinaturas estendidas!`
+      sonnerToast.success('Assinaturas Estendidas!', {
+        id: 'bulk-extend',
+        description: `${selectedUsers.length} assinaturas atualizadas com sucesso`,
+        duration: 5000
       });
       setSelectedUsers([]);
       setShowBulkSubscriptionModal(false);
       fetchUsers();
     } catch (error: any) {
       console.error('Erro bulk subscription:', error);
-      toast({ 
-        title: 'Erro',
-        description: 'Erro ao estender assinaturas',
-        variant: 'destructive'
+      sonnerToast.error('Erro ao Estender', {
+        id: 'bulk-extend',
+        description: 'Não foi possível estender as assinaturas',
+        duration: 5000
       });
     }
   };
@@ -965,10 +987,9 @@ const AdminUsers = () => {
     // Verificar se há admins na seleção
     const hasAdmins = selectedUsersData.some(u => u.roles?.includes('admin'));
     if (hasAdmins) {
-      toast({ 
-        title: 'Erro',
+      sonnerToast.error('Erro - Admins na Seleção', {
         description: '❌ Não é possível deletar usuários com role Admin!',
-        variant: 'destructive'
+        duration: 5000
       });
       return;
     }
@@ -980,9 +1001,14 @@ const AdminUsers = () => {
 
     const confirmation = prompt(`Digite "DELETAR" em maiúsculas para confirmar:`);
     if (confirmation !== 'DELETAR') {
-      toast({ title: 'Operação cancelada' });
+      sonnerToast.info('Operação Cancelada', {
+        description: 'Deleção não foi confirmada',
+        duration: 3000
+      });
       return;
     }
+
+    sonnerToast.loading(`Deletando ${selectedUsers.length} usuários...`, { id: 'bulk-delete' });
 
     try {
       const { data, error } = await supabase.functions.invoke('bulk-delete-users', {
@@ -993,19 +1019,20 @@ const AdminUsers = () => {
 
       const result = data as { success: string[], failed: Array<{ id: string, error: string }> };
 
-      toast({ 
-        title: 'Operação concluída',
-        description: `${result.success.length} usuários deletados, ${result.failed.length} falharam`
+      sonnerToast.success('Deleção Concluída!', {
+        id: 'bulk-delete',
+        description: `${result.success.length} deletados, ${result.failed.length} falharam`,
+        duration: 5000
       });
 
       setSelectedUsers([]);
       fetchUsers();
     } catch (error: any) {
       console.error('Erro ao deletar usuários:', error);
-      toast({ 
-        title: 'Erro',
-        description: 'Erro ao deletar usuários',
-        variant: 'destructive'
+      sonnerToast.error('Erro ao Deletar', {
+        id: 'bulk-delete',
+        description: 'Não foi possível deletar os usuários',
+        duration: 5000
       });
     }
   };
