@@ -33,6 +33,7 @@ import BulkUserImport from '@/pages/admin/BulkUserImport';
 import RevokeAccessDryRun from '@/pages/admin/RevokeAccessDryRun';
 import ApiCostSettings from '@/pages/admin/ApiCostSettings';
 import ApiCosts from '@/pages/admin/ApiCosts';
+import AdminApiKeys from '@/pages/admin/AdminApiKeys';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProtectedAdminRoute } from '@/components/ProtectedAdminRoute';
 
@@ -80,6 +81,7 @@ function App() {
             <Route path="settings" element={<AdminSettings />} />
             <Route path="api-costs" element={<ApiCosts />} />
             <Route path="api-costs/settings" element={<ApiCostSettings />} />
+            <Route path="api-keys" element={<AdminApiKeys />} />
           </Route>
 
           {/* Redirect to Home if no route matches */}

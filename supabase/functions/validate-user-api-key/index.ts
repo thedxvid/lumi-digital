@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { provider } = await req.json();
+    const { provider, admin_user_id } = await req.json();
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -40,11 +40,32 @@ serve(async (req) => {
       );
     }
 
+    // Determine which user's key to validate
+    let targetUserId = user.id;
+
+    // If admin_user_id is provided, check if caller is admin
+    if (admin_user_id && admin_user_id !== user.id) {
+      const { data: isAdmin } = await supabaseClient.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+
+      if (!isAdmin) {
+        return new Response(
+          JSON.stringify({ error: 'Permissão negada - apenas admins podem validar chaves de outros usuários' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      targetUserId = admin_user_id;
+      console.log(`🔐 Admin ${user.id} validando chave do usuário ${targetUserId}`);
+    }
+
     // Get user's API key
     const { data: keyData, error: keyError } = await supabaseClient
       .from('user_api_keys')
       .select('api_key_encrypted')
-      .eq('user_id', user.id)
+      .eq('user_id', targetUserId)
       .eq('provider', provider)
       .single();
 
@@ -96,7 +117,7 @@ serve(async (req) => {
             is_valid: isValid,
             last_validated_at: new Date().toISOString()
           })
-          .eq('user_id', user.id)
+          .eq('user_id', targetUserId)
           .eq('provider', provider);
 
         if (!isValid) {
