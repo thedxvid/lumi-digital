@@ -1191,10 +1191,16 @@ const AdminUsers = () => {
     });
 
     try {
-      const { error } = await supabase.functions.invoke('send-welcome-email', {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const { error } = await supabase.functions.invoke('resend-individual-welcome-email', {
         body: { 
+          userId: user.id,
           email: user.email,
           fullName: user.full_name || user.email.split('@')[0]
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
         }
       });
 
