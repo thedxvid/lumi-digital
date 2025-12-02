@@ -112,13 +112,36 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      console.log('🔍 Buscando usuários...');
+      console.log('🔍 Buscando usuários com paginação...');
       
-      // Buscar via function para ter acesso aos emails
-      const { data: usersData, error: usersError } = await supabase
-        .rpc('get_admin_user_details');
+      // Buscar todos os usuários em lotes de 500
+      let allUsers: any[] = [];
+      let page = 1;
+      const pageSize = 500;
+      let hasMore = true;
 
-      if (usersError) throw usersError;
+      while (hasMore) {
+        console.log(`📄 Carregando página ${page}...`);
+        
+        const { data: usersData, error: usersError } = await supabase
+          .rpc('get_admin_user_details_paginated', {
+            _page: page,
+            _page_size: pageSize
+          });
+
+        if (usersError) throw usersError;
+
+        if (usersData && usersData.length > 0) {
+          allUsers = [...allUsers, ...usersData];
+          hasMore = usersData.length === pageSize;
+          page++;
+          console.log(`✅ ${usersData.length} usuários carregados (total: ${allUsers.length})`);
+        } else {
+          hasMore = false;
+        }
+      }
+
+      console.log(`✅ Total de ${allUsers.length} usuários carregados`);
 
       // Buscar subscriptions
       const { data: subscriptions } = await supabase
@@ -160,7 +183,7 @@ const AdminUsers = () => {
       });
 
       // Combinar dados
-      const fullUsers: User[] = (usersData || []).map(user => ({
+      const fullUsers: User[] = allUsers.map(user => ({
         id: user.id,
         full_name: user.full_name || '',
         email: user.email || 'Email não disponível',
