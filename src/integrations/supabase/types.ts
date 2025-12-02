@@ -1430,6 +1430,22 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_admin_user_details_paginated: {
+        Args: { _page?: number; _page_size?: number }
+        Returns: {
+          access_granted: boolean
+          auth_created_at: string
+          confirmed_at: string
+          created_at: string
+          email: string
+          email_confirmed_at: string
+          full_name: string
+          id: string
+          last_sign_in_at: string
+          subscription_status: string
+          updated_at: string
+        }[]
+      }
       get_cost_stats: {
         Args: { end_date: string; start_date: string }
         Returns: {
