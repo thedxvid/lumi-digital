@@ -791,15 +791,21 @@ const AdminUsers = () => {
     let failed = 0;
     const errors: Array<{ email: string; error: string }> = [];
 
+    // Obter sessão do admin para autenticação
+    const { data: { session } } = await supabase.auth.getSession();
+
     for (const user of selectedUsersData) {
       try {
         setEmailProgress(prev => ({ ...prev, current: user.email }));
         
-        const { error } = await supabase.functions.invoke('send-welcome-email', {
+        const { error } = await supabase.functions.invoke('resend-individual-welcome-email', {
           body: { 
+            userId: user.id,
             email: user.email,
-            fullName: user.full_name || user.email.split('@')[0],
-            password: `Lumi${Math.random().toString(36).slice(-8)}`
+            fullName: user.full_name || user.email.split('@')[0]
+          },
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`
           }
         });
 
