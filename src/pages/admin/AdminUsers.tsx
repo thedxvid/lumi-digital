@@ -47,6 +47,12 @@ interface User {
     videos_monthly_used: number;
     videos_monthly_limit: number;
   };
+  order?: {
+    order_value: number;
+    order_value_formatted: string;
+    product_offer_name: string;
+    payment_method: string;
+  };
 }
 
 interface Filters {
@@ -143,6 +149,23 @@ const AdminUsers = () => {
 
       console.log(`✅ Total de ${allUsers.length} usuários carregados`);
 
+      // Buscar pedidos pagos
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('user_id, order_value, order_value_formatted, product_offer_name, payment_method')
+        .eq('order_status', 'paid')
+        .order('created_at', { ascending: false });
+
+      console.log(`📦 ${orders?.length || 0} pedidos carregados`);
+
+      // Mapear pedidos por user_id (pegar o mais recente)
+      const ordersMap = new Map();
+      orders?.forEach(order => {
+        if (order.user_id && !ordersMap.has(order.user_id)) {
+          ordersMap.set(order.user_id, order);
+        }
+      });
+
       // Buscar subscriptions
       const { data: subscriptions } = await supabase
         .from('subscriptions')
@@ -193,7 +216,8 @@ const AdminUsers = () => {
         last_sign_in_at: user.last_sign_in_at,
         roles: rolesMap.get(user.id) || [],
         subscription: subsMap.get(user.id),
-        usage_limits: limitsMap.get(user.id)
+        usage_limits: limitsMap.get(user.id),
+        order: ordersMap.get(user.id)
       }));
 
       setUsers(fullUsers);
@@ -1640,9 +1664,16 @@ const AdminUsers = () => {
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <Mail className="h-3 w-3" />
-                    <span>{user.email}</span>
+                  <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground mb-2">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3 w-3" />
+                      <span>{user.email}</span>
+                    </div>
+                    {user.order && user.order.order_value > 0 && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
+                        💰 {user.order.order_value_formatted}
+                      </Badge>
+                    )}
                   </div>
 
                   {user.roles && user.roles.length > 0 && (

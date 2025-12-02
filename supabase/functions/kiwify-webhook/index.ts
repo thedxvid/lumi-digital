@@ -497,8 +497,12 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
           payment_method: payload.payment_method || null,
           installments_number: payload.installments_number || 1,
           installment_value: payload.installment_value || 0,
-          order_value: payload.order_value || 0,
-          order_value_formatted: payload.order_value_formatted || 'R$ 0,00',
+          order_value: payload.Commissions?.charge_amount 
+            ? payload.Commissions.charge_amount / 100  // Converter centavos para reais
+            : (payload.order_value || 0),
+          order_value_formatted: payload.Commissions?.charge_amount 
+            ? `R$ ${(payload.Commissions.charge_amount / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : (payload.order_value_formatted || 'R$ 0,00'),
           customer_email: payload.Customer!.email,
           customer_name: `${payload.Customer!.first_name || ''} ${payload.Customer!.last_name || ''}`.trim() || 'Nome não informado',
           customer_mobile: payload.Customer!.mobile || null,
