@@ -124,17 +124,20 @@ const AdminUsers = () => {
       const { data: subscriptions } = await supabase
         .from('subscriptions')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .limit(10000);
 
       // Buscar limites
       const { data: limits } = await supabase
         .from('usage_limits')
-        .select('*');
+        .select('*')
+        .limit(10000);
 
       // Buscar roles
       const { data: rolesData } = await supabase
         .from('user_roles')
-        .select('user_id, role');
+        .select('user_id, role')
+        .limit(10000);
 
       // Mapear roles por usuário
       const rolesMap = new Map<string, string[]>();
