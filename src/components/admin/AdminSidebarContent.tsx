@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { Lightbulb, Home, Users, ShoppingCart, BarChart3, Settings, LogOut, Bot, Activity, Upload, DollarSign } from 'lucide-react';
+import { Lightbulb, Home, Users, ShoppingCart, BarChart3, Settings, LogOut, Bot, Activity, Upload, DollarSign, Key } from 'lucide-react';
 
 interface AdminSidebarContentProps {
   onNavigate?: () => void;
@@ -20,6 +20,7 @@ export function AdminSidebarContent({ onNavigate, className = '' }: AdminSidebar
     { icon: Bot, label: 'Agentes', path: '/admin/agents' },
     { icon: Activity, label: 'Atividades', path: '/admin/logs' },
     { icon: DollarSign, label: 'Custos de API', path: '/admin/api-costs' },
+    { icon: Key, label: 'Chaves BYOK', path: '/admin/api-keys' },
     { icon: Settings, label: 'Configurações', path: '/admin/settings' },
   ];
 
