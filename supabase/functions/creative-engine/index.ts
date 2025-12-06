@@ -254,9 +254,17 @@ OUTPUT SIZE: ${width}x${height} pixels`;
       }
 
       const falData = await falResponse.json()
-      baseImage = falData.images?.[0]?.url
+      console.log('📦 Fal.ai response structure:', JSON.stringify(Object.keys(falData)))
+      console.log('📦 Fal.ai images field:', JSON.stringify(falData.images?.slice?.(0, 1) || falData.images || 'no images'))
+      
+      // Try multiple extraction paths (Fal.ai response format may vary)
+      baseImage = falData.images?.[0]?.url || 
+                  falData.images?.[0]?.image_url ||
+                  falData.output?.images?.[0]?.url ||
+                  falData.image?.url ||
+                  (typeof falData.images?.[0] === 'string' ? falData.images[0] : undefined)
 
-      console.log('✅ Fal.ai Nano Banana PRO image generated successfully')
+      console.log('✅ Fal.ai Nano Banana PRO image generated, baseImage exists:', !!baseImage)
 
       // Track API cost for Fal.ai
       if (userId) {
