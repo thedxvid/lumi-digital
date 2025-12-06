@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CreativeTypeSelector } from "./CreativeTypeSelector";
 import { FormatSelector } from "./FormatSelector";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Type } from "lucide-react";
+
 export interface CreativeConfig {
   creativeType: string;
   format: string;
   customPrompt?: string;
+  mainText?: string;
+  secondaryText?: string;
+  callToAction?: string;
 }
 interface CreativeConfigFormProps {
   onGenerate: (config: CreativeConfig) => void;
@@ -25,7 +30,10 @@ export function CreativeConfigForm({
   const [config, setConfig] = useState<CreativeConfig>({
     creativeType: 'social-post',
     format: 'square',
-    customPrompt: ''
+    customPrompt: '',
+    mainText: '',
+    secondaryText: '',
+    callToAction: ''
   });
   const updateConfig = (field: keyof CreativeConfig, value: string) => {
     setConfig(prev => ({
@@ -69,23 +77,73 @@ export function CreativeConfigForm({
 
           <Card>
             <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Type className="w-5 h-5" />
+                Texto do Criativo (PRO)
+              </CardTitle>
+              <CardDescription>
+                O texto será gerado diretamente na imagem usando IA avançada. Deixe em branco para adicionar depois.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="mainText">Texto Principal / Headline</Label>
+                <Input 
+                  id="mainText" 
+                  value={config.mainText || ''} 
+                  onChange={e => updateConfig('mainText', e.target.value)} 
+                  placeholder="Ex: Oferta Imperdível!" 
+                  maxLength={60}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {config.mainText?.length || 0}/60 caracteres
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secondaryText">Texto Secundário</Label>
+                <Input 
+                  id="secondaryText" 
+                  value={config.secondaryText || ''} 
+                  onChange={e => updateConfig('secondaryText', e.target.value)} 
+                  placeholder="Ex: Aproveite 50% de desconto em todos os produtos" 
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {config.secondaryText?.length || 0}/100 caracteres
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="callToAction">Call to Action (Botão)</Label>
+                <Input 
+                  id="callToAction" 
+                  value={config.callToAction || ''} 
+                  onChange={e => updateConfig('callToAction', e.target.value)} 
+                  placeholder="Ex: Compre Agora" 
+                  maxLength={30}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {config.callToAction?.length || 0}/30 caracteres
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5" />
-              Prompt Personalizado
+              Prompt Visual
             </CardTitle>
               <CardDescription>
-                Descreva exatamente como você quer o criativo visual. O texto será adicionado depois.
+                Descreva o estilo visual, cores e composição do criativo.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <Label htmlFor="customPrompt">Descreva o visual que você quer</Label>
-                <Textarea id="customPrompt" value={config.customPrompt || ''} onChange={e => updateConfig('customPrompt', e.target.value)} placeholder="Ex: Fundo com gradiente azul para roxo, estilo moderno e clean, com elementos geométricos sutis nas bordas, deixe espaço central para texto..." className="min-h-[150px] resize-y" />
+                <Textarea id="customPrompt" value={config.customPrompt || ''} onChange={e => updateConfig('customPrompt', e.target.value)} placeholder="Ex: Fundo com gradiente azul para roxo, estilo moderno e clean, com elementos geométricos sutis..." className="min-h-[120px] resize-y" />
                 <p className="text-xs text-muted-foreground">
                   {config.customPrompt?.length || 0} caracteres
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  💡 Dica: Foque na descrição visual. Você adicionará o texto na próxima etapa.
                 </p>
               </div>
             </CardContent>
