@@ -41,27 +41,27 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     requires_user_key: false
   },
   
-  // ===== VEO 3 (Apenas BYOK) =====
+  // ===== VEO 3.1 (Apenas BYOK) - Melhor qualidade =====
   {
-    id: 'fal_veo3_fast',
-    name: 'fal_veo3_fast',
-    display_name: 'Veo 3 Fast (Text-to-Video)',
-    cost_per_8s: 0.50,
-    description: 'Google Veo 3: ultra-rápido e realista',
+    id: 'fal_veo31',
+    name: 'fal_veo31',
+    display_name: 'Veo 3.1 (Text-to-Video)',
+    cost_per_8s: 0.60,
+    description: 'Google Veo 3.1: melhor qualidade e realismo',
     provider: 'Google Veo',
     mode: 'text-to-video',
     requires_user_key: true
   },
   {
-    id: 'fal_veo3_image_to_video',
-    name: 'fal_veo3_image_to_video',
-    display_name: 'Veo 3 Fast (Image-to-Video)',
-    cost_per_8s: 0.50,
-    description: 'Transforma imagens em vídeo com Veo 3',
+    id: 'fal_veo31_image_to_video',
+    name: 'fal_veo31_image_to_video',
+    display_name: 'Veo 3.1 (Image-to-Video)',
+    cost_per_8s: 0.60,
+    description: 'Transforma imagens em vídeo com Veo 3.1',
     provider: 'Google Veo',
     mode: 'image-to-video',
     requires_images: 1,
-    endpoint: 'https://fal.run/fal-ai/veo3/fast/image-to-video',
+    endpoint: 'https://fal.run/fal-ai/veo3.1/image-to-video',
     requires_user_key: true
   }
 ];
@@ -404,15 +404,15 @@ export const VideoConfigForm = ({
             </div>
           </div>
 
-          {/* Alerta BYOK para Veo 3 */}
+          {/* Alerta BYOK para Veo 3.1 */}
           {!hasFalApiKey && !loadingKeys && (
             <Alert className="border-primary/30 bg-primary/5">
               <Lock className="h-4 w-4 text-primary" />
               <AlertTitle className="text-primary font-semibold">
-                🔓 Desbloqueie o Veo 3 Fast
+                🔓 Desbloqueie o Veo 3.1
               </AlertTitle>
               <AlertDescription className="text-foreground/80">
-                Conecte sua API key do Fal.ai para usar os modelos Google Veo 3 (text-to-video e image-to-video) sem limites!
+                Conecte sua API key do Fal.ai para usar os modelos Google Veo 3.1 com melhor qualidade e realismo!
                 <Button 
                   variant="link" 
                   className="p-0 h-auto text-primary underline ml-1"
@@ -421,6 +421,15 @@ export const VideoConfigForm = ({
                 >
                   Conectar agora
                 </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Info sobre créditos Kling */}
+          {apiProvider?.includes('kling') && (
+            <Alert className="border-blue-500/30 bg-blue-500/5">
+              <AlertDescription className="text-sm text-foreground/80">
+                💡 <strong>Kling</strong> usa seus créditos Lumi incluídos no plano. Conecte sua chave Fal.ai para usar o Veo 3.1 sem consumir créditos do plano.
               </AlertDescription>
             </Alert>
           )}

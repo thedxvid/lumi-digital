@@ -6,6 +6,7 @@ import { ImageUploader } from "@/components/creative/ImageUploader";
 import { CreativeHistoryGallery } from "@/components/creative/CreativeHistoryGallery";
 import { CreativeConfigForm, type CreativeConfig } from "@/components/creative/CreativeConfigForm";
 import { CreativeResultModal } from "@/components/creative/CreativeResultModal";
+import { CreativeGenerationProgress } from "@/components/creative/CreativeGenerationProgress";
 import { ApiTierBadge } from "@/components/dashboard/ApiTierBadge";
 import { BYOKCostIndicator } from "@/components/byok/BYOKCostIndicator";
 import { useBYOKCosts } from "@/hooks/useBYOKCosts";
@@ -109,6 +110,7 @@ export default function CreativeEngine() {
           <TabsContent value="results"><CreativeHistoryGallery history={history} onDelete={deleteHistoryItem} onToggleFavorite={toggleFavorite} /></TabsContent>
         </Tabs>
       </div>
+      <CreativeGenerationProgress isGenerating={loading} mode={generationMode} />
       <CreativeResultModal 
         open={resultModalOpen} 
         onOpenChange={setResultModalOpen} 

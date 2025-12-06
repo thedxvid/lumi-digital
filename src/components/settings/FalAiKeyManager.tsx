@@ -237,12 +237,16 @@ export function FalAiKeyManager() {
 
               <Alert className="bg-lumi-gold/10 border-lumi-gold/20">
                 <AlertDescription className="text-sm">
-                  <p className="font-medium text-foreground">💡 Vantagens de usar sua própria key:</p>
+                  <p className="font-medium text-foreground">💡 O que muda ao conectar sua chave:</p>
                   <ul className="mt-2 space-y-1 text-muted-foreground list-disc list-inside">
-                    <li>Vídeos ilimitados (limite só da fal.ai)</li>
-                    <li>Seus créditos Lumi são preservados</li>
-                    <li>Custos diretos na sua conta fal.ai</li>
+                    <li><strong>Veo 3.1:</strong> Desbloqueado apenas com sua chave</li>
+                    <li><strong>Nano Banana PRO:</strong> Criativos com texto nativo</li>
+                    <li><strong>Kling:</strong> Continua usando seus créditos Lumi</li>
+                    <li><strong>Créditos Lumi:</strong> Preservados para Kling e outros recursos</li>
                   </ul>
+                  <p className="mt-2 text-xs text-muted-foreground/80">
+                    Você pode desconectar a qualquer momento e voltar a usar apenas os créditos do plano.
+                  </p>
                 </AlertDescription>
               </Alert>
             </>

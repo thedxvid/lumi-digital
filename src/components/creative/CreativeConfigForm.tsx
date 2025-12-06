@@ -7,11 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { CreativeTypeSelector } from "./CreativeTypeSelector";
 import { FormatSelector } from "./FormatSelector";
-import { Loader2, Sparkles, Type } from "lucide-react";
+import { Loader2, Sparkles, Type, RatioIcon } from "lucide-react";
+
+const ASPECT_RATIOS = [
+  { value: '1:1', label: 'Quadrado', description: '1:1' },
+  { value: '9:16', label: 'Stories/Reels', description: '9:16' },
+  { value: '16:9', label: 'Landscape', description: '16:9' },
+  { value: '4:5', label: 'Feed', description: '4:5' },
+];
 
 export interface CreativeConfig {
   creativeType: string;
   format: string;
+  aspectRatio?: string;
   customPrompt?: string;
   mainText?: string;
   secondaryText?: string;
@@ -30,6 +38,7 @@ export function CreativeConfigForm({
   const [config, setConfig] = useState<CreativeConfig>({
     creativeType: 'social-post',
     format: 'square',
+    aspectRatio: '1:1',
     customPrompt: '',
     mainText: '',
     secondaryText: '',
@@ -46,23 +55,54 @@ export function CreativeConfigForm({
     onGenerate(config);
   };
   return <form onSubmit={handleSubmit} className="space-y-6">
-      {generationMode === 'prompt-only' ? <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              Descreva seu Criativo
-            </CardTitle>
-            <CardDescription>
-              Descreva detalhadamente o criativo que você deseja gerar. Seja específico sobre cores, estilo, composição e formato.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Textarea value={config.customPrompt || ''} onChange={e => updateConfig('customPrompt', e.target.value)} placeholder="Ex: Crie um post para Instagram quadrado com fundo azul gradiente, estilo moderno e minimalista, composição centralizada com espaço para texto..." className="min-h-[300px] resize-y" />
-            <p className="text-xs text-muted-foreground mt-2">
-              {config.customPrompt?.length || 0} caracteres
-            </p>
-          </CardContent>
-        </Card> : <>
+      {generationMode === 'prompt-only' ? <>
+          {/* Aspect Ratio Selector for prompt-only mode */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RatioIcon className="w-5 h-5" />
+                Proporção da Imagem
+              </CardTitle>
+              <CardDescription>
+                Escolha o formato do criativo que será gerado
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {ASPECT_RATIOS.map((ratio) => (
+                  <Button
+                    key={ratio.value}
+                    type="button"
+                    variant={config.aspectRatio === ratio.value ? 'default' : 'outline'}
+                    onClick={() => updateConfig('aspectRatio', ratio.value)}
+                    className="flex flex-col h-auto py-3"
+                  >
+                    <span className="font-medium">{ratio.label}</span>
+                    <span className="text-xs opacity-70">{ratio.description}</span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Descreva seu Criativo
+              </CardTitle>
+              <CardDescription>
+                Descreva detalhadamente o criativo que você deseja gerar. Seja específico sobre cores, estilo, composição e formato.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea value={config.customPrompt || ''} onChange={e => updateConfig('customPrompt', e.target.value)} placeholder="Ex: Crie um post para Instagram quadrado com fundo azul gradiente, estilo moderno e minimalista, composição centralizada com espaço para texto..." className="min-h-[300px] resize-y" />
+              <p className="text-xs text-muted-foreground mt-2">
+                {config.customPrompt?.length || 0} caracteres
+              </p>
+            </CardContent>
+          </Card>
+        </> : <>
           <Card>
             <CardHeader>
               <CardTitle>Tipo e Formato</CardTitle>
