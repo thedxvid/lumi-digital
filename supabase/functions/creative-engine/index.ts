@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,9 +33,71 @@ serve(async (req) => {
       throw new Error('Maximum 10 images allowed')
     }
 
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
-    if (!lovableApiKey) {
-      throw new Error('Lovable API key not configured')
+    // Get user info and determine API tier
+    const authHeader = req.headers.get('authorization')
+    let apiTier = 'standard' // default
+    let userId: string | null = null
+    let userHasByok = false
+    let userFalKey: string | null = null
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    if (authHeader) {
+      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
+      if (user) {
+        userId = user.id
+
+        // Check user's api_tier from usage_limits
+        const { data: limits } = await supabase
+          .from('usage_limits')
+          .select('api_tier, plan_type')
+          .eq('user_id', user.id)
+          .single()
+
+        if (limits) {
+          apiTier = limits.api_tier || 'standard'
+          console.log(`🎨 User ${user.id} - Plan: ${limits.plan_type}, API Tier: ${apiTier}`)
+        }
+
+        // Check if user has admin role (admins use PRO API)
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .single()
+
+        if (roles) {
+          apiTier = 'pro'
+          console.log('👑 Admin user detected - using PRO API')
+        }
+
+        // Check if user has BYOK Fal.ai key configured
+        const { data: userApiKey } = await supabase
+          .from('user_api_keys')
+          .select('api_key_encrypted, is_active, is_valid')
+          .eq('user_id', user.id)
+          .eq('provider', 'fal_ai')
+          .eq('is_active', true)
+          .single()
+
+        if (userApiKey?.is_valid) {
+          userHasByok = true
+          // Decrypt the key
+          const encryptionKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.substring(0, 32) || ''
+          const { data: decryptedKey } = await supabase.rpc('decrypt_api_key', {
+            encrypted_text: userApiKey.api_key_encrypted,
+            encryption_key: encryptionKey
+          })
+          if (decryptedKey) {
+            userFalKey = decryptedKey
+            apiTier = 'pro' // BYOK users can use PRO API
+            console.log('🔑 User has BYOK Fal.ai key - using PRO API')
+          }
+        }
+      }
     }
 
     // STEP 1: Generate copy using LLM (if config provided)
@@ -73,32 +136,25 @@ serve(async (req) => {
 
     // STEP 2: Generate base image WITHOUT text
     console.log('Step 2: Generating base image without text...')
+    console.log(`🖼️ Using API tier: ${apiTier}`)
     
     // Get dimensions based on format
     const formatDimensions: Record<string, string> = {
-      // Social Post
       'square': '1080x1080',
       'vertical': '1080x1350',
       'horizontal': '1200x675',
-      // Story
       'story-vertical': '1080x1920',
-      // Ad
       'ad-square': '1200x1200',
       'ad-horizontal': '1200x628',
       'ad-vertical': '1080x1350',
-      // Banner
       'banner-wide': '1920x1080',
       'banner-ultra': '2560x1080',
       'banner-custom': '1920x1080',
-      // Email
       'email-standard': '600x800',
-      // Product
       'product-square': '1000x1000',
       'product-vertical': '1000x1333',
-      // Infographic
       'infographic-vertical': '800x2000',
       'infographic-horizontal': '2000x800',
-      // Free
       'free-square': '1080x1080',
       'free-custom': '1080x1080'
     };
@@ -137,92 +193,149 @@ CRITICAL: This is a BASE IMAGE ONLY. Text will be overlaid programmatically late
 OUTPUT SIZE: ${width}x${height} pixels`;
     }
 
-    // Prepare the message content with images
-    const imageContent = images.map((img: string) => ({
-      type: "image_url",
-      image_url: {
-        url: img // Can be base64 or URL
-      }
-    }))
+    let baseImage: string | undefined
 
-    const messageContent = [
-      {
-        type: "text",
-        text: enhancedPrompt
-      },
-      ...imageContent
-    ]
-
-    console.log('Calling Lovable AI Gateway for image generation...')
-    
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
-        messages: [
-          {
-            role: "user",
-            content: messageContent
-          }
-        ],
-        modalities: ["image", "text"]
-      })
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Lovable AI Gateway error:', response.status, errorText)
+    // Route to appropriate API based on tier
+    if (apiTier === 'pro') {
+      // Use Fal.ai Nano Banana PRO
+      console.log('🚀 Using Fal.ai Nano Banana PRO API')
       
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.'
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
-        )
+      const falApiKey = userHasByok && userFalKey ? userFalKey : Deno.env.get('FAL_KEY')
+      
+      if (!falApiKey) {
+        throw new Error('Fal.ai API key not configured')
       }
 
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Créditos de IA esgotados. Por favor, adicione mais créditos.'
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
-        )
+      // Map aspect ratio for Fal.ai
+      const falAspectRatio = width > height ? 'landscape_16_9' : 
+                            width < height ? 'portrait_9_16' : 
+                            'square_hd';
+
+      const falResponse = await fetch('https://queue.fal.run/fal-ai/nano-banana-pro', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${falApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: enhancedPrompt,
+          image_size: falAspectRatio,
+          num_inference_steps: 28,
+          guidance_scale: 3.5,
+          num_images: 1,
+          enable_safety_checker: true,
+          sync_mode: true
+        })
+      })
+
+      if (!falResponse.ok) {
+        const errorText = await falResponse.text()
+        console.error('Fal.ai API error:', falResponse.status, errorText)
+        
+        if (falResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+          )
+        }
+
+        if (falResponse.status === 402 || falResponse.status === 401) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Créditos Fal.ai esgotados ou chave inválida. Verifique sua configuração.'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+          )
+        }
+
+        throw new Error(`Fal.ai API error: ${falResponse.status}`)
       }
 
-      throw new Error(`AI Gateway error: ${response.status}`)
-    }
+      const falData = await falResponse.json()
+      baseImage = falData.images?.[0]?.url
 
-    const data = await response.json()
-    console.log('AI response received')
+      console.log('✅ Fal.ai Nano Banana PRO image generated successfully')
 
-    // Extract the base image from the response
-    const baseImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url
+      // Track API cost for Fal.ai
+      if (userId) {
+        await supabase.from('api_cost_tracking').insert({
+          user_id: userId,
+          feature_type: 'creative_image',
+          api_provider: userHasByok ? 'fal_ai_byok' : 'fal_ai',
+          cost_usd: userHasByok ? 0 : 0.003, // BYOK users don't cost us
+          metadata: { format: config?.format, prompt: prompt.substring(0, 100), model: 'nano-banana-pro' }
+        })
+      }
 
-    if (!baseImage) {
-      console.error('Failed to extract base image')
-      throw new Error('Failed to extract generated image from AI response')
-    }
+    } else {
+      // Use Lovable AI Gateway (standard tier)
+      console.log('🌐 Using Lovable AI Gateway (gemini-2.5-flash-image-preview)')
+      
+      const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
+      if (!lovableApiKey) {
+        throw new Error('Lovable API key not configured')
+      }
 
-    console.log('Base image generated successfully')
+      // Prepare the message content with images
+      const imageContent = images.map((img: string) => ({
+        type: "image_url",
+        image_url: { url: img }
+      }))
 
-    // Return base image only + suggested copy (if generated)
-    const description = data.choices?.[0]?.message?.content || 'Creative base generated successfully'
+      const messageContent = [
+        { type: "text", text: enhancedPrompt },
+        ...imageContent
+      ]
 
-    // Track API cost
-    const authHeader = req.headers.get('authorization')
-    if (authHeader) {
-      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2')
-      const supabaseClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
-      const { data: { user } } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
-      if (user) {
-        await supabaseClient.from('api_cost_tracking').insert({
-          user_id: user.id,
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash-image-preview',
+          messages: [{ role: "user", content: messageContent }],
+          modalities: ["image", "text"]
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Lovable AI Gateway error:', response.status, errorText)
+        
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+          )
+        }
+
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Créditos de IA esgotados. Por favor, adicione mais créditos.'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+          )
+        }
+
+        throw new Error(`AI Gateway error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      baseImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url
+
+      console.log('✅ Lovable AI Gateway image generated successfully')
+
+      // Track API cost for Lovable AI
+      if (userId) {
+        await supabase.from('api_cost_tracking').insert({
+          user_id: userId,
           feature_type: 'creative_image',
           api_provider: 'lovable_ai',
           cost_usd: 0.0015,
@@ -231,11 +344,19 @@ OUTPUT SIZE: ${width}x${height} pixels`;
       }
     }
 
+    if (!baseImage) {
+      console.error('Failed to extract base image')
+      throw new Error('Failed to extract generated image from AI response')
+    }
+
+    console.log('🎉 Base image generated successfully')
+
     return new Response(
       JSON.stringify({ 
         baseImage,
         suggestedCopy: copyData || null,
-        description
+        description: 'Creative base generated successfully',
+        apiTier
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

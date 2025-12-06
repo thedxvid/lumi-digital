@@ -88,17 +88,90 @@ serve(async (req) => {
       }
     }
 
+    // Get user's api_tier and plan_type
+    const { data: limits } = await supabase
+      .from('usage_limits')
+      .select('api_tier, plan_type, carousel_images_monthly_limit, carousel_images_monthly_used')
+      .eq('user_id', user.id)
+      .single();
+
+    const apiTier = limits?.api_tier || 'standard';
+    const planType = limits?.plan_type || 'basic';
+    const isLumiPlan = planType === 'lumi';
+
+    console.log(`🎠 User ${user.id} - Plan: ${planType}, API Tier: ${apiTier}`);
+
+    // Check if user has admin role
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .single();
+
+    const isAdmin = !!roles;
+    const useProApi = apiTier === 'pro' || isAdmin;
+
+    // For Lumi plan, check carousel_images limit
+    if (isLumiPlan) {
+      const carouselImagesLimit = limits?.carousel_images_monthly_limit || 30;
+      const carouselImagesUsed = limits?.carousel_images_monthly_used || 0;
+      const imagesRemaining = carouselImagesLimit - carouselImagesUsed;
+
+      if (imageCount > imagesRemaining) {
+        return new Response(
+          JSON.stringify({ 
+            error: `Limite de imagens de carrossel atingido. Restam ${imagesRemaining} imagens este mês.`,
+            remaining: imagesRemaining
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Check for BYOK Fal.ai key
+    let userFalKey: string | null = null;
+    let userHasByok = false;
+
+    const { data: userApiKey } = await supabase
+      .from('user_api_keys')
+      .select('api_key_encrypted, is_active, is_valid')
+      .eq('user_id', user.id)
+      .eq('provider', 'fal_ai')
+      .eq('is_active', true)
+      .single();
+
+    if (userApiKey?.is_valid) {
+      userHasByok = true;
+      const encryptionKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.substring(0, 32) || '';
+      const { data: decryptedKey } = await supabase.rpc('decrypt_api_key', {
+        encrypted_text: userApiKey.api_key_encrypted,
+        encryption_key: encryptionKey
+      });
+      if (decryptedKey) {
+        userFalKey = decryptedKey;
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const FAL_KEY = Deno.env.get("FAL_KEY");
+
+    if (!useProApi && !LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    if (useProApi && !FAL_KEY && !userFalKey) {
+      return new Response(JSON.stringify({ error: "FAL_KEY not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     console.log('Generation mode:', generationMode);
-    console.log('Custom prompt:', customPrompt ? 'Present' : 'Missing');
-    console.log('Slides config:', slides ? `${slides.length} slides` : 'None');
+    console.log('API mode:', useProApi ? 'Fal.ai Nano Banana PRO' : 'Lovable AI Gateway');
     console.log(`Generating carousel "${title}" with ${imageCount} images`);
 
     // Theme descriptions for better prompts
@@ -155,12 +228,7 @@ serve(async (req) => {
 
     for (let i = 0; i < imageCount; i++) {
       const slide = slidesToProcess[i];
-      console.log(`Processing slide ${i + 1}/${imageCount}...`, {
-        imageMode: slide.imageMode,
-        uploadedImageIndex: slide.uploadedImageIndex,
-        hasVisualInstruction: !!slide.visualInstruction,
-        generationMode
-      });
+      console.log(`Processing slide ${i + 1}/${imageCount}...`);
 
       let imageUrl: string;
       let description: string;
@@ -171,12 +239,10 @@ serve(async (req) => {
         imageUrl = uploadedImages[slide.uploadedImageIndex];
         description = slide.visualInstruction || `Slide ${i + 1}`;
       } else {
-        // Gerar imagem com IA
+        // Build the prompt
         let slidePrompt: string;
-        const messageContent: any[] = [];
 
         if (slide.imageMode === 'generate-with-reference') {
-          // Gerar usando fotos de referência (manter identidade visual)
           slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
@@ -199,24 +265,8 @@ CRITICAL DESIGN REQUIREMENTS:
 
 IMPORTANT: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
           `.trim();
-
-          messageContent.push({
-            type: "text",
-            text: slidePrompt
-          });
-
-          // Adicionar todas as fotos de referência
-          uploadedImages.forEach((img) => {
-            messageContent.push({
-              type: "image_url",
-              image_url: { url: img }
-            });
-          });
-        } else {
-          // Gerar imagem do zero (sem referência)
-          if (generationMode === 'prompt-only' && customPrompt) {
-            // Modo prompt-only: usar o prompt customizado com contexto de sequência
-            slidePrompt = `
+        } else if (generationMode === 'prompt-only' && customPrompt) {
+          slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
 USER REQUEST: ${customPrompt}
@@ -239,10 +289,9 @@ ${tone ? `- Tone: ${toneDescriptions[tone] || tone}` : ''}
 ${i === 0 ? '\n- This is the FIRST slide - make it eye-catching and engaging' : ''}
 
 REMEMBER: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
-            `.trim();
-          } else {
-            // Modo config normal
-            slidePrompt = `
+          `.trim();
+        } else {
+          slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
 CRITICAL INSTRUCTION: 
@@ -267,63 +316,114 @@ CRITICAL:
 - Create space for text overlay (text will be added separately)
 - Focus on creating compelling visual backgrounds and elements
 - Maintain visual consistency with professional standards
-            `.trim();
+          `.trim();
+        }
+
+        console.log(`Calling ${useProApi ? 'Fal.ai' : 'Lovable AI'} to generate image for slide ${i + 1}...`);
+
+        if (useProApi) {
+          // Use Fal.ai Nano Banana PRO
+          const falApiKey = userHasByok && userFalKey ? userFalKey : FAL_KEY;
+
+          const messageContent: any[] = [{ type: "text", text: slidePrompt }];
+          
+          // Add reference images if mode is generate-with-reference
+          if (slide.imageMode === 'generate-with-reference') {
+            uploadedImages.forEach((img) => {
+              messageContent.push({
+                type: "image_url",
+                image_url: { url: img }
+              });
+            });
           }
 
-          messageContent.push({
-            type: "text",
-            text: slidePrompt
+          const falResponse = await fetch('https://queue.fal.run/fal-ai/nano-banana-pro', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Key ${falApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              prompt: slidePrompt,
+              image_size: 'square_hd',
+              num_inference_steps: 28,
+              guidance_scale: 3.5,
+              num_images: 1,
+              enable_safety_checker: true,
+              sync_mode: true
+            })
           });
-        }
 
-        console.log(`Calling AI to generate image for slide ${i + 1}...`);
-
-        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image-preview",
-            messages: [
-              {
-                role: "user",
-                content: messageContent,
-              },
-            ],
-            modalities: ["image", "text"],
-          }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`AI API error for slide ${i + 1}:`, response.status, errorText);
-          
-          if (response.status === 429) {
-            throw new Error("Rate limit exceeded. Please try again in a few moments.");
+          if (!falResponse.ok) {
+            const errorText = await falResponse.text();
+            console.error(`Fal.ai API error for slide ${i + 1}:`, falResponse.status, errorText);
+            
+            if (falResponse.status === 429) {
+              throw new Error("Rate limit exceeded. Please try again in a few moments.");
+            }
+            if (falResponse.status === 402 || falResponse.status === 401) {
+              throw new Error("Insufficient Fal.ai credits or invalid API key.");
+            }
+            
+            throw new Error(`Failed to generate image for slide ${i + 1}: ${falResponse.status}`);
           }
-          if (response.status === 402) {
-            throw new Error("Insufficient credits. Please add credits to your Lovable AI workspace.");
-          }
-          
-          throw new Error(`Failed to generate image for slide ${i + 1}: ${response.status} ${errorText}`);
-        }
 
-        const data = await response.json();
-        
-        imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        description = data.choices?.[0]?.message?.content || slide.visualInstruction || `Slide ${i + 1}`;
+          const falData = await falResponse.json();
+          imageUrl = falData.images?.[0]?.url;
+          description = slide.visualInstruction || `Slide ${i + 1}`;
+
+        } else {
+          // Use Lovable AI Gateway
+          const messageContent: any[] = [{ type: "text", text: slidePrompt }];
+          
+          if (slide.imageMode === 'generate-with-reference') {
+            uploadedImages.forEach((img) => {
+              messageContent.push({
+                type: "image_url",
+                image_url: { url: img }
+              });
+            });
+          }
+
+          const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash-image-preview",
+              messages: [{ role: "user", content: messageContent }],
+              modalities: ["image", "text"],
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`AI API error for slide ${i + 1}:`, response.status, errorText);
+            
+            if (response.status === 429) {
+              throw new Error("Rate limit exceeded. Please try again in a few moments.");
+            }
+            if (response.status === 402) {
+              throw new Error("Insufficient credits. Please add credits to your Lovable AI workspace.");
+            }
+            
+            throw new Error(`Failed to generate image for slide ${i + 1}: ${response.status}`);
+          }
+
+          const data = await response.json();
+          imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          description = data.choices?.[0]?.message?.content || slide.visualInstruction || `Slide ${i + 1}`;
+        }
 
         if (!imageUrl) {
-          console.error(`No image URL for slide ${i + 1}:`, JSON.stringify(data, null, 2));
+          console.error(`No image URL for slide ${i + 1}`);
           throw new Error(`No image URL returned for slide ${i + 1}`);
         }
       }
 
       console.log(`✅ Generated image for slide ${i + 1} successfully`);
-      
-      // Store only the base image without text
       images.push({ url: imageUrl, description });
       
       // Add small delay between requests to avoid rate limiting
@@ -362,13 +462,34 @@ CRITICAL:
 
     console.log("Carousel generated successfully:", carouselData.id);
 
+    // Update usage limits based on plan type
+    if (isLumiPlan) {
+      // For Lumi plan, increment carousel_images_monthly_used
+      await supabase
+        .from('usage_limits')
+        .update({
+          carousel_images_monthly_used: (limits?.carousel_images_monthly_used || 0) + imageCount
+        })
+        .eq('user_id', user.id);
+      
+      console.log(`📊 Updated carousel_images_monthly_used +${imageCount} for Lumi user`);
+    } else {
+      // For other plans, increment carousels_monthly_used
+      await supabase
+        .from('usage_limits')
+        .update({
+          carousels_monthly_used: (limits?.carousels_monthly_used || 0) + 1
+        })
+        .eq('user_id', user.id);
+    }
+
     // Track API cost
     await supabase.from('api_cost_tracking').insert({
       user_id: user.id,
       feature_type: 'carousel',
-      api_provider: 'lovable_ai',
-      cost_usd: 0.015,
-      metadata: { title, imageCount, theme }
+      api_provider: useProApi ? (userHasByok ? 'fal_ai_byok' : 'fal_ai') : 'lovable_ai',
+      cost_usd: useProApi ? (userHasByok ? 0 : 0.003 * imageCount) : 0.015,
+      metadata: { title, imageCount, theme, apiTier }
     });
 
     return new Response(
@@ -376,6 +497,7 @@ CRITICAL:
         success: true,
         carousel: carouselData,
         images,
+        apiTier: useProApi ? 'pro' : 'standard'
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

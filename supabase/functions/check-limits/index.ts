@@ -7,8 +7,9 @@ const corsHeaders = {
 };
 
 interface CheckLimitsRequest {
-  feature: 'creative_images' | 'profile_analysis' | 'carousels' | 'videos';
+  feature: 'creative_images' | 'profile_analysis' | 'carousels' | 'carousel_images' | 'videos';
   increment?: boolean;
+  imageCount?: number; // For carousel_images feature - how many images in this carousel
 }
 
 interface CheckLimitsResponse {
@@ -46,9 +47,9 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { feature, increment = false }: CheckLimitsRequest = await req.json();
+    const { feature, increment = false, imageCount = 0 }: CheckLimitsRequest = await req.json();
     
-    console.log(`🔍 [check-limits] Request for user ${user.id}:`, { feature, increment });
+    console.log(`🔍 [check-limits] Request for user ${user.id}:`, { feature, increment, imageCount });
 
     // Reset limits if needed
     await supabaseClient.rpc('reset_daily_limits');
@@ -115,16 +116,62 @@ serve(async (req) => {
         break;
 
       case 'carousels':
-        allowed = limits.carousels_monthly_used < limits.carousels_monthly_limit;
+        // For 'lumi' plan, check carousel_images instead
+        if (limits.plan_type === 'lumi') {
+          // Redirect to carousel_images check
+          const carouselImagesLimit = limits.carousel_images_monthly_limit || 30;
+          const carouselImagesUsed = limits.carousel_images_monthly_used || 0;
+          allowed = carouselImagesUsed < carouselImagesLimit;
+          limitInfo = {
+            limit: carouselImagesLimit,
+            used: carouselImagesUsed,
+            remaining: Math.max(0, carouselImagesLimit - carouselImagesUsed)
+          };
+          if (!allowed) {
+            reason = 'Limite mensal de imagens de carrossel atingido';
+            requiresUpgrade = true;
+          }
+        } else {
+          // Standard carousel count limit for other plans
+          allowed = limits.carousels_monthly_used < limits.carousels_monthly_limit;
+          limitInfo = {
+            limit: limits.carousels_monthly_limit,
+            used: limits.carousels_monthly_used,
+            remaining: Math.max(0, limits.carousels_monthly_limit - limits.carousels_monthly_used)
+          };
+          if (!allowed) {
+            reason = 'Limite mensal de carrosséis atingido';
+            requiresUpgrade = true;
+          }
+        }
+        break;
+
+      case 'carousel_images':
+        // New feature for Lumi plan - counts total images across all carousels
+        const carouselImagesLimit = limits.carousel_images_monthly_limit || 30;
+        const carouselImagesUsed = limits.carousel_images_monthly_used || 0;
+        const requestedImages = imageCount || 0;
+        
+        // Check if we can add the requested number of images
+        allowed = (carouselImagesUsed + requestedImages) <= carouselImagesLimit;
         limitInfo = {
-          limit: limits.carousels_monthly_limit,
-          used: limits.carousels_monthly_used,
-          remaining: Math.max(0, limits.carousels_monthly_limit - limits.carousels_monthly_used)
+          limit: carouselImagesLimit,
+          used: carouselImagesUsed,
+          remaining: Math.max(0, carouselImagesLimit - carouselImagesUsed)
         };
+        
         if (!allowed) {
-          reason = 'Limite mensal de carrosséis atingido';
+          reason = `Limite de imagens de carrossel atingido. Restam ${limitInfo.remaining} imagens este mês.`;
           requiresUpgrade = true;
         }
+        
+        console.log(`📊 [check-limits] Carousel images for user ${user.id}:`, {
+          limit: carouselImagesLimit,
+          used: carouselImagesUsed,
+          requested: requestedImages,
+          remaining: limitInfo.remaining,
+          allowed
+        });
         break;
 
       case 'videos':
@@ -171,20 +218,32 @@ serve(async (req) => {
           updates.profile_analysis_daily_used = limits.profile_analysis_daily_used + 1;
           break;
         case 'carousels':
-          updates.carousels_monthly_used = limits.carousels_monthly_used + 1;
+          if (limits.plan_type !== 'lumi') {
+            // Only increment carousel count for non-lumi plans
+            updates.carousels_monthly_used = limits.carousels_monthly_used + 1;
+          }
+          // For lumi plans, carousel_images increment is handled separately
           break;
-      case 'videos':
-        // NOTA: O incremento de vídeos NÃO é feito aqui porque o generate-video
-        // já decrementa os lifetime limits corretos (sora/kling) baseado na API usada.
-        // Fazer increment aqui causaria dupla contagem.
-        console.log('⚠️ Video increment skipped - handled by generate-video function');
-        break;
+        case 'carousel_images':
+          // Increment by the number of images being generated
+          updates.carousel_images_monthly_used = (limits.carousel_images_monthly_used || 0) + (imageCount || 1);
+          break;
+        case 'videos':
+          // NOTA: O incremento de vídeos NÃO é feito aqui porque o generate-video
+          // já decrementa os lifetime limits corretos (sora/kling) baseado na API usada.
+          // Fazer increment aqui causaria dupla contagem.
+          console.log('⚠️ Video increment skipped - handled by generate-video function');
+          break;
       }
 
-      await supabaseClient
-        .from('usage_limits')
-        .update(updates)
-        .eq('user_id', user.id);
+      if (Object.keys(updates).length > 0) {
+        await supabaseClient
+          .from('usage_limits')
+          .update(updates)
+          .eq('user_id', user.id);
+        
+        console.log(`✅ [check-limits] Updated usage for user ${user.id}:`, updates);
+      }
     }
 
     const response: CheckLimitsResponse = {
