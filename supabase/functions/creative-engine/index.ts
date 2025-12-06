@@ -212,7 +212,7 @@ OUTPUT SIZE: ${width}x${height} pixels`;
                             'square_hd';
 
       // Use the synchronous endpoint directly for immediate results
-      const falResponse = await fetch('https://fal.run/fal-ai/nano-banana', {
+      const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
         method: 'POST',
         headers: {
           'Authorization': `Key ${falApiKey}`,
