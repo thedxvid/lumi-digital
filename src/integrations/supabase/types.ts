@@ -892,6 +892,9 @@ export type Database = {
       }
       usage_limits: {
         Row: {
+          api_tier: string | null
+          carousel_images_monthly_limit: number | null
+          carousel_images_monthly_used: number | null
           carousels_monthly_limit: number
           carousels_monthly_used: number
           created_at: string | null
@@ -917,6 +920,9 @@ export type Database = {
           videos_monthly_used: number
         }
         Insert: {
+          api_tier?: string | null
+          carousel_images_monthly_limit?: number | null
+          carousel_images_monthly_used?: number | null
           carousels_monthly_limit?: number
           carousels_monthly_used?: number
           created_at?: string | null
@@ -942,6 +948,9 @@ export type Database = {
           videos_monthly_used?: number
         }
         Update: {
+          api_tier?: string | null
+          carousel_images_monthly_limit?: number | null
+          carousel_images_monthly_used?: number | null
           carousels_monthly_limit?: number
           carousels_monthly_used?: number
           created_at?: string | null

@@ -3,6 +3,9 @@ project_id = "mvlhtcdurcfiammzcvfv"
 [functions.kiwify-webhook]
 verify_jwt = false
 
+[functions.lumi-product-webhook]
+verify_jwt = false
+
 [functions.bulk-delete-users]
 verify_jwt = true
 
@@ -47,4 +50,3 @@ verify_jwt = true
 
 [functions.process-blackfriday-spreadsheet]
 verify_jwt = true
-

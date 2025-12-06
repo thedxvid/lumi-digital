@@ -1,5 +1,6 @@
-export type PlanType = 'free' | 'basic';
-export type DurationMonths = 1 | 3 | 6;
+export type PlanType = 'free' | 'basic' | 'lumi';
+export type DurationMonths = 1 | 3 | 6 | 12;
+export type ApiTier = 'standard' | 'pro';
 export type VideoAddonType = 
   | 'plus_10' 
   | 'plus_20' 
@@ -26,6 +27,7 @@ export interface UsageLimits {
   id: string;
   user_id: string;
   plan_type: PlanType;
+  api_tier?: ApiTier;
   creative_images_daily_limit: number;
   creative_images_daily_used: number;
   profile_analysis_daily_limit: number;
@@ -34,6 +36,8 @@ export interface UsageLimits {
   creative_images_monthly_used: number;
   carousels_monthly_limit: number;
   carousels_monthly_used: number;
+  carousel_images_monthly_limit?: number;
+  carousel_images_monthly_used?: number;
   videos_monthly_limit: number;
   videos_monthly_used: number;
   video_credits: number;
