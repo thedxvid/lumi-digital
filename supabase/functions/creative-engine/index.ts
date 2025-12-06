@@ -166,7 +166,41 @@ serve(async (req) => {
     let enhancedPrompt = prompt;
     
     if (config) {
-      enhancedPrompt = `🎨 VISUAL COMPOSITION ONLY - NO TEXT
+      // Check if we should include text in the generation (PRO tier with Nano Banana PRO)
+      const includeTextInGeneration = apiTier === 'pro' && (config.mainText || config.secondaryText || config.callToAction);
+      
+      if (includeTextInGeneration) {
+        // PRO tier: Generate image WITH text using Nano Banana PRO's native text capabilities
+        enhancedPrompt = `🎨 CREATIVE COMPOSITION WITH TEXT
+
+YOU ARE CREATING: ${config.creativeType} creative
+FORMAT: ${config.format}
+DIMENSIONS: ${dimensions} pixels (Aspect Ratio ${aspectRatio}:1)
+${width > height ? 'ORIENTATION: Horizontal/Landscape' : width < height ? 'ORIENTATION: Vertical/Portrait' : 'ORIENTATION: Square'}
+
+${config.mainText ? `📌 MAIN TEXT/HEADLINE: "${config.mainText}"` : ''}
+${config.secondaryText ? `📝 SECONDARY TEXT: "${config.secondaryText}"` : ''}
+${config.callToAction ? `🔘 CALL TO ACTION BUTTON: "${config.callToAction}"` : ''}
+
+COMPOSITION REQUIREMENTS:
+• Create image in EXACTLY ${dimensions} dimensions (${width}x${height} pixels)
+• Maintain ${aspectRatio}:1 aspect ratio precisely
+• Create a visually striking, professional composition
+• Render all text elements clearly, legibly, and beautifully integrated
+• Use appropriate typography hierarchy (headline larger, secondary smaller)
+• Ensure text contrasts well with background
+• Integrate provided images seamlessly if any
+• Make the CTA button stand out if provided
+
+${config.customPrompt ? `VISUAL STYLE:\n${config.customPrompt}\n` : ''}
+
+ADDITIONAL CONTEXT:
+${prompt}
+
+OUTPUT SIZE: ${width}x${height} pixels`;
+      } else {
+        // STANDARD tier or no text provided: Generate base image WITHOUT text
+        enhancedPrompt = `🎨 VISUAL COMPOSITION ONLY - NO TEXT
 
 IMPORTANT: Create a pure visual composition WITHOUT any text, words, or letters.
 
@@ -191,6 +225,7 @@ ${prompt}
 
 CRITICAL: This is a BASE IMAGE ONLY. Text will be overlaid programmatically later.
 OUTPUT SIZE: ${width}x${height} pixels`;
+      }
     }
 
     let baseImage: string | undefined
