@@ -19,9 +19,8 @@ export function FalAiKeyManager() {
   const isValid = falKey?.is_valid;
 
   useEffect(() => {
-    if (!isConnected) {
-      setIsEditing(true);
-    }
+    // Só mostra o formulário de edição se não estiver conectado
+    setIsEditing(!isConnected);
   }, [isConnected]);
 
   const handleSave = async () => {
