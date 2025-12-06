@@ -35,6 +35,7 @@ export interface CarouselHistoryItem {
 
 export function useCarousel() {
   const [loading, setLoading] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [history, setHistory] = useState<CarouselHistoryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
@@ -148,7 +149,7 @@ export function useCarousel() {
   };
 
   const loadHistory = async () => {
-    setLoading(true);
+    setLoadingHistory(true);
     try {
       const { data, error } = await supabase
         .from('carousel_history' as any)
@@ -162,7 +163,7 @@ export function useCarousel() {
       console.error('Error loading carousel history:', error);
       toast.error('Erro ao carregar histórico');
     } finally {
-      setLoading(false);
+      setLoadingHistory(false);
     }
   };
 
@@ -188,6 +189,7 @@ export function useCarousel() {
     loadHistory,
     deleteCarousel,
     loading,
+    loadingHistory,
     history,
     currentSlide,
     totalSlides,
