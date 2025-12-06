@@ -211,7 +211,8 @@ OUTPUT SIZE: ${width}x${height} pixels`;
                             width < height ? 'portrait_9_16' : 
                             'square_hd';
 
-      const falResponse = await fetch('https://queue.fal.run/fal-ai/nano-banana-pro', {
+      // Use the synchronous endpoint directly for immediate results
+      const falResponse = await fetch('https://fal.run/fal-ai/nano-banana', {
         method: 'POST',
         headers: {
           'Authorization': `Key ${falApiKey}`,
@@ -223,8 +224,7 @@ OUTPUT SIZE: ${width}x${height} pixels`;
           num_inference_steps: 28,
           guidance_scale: 3.5,
           num_images: 1,
-          enable_safety_checker: true,
-          sync_mode: true
+          enable_safety_checker: true
         })
       })
 
@@ -254,15 +254,48 @@ OUTPUT SIZE: ${width}x${height} pixels`;
       }
 
       const falData = await falResponse.json()
-      console.log('📦 Fal.ai response structure:', JSON.stringify(Object.keys(falData)))
-      console.log('📦 Fal.ai images field:', JSON.stringify(falData.images?.slice?.(0, 1) || falData.images || 'no images'))
+      console.log('📦 Fal.ai response keys:', JSON.stringify(Object.keys(falData)))
       
-      // Try multiple extraction paths (Fal.ai response format may vary)
-      baseImage = falData.images?.[0]?.url || 
-                  falData.images?.[0]?.image_url ||
-                  falData.output?.images?.[0]?.url ||
-                  falData.image?.url ||
-                  (typeof falData.images?.[0] === 'string' ? falData.images[0] : undefined)
+      // Handle both sync and queue responses
+      let imageData = falData
+      
+      // If we got a queue response, poll for the result
+      if (falData.status && falData.response_url) {
+        console.log('⏳ Got queue response, polling for result...')
+        let attempts = 0
+        const maxAttempts = 60 // Max 60 seconds
+        
+        while (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          const statusResponse = await fetch(falData.response_url, {
+            headers: { 'Authorization': `Key ${falApiKey}` }
+          })
+          
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json()
+            console.log('📦 Poll response status:', statusData.status)
+            
+            if (statusData.status === 'COMPLETED' || statusData.images) {
+              imageData = statusData
+              break
+            } else if (statusData.status === 'FAILED') {
+              throw new Error('Fal.ai generation failed')
+            }
+          }
+          attempts++
+        }
+        
+        if (attempts >= maxAttempts) {
+          throw new Error('Fal.ai generation timed out')
+        }
+      }
+      
+      // Extract image from the result
+      baseImage = imageData.images?.[0]?.url || 
+                  imageData.images?.[0]?.image_url ||
+                  imageData.output?.images?.[0]?.url ||
+                  (typeof imageData.images?.[0] === 'string' ? imageData.images[0] : undefined)
 
       console.log('✅ Fal.ai Nano Banana PRO image generated, baseImage exists:', !!baseImage)
 
