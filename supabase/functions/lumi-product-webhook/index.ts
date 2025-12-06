@@ -1,5 +1,55 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+
+// Zod schemas for input validation
+const CustomerSchema = z.object({
+  email: z.string().email().max(255),
+  first_name: z.string().max(100).optional().default(''),
+  last_name: z.string().max(100).optional().default(''),
+  mobile: z.string().max(20).optional().default('')
+});
+
+const ProductSchema = z.object({
+  product_id: z.string().max(100).optional().default(''),
+  product_name: z.string().max(255).optional().default(''),
+  product_offer_id: z.string().max(100).optional().default(''),
+  product_offer_name: z.string().max(255).optional().default('')
+}).optional();
+
+const SubscriptionPlanSchema = z.object({
+  id: z.string().max(100).optional(),
+  name: z.string().max(255).optional(),
+  frequency: z.string().max(50).optional(),
+  qty_charges: z.number().optional()
+}).optional();
+
+const SubscriptionSchema = z.object({
+  start_date: z.string().optional(),
+  next_payment: z.string().optional(),
+  status: z.string().max(50).optional(),
+  plan: SubscriptionPlanSchema
+}).optional();
+
+const LumiWebhookPayloadSchema = z.object({
+  order_id: z.string().max(100).optional(),
+  order_ref: z.string().max(100).optional(),
+  product_id: z.string().max(100).optional(),
+  product_name: z.string().max(255).optional(),
+  product_type: z.string().max(50).optional(),
+  checkout_link: z.string().url().max(500).optional().nullable(),
+  webhook_event_type: z.string().max(50).optional(),
+  approved_date: z.string().optional(),
+  Product: ProductSchema,
+  Customer: CustomerSchema,
+  Subscription: SubscriptionSchema,
+  order_status: z.enum(['paid', 'waiting_payment', 'refused', 'refunded', 'chargeback', 'cancelled']).optional(),
+  payment_method: z.string().max(50).optional(),
+  installments_number: z.number().min(0).max(100).optional(),
+  installment_value: z.number().min(0).optional(),
+  order_value: z.number().min(0).optional(),
+  order_value_formatted: z.string().max(50).optional()
+}).passthrough(); // Allow additional fields
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -132,10 +182,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const payload: KiwifyWebhookPayload = await req.json();
+    const rawPayload = await req.json();
     
-    console.log('📦 [lumi-product-webhook] Payload recebido:', JSON.stringify(payload, null, 2));
-    console.log('📦 Status do pedido:', payload.order_status);
+    // Validate input with Zod schema
+    const parseResult = LumiWebhookPayloadSchema.safeParse(rawPayload);
+    if (!parseResult.success) {
+      console.error('❌ [lumi-product-webhook] Payload validation failed:', parseResult.error.issues);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid payload format', details: parseResult.error.issues }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    const payload = parseResult.data as KiwifyWebhookPayload;
+    
+    // Log only non-sensitive identifiers (not full payload)
+    console.log('📦 [lumi-product-webhook] Webhook recebido:', {
+      orderId: payload.order_id,
+      status: payload.order_status,
+      hasCustomer: !!payload.Customer?.email,
+      productName: payload.product_name || payload.Product?.product_name
+    });
     
     // Validação - verificar se tem email
     if (!payload.Customer?.email) {
