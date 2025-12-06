@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sparkles, Zap } from "lucide-react";
 import { useUsageLimits } from "@/hooks/useUsageLimits";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { cn } from "@/lib/utils";
 
 interface ApiTierBadgeProps {
@@ -12,12 +13,14 @@ interface ApiTierBadgeProps {
 
 export function ApiTierBadge({ className, showTooltip = true, size = 'md' }: ApiTierBadgeProps) {
   const { limits, loading } = useUsageLimits();
+  const { isAdmin } = useAdminAuth();
 
   if (loading || !limits) {
     return null;
   }
 
-  const isPro = limits.api_tier === 'pro';
+  // Admins always get PRO tier dynamically
+  const isPro = limits.api_tier === 'pro' || isAdmin;
   const planType = limits.plan_type;
 
   const sizeClasses = {
@@ -73,7 +76,12 @@ export function ApiTierBadge({ className, showTooltip = true, size = 'md' }: Api
                 ? 'Você está usando a API Fal.ai Nano Banana PRO para geração de imagens de alta qualidade.'
                 : 'Você está usando a API Lovable AI Gateway (gemini-2.5-flash-image-preview).'}
             </p>
-            {planType === 'lumi' && (
+            {isAdmin && (
+              <p className="text-xs text-primary font-medium">
+                Admin - PRO automático
+              </p>
+            )}
+            {planType === 'lumi' && !isAdmin && (
               <p className="text-xs text-primary font-medium">
                 Plano Lumi ativo
               </p>
