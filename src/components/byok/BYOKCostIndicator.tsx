@@ -4,8 +4,17 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useBYOKCosts } from '@/hooks/useBYOKCosts';
-import { formatCostUSD } from '@/config/falPricing';
 import { useNavigate } from 'react-router-dom';
+
+// Taxa de câmbio USD -> BRL (pode ser atualizada conforme necessário)
+const USD_TO_BRL = 6.0;
+
+const formatBRL = (costUSD: number): string => {
+  const costBRL = costUSD * USD_TO_BRL;
+  if (costBRL < 0.01) return `R$ ${costBRL.toFixed(4).replace('.', ',')}`;
+  if (costBRL < 1) return `R$ ${costBRL.toFixed(2).replace('.', ',')}`;
+  return `R$ ${costBRL.toFixed(2).replace('.', ',')}`;
+};
 
 interface BYOKCostIndicatorProps {
   estimatedCost: number;
@@ -41,17 +50,17 @@ export const BYOKCostIndicator = ({
           <TooltipTrigger asChild>
             <Badge variant="outline" className="gap-1 cursor-help border-amber-500/50 text-amber-600 dark:text-amber-400">
               <Wallet className="h-3 w-3" />
-              ~{formatCostUSD(estimatedCost)}
+              ~{formatBRL(estimatedCost)}
             </Badge>
           </TooltipTrigger>
           <TooltipContent className="max-w-xs">
-            <p className="font-medium">Custo estimado: {formatCostUSD(estimatedCost)}</p>
+            <p className="font-medium">Custo estimado: {formatBRL(estimatedCost)}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Será debitado da sua conta Fal.ai
+              Será debitado da sua conta pessoal
             </p>
             <div className="mt-2 pt-2 border-t text-xs">
-              <p>Hoje: {formatCostUSD(costs.today)}</p>
-              <p>Este mês: {formatCostUSD(costs.month)}</p>
+              <p>Hoje: {formatBRL(costs.today)}</p>
+              <p>Este mês: {formatBRL(costs.month)}</p>
             </div>
           </TooltipContent>
         </Tooltip>
@@ -68,7 +77,7 @@ export const BYOKCostIndicator = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">BYOK Ativo</span>
+              <span className="text-sm font-medium">Sua Chave API</span>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -76,7 +85,7 @@ export const BYOKCostIndicator = ({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs text-xs">
-                      Você está usando sua própria chave Fal.ai. 
+                      Você está usando sua própria chave de API. 
                       Os custos serão debitados diretamente da sua conta.
                     </p>
                   </TooltipContent>
@@ -84,7 +93,7 @@ export const BYOKCostIndicator = ({
               </TooltipProvider>
             </div>
             <p className="text-xs text-muted-foreground">
-              Esta {featureLabels[featureType]}: <span className="font-semibold text-amber-600 dark:text-amber-400">~{formatCostUSD(estimatedCost)}</span>
+              Esta {featureLabels[featureType]}: <span className="font-semibold text-amber-600 dark:text-amber-400">~{formatBRL(estimatedCost)}</span>
               {model && <span className="ml-1 opacity-70">({model})</span>}
             </p>
           </div>
@@ -96,15 +105,15 @@ export const BYOKCostIndicator = ({
             <span>Hoje</span>
           </div>
           <p className="text-sm font-semibold">
-            {isLoading ? '...' : formatCostUSD(costs.today)}
+            {isLoading ? '...' : formatBRL(costs.today)}
           </p>
         </div>
       </div>
 
       <div className="mt-2 pt-2 border-t border-amber-500/20 flex items-center justify-between text-xs">
         <div className="flex gap-3 text-muted-foreground">
-          <span>Semana: {formatCostUSD(costs.week)}</span>
-          <span>Mês: {formatCostUSD(costs.month)}</span>
+          <span>Semana: {formatBRL(costs.week)}</span>
+          <span>Mês: {formatBRL(costs.month)}</span>
         </div>
         <Button 
           variant="ghost" 
