@@ -166,40 +166,41 @@ serve(async (req) => {
     let enhancedPrompt = prompt;
     
     if (config) {
-      // Check if we should include text in the generation (PRO tier with Nano Banana PRO)
-      const includeTextInGeneration = apiTier === 'pro' && (config.mainText || config.secondaryText || config.callToAction);
-      
-      if (includeTextInGeneration) {
-        // PRO tier: Generate image WITH text using Nano Banana PRO's native text capabilities
-        enhancedPrompt = `🎨 CREATIVE COMPOSITION WITH TEXT
+      // PRO tier ALWAYS uses full creative freedom with native text generation
+      // The Nano Banana PRO model can render text directly from prompts
+      if (apiTier === 'pro') {
+        // Build text elements section only if specific fields are provided
+        const textElements: string[] = [];
+        if (config.mainText) textElements.push(`📌 MAIN TEXT/HEADLINE: "${config.mainText}"`);
+        if (config.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${config.secondaryText}"`);
+        if (config.callToAction) textElements.push(`🔘 CALL TO ACTION BUTTON: "${config.callToAction}"`);
+        
+        // PRO tier: Full creative freedom with Nano Banana PRO - NEVER block text
+        enhancedPrompt = `🎨 CREATIVE COMPOSITION
 
 YOU ARE CREATING: ${config.creativeType} creative
 FORMAT: ${config.format}
 DIMENSIONS: ${dimensions} pixels (Aspect Ratio ${aspectRatio}:1)
 ${width > height ? 'ORIENTATION: Horizontal/Landscape' : width < height ? 'ORIENTATION: Vertical/Portrait' : 'ORIENTATION: Square'}
 
-${config.mainText ? `📌 MAIN TEXT/HEADLINE: "${config.mainText}"` : ''}
-${config.secondaryText ? `📝 SECONDARY TEXT: "${config.secondaryText}"` : ''}
-${config.callToAction ? `🔘 CALL TO ACTION BUTTON: "${config.callToAction}"` : ''}
+${textElements.length > 0 ? `TEXT ELEMENTS TO INCLUDE:\n${textElements.join('\n')}` : ''}
 
 COMPOSITION REQUIREMENTS:
 • Create image in EXACTLY ${dimensions} dimensions (${width}x${height} pixels)
 • Maintain ${aspectRatio}:1 aspect ratio precisely
 • Create a visually striking, professional composition
-• Render all text elements clearly, legibly, and beautifully integrated
+• Integrate provided images seamlessly if any
+${textElements.length > 0 ? `• Render all text elements clearly, legibly, and beautifully integrated
 • Use appropriate typography hierarchy (headline larger, secondary smaller)
 • Ensure text contrasts well with background
-• Integrate provided images seamlessly if any
-• Make the CTA button stand out if provided
+• Make the CTA button stand out if provided` : '• Include any text elements described in the visual direction below'}
 
-${config.customPrompt ? `VISUAL STYLE:\n${config.customPrompt}\n` : ''}
-
-ADDITIONAL CONTEXT:
-${prompt}
+VISUAL DIRECTION:
+${config.customPrompt || prompt}
 
 OUTPUT SIZE: ${width}x${height} pixels`;
       } else {
-        // STANDARD tier or no text provided: Generate base image WITHOUT text
+        // STANDARD tier: Generate base image WITHOUT text (text added via canvas later)
         enhancedPrompt = `🎨 VISUAL COMPOSITION ONLY - NO TEXT
 
 IMPORTANT: Create a pure visual composition WITHOUT any text, words, or letters.
