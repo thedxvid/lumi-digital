@@ -7,12 +7,16 @@ import { CreativeHistoryGallery } from "@/components/creative/CreativeHistoryGal
 import { CreativeConfigForm, type CreativeConfig } from "@/components/creative/CreativeConfigForm";
 import { CreativeResultModal } from "@/components/creative/CreativeResultModal";
 import { ApiTierBadge } from "@/components/dashboard/ApiTierBadge";
+import { BYOKCostIndicator } from "@/components/byok/BYOKCostIndicator";
+import { useBYOKCosts } from "@/hooks/useBYOKCosts";
 import { toast } from "sonner";
-
 export default function CreativeEngine() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [config, setConfig] = useState<CreativeConfig | null>(null);
   const [generationMode, setGenerationMode] = useState<'with-image' | 'prompt-only'>('with-image');
+  
+  const { hasBYOK, registerCost, estimateImageCost } = useBYOKCosts();
+  const imageCost = estimateImageCost('nano-banana-pro');
   
   const { 
     generateCreative, 
@@ -46,20 +50,29 @@ export default function CreativeEngine() {
     // No modo prompt-only, usa apenas o customPrompt
     if (generationMode === 'prompt-only') {
       setConfig(formConfig);
-      await generateCreative(imagesToUse, formConfig.customPrompt!.trim(), formConfig);
+      const result = await generateCreative(imagesToUse, formConfig.customPrompt!.trim(), formConfig);
+      if (result && hasBYOK) {
+        await registerCost('creative_image', 'nano-banana-pro', imageCost);
+      }
       return;
     }
     
     // No modo with-image, pode usar customPrompt ou gerar um prompt baseado na config
     if (formConfig.customPrompt && formConfig.customPrompt.trim()) {
       setConfig(formConfig);
-      await generateCreative(imagesToUse, formConfig.customPrompt.trim(), formConfig);
+      const result = await generateCreative(imagesToUse, formConfig.customPrompt.trim(), formConfig);
+      if (result && hasBYOK) {
+        await registerCost('creative_image', 'nano-banana-pro', imageCost);
+      }
       return;
     }
 
     const fullPrompt = `Create a ${formConfig.creativeType} creative...`;
     setConfig(formConfig);
-    await generateCreative(imagesToUse, fullPrompt, formConfig);
+    const result = await generateCreative(imagesToUse, fullPrompt, formConfig);
+    if (result && hasBYOK) {
+      await registerCost('creative_image', 'nano-banana-pro', imageCost);
+    }
   };
 
   return (
@@ -72,6 +85,13 @@ export default function CreativeEngine() {
         <Tabs defaultValue="create">
           <TabsList><TabsTrigger value="create">Criar</TabsTrigger><TabsTrigger value="results">Resultados</TabsTrigger></TabsList>
           <TabsContent value="create" className="space-y-6 mt-6">
+            {hasBYOK && (
+              <BYOKCostIndicator 
+                estimatedCost={imageCost} 
+                featureType="image" 
+                model="Nano Banana PRO"
+              />
+            )}
             <Card>
               <CardHeader><CardTitle>Modo de Geração</CardTitle></CardHeader>
               <CardContent>
