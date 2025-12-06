@@ -404,35 +404,6 @@ export const VideoConfigForm = ({
             </div>
           </div>
 
-          {/* Alerta BYOK para Veo 3.1 */}
-          {!hasFalApiKey && !loadingKeys && (
-            <Alert className="border-primary/30 bg-primary/5">
-              <Lock className="h-4 w-4 text-primary" />
-              <AlertTitle className="text-primary font-semibold">
-                🔓 Desbloqueie o Veo 3.1
-              </AlertTitle>
-              <AlertDescription className="text-foreground/80">
-                Conecte sua API key do Fal.ai para usar os modelos Google Veo 3.1 com melhor qualidade e realismo!
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-primary underline ml-1"
-                  onClick={() => navigate('/app/settings')}
-                  type="button"
-                >
-                  Conectar agora
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Info sobre créditos Kling */}
-          {apiProvider?.includes('kling') && (
-            <Alert className="border-blue-500/30 bg-blue-500/5">
-              <AlertDescription className="text-sm text-foreground/80">
-                💡 <strong>Kling</strong> usa seus créditos Lumi incluídos no plano. Conecte sua chave Fal.ai para usar o Veo 3.1 sem consumir créditos do plano.
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* API Provider */}
           <div className="space-y-3">
