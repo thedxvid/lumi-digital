@@ -90,7 +90,6 @@ export const VideoPlayer = ({
         autoPlay={autoPlay}
         playsInline
         preload="metadata"
-        crossOrigin="anonymous"
         className={className}
       />
       

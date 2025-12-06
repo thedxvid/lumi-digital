@@ -120,6 +120,18 @@ serve(async (req) => {
           .eq('user_id', targetUserId)
           .eq('provider', provider);
 
+        // Se a chave for válida, atualizar api_tier para 'pro'
+        if (isValid) {
+          console.log(`🚀 Atualizando api_tier para 'pro' para usuário ${targetUserId}`);
+          await supabaseClient
+            .from('usage_limits')
+            .update({ 
+              api_tier: 'pro',
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', targetUserId);
+        }
+
         if (!isValid) {
           const errorText = await testResponse.text();
           return new Response(
