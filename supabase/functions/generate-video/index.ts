@@ -219,15 +219,15 @@ serve(async (req) => {
         requiresUserKey: false
       },
       
-      // ===== VEO 3 - APENAS BYOK =====
-      fal_veo3_fast: {
-        endpoint: 'https://fal.run/fal-ai/veo3/fast',
+      // ===== VEO 3.1 - APENAS BYOK =====
+      fal_veo31: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1',
         key: FAL_KEY, // Nunca será usado
         authPrefix: 'Key',
         requiresUserKey: true
       },
-      fal_veo3_image_to_video: {
-        endpoint: 'https://fal.run/fal-ai/veo3/fast/image-to-video',
+      fal_veo31_image_to_video: {
+        endpoint: 'https://fal.run/fal-ai/veo3.1/image-to-video',
         key: FAL_KEY, // Nunca será usado
         authPrefix: 'Key',
         requiresUserKey: true
@@ -243,9 +243,9 @@ serve(async (req) => {
       );
     }
 
-    // 🚨 PROTEÇÃO CRÍTICA: Veo 3 só pode ser usado com API key do usuário
+    // 🚨 PROTEÇÃO CRÍTICA: Veo 3.1 só pode ser usado com API key do usuário
     if (selectedAPI.requiresUserKey && !isUsingUserKey) {
-      console.error('❌ BLOCKED: Attempt to use Veo 3 without user API key');
+      console.error('❌ BLOCKED: Attempt to use Veo 3.1 without user API key');
       return new Response(
         JSON.stringify({ 
           error: 'Este modelo requer que você conecte sua própria API key do Fal.ai nas Configurações → Integrações. Isso garante uso ilimitado sem consumir créditos da plataforma.',
@@ -268,8 +268,8 @@ serve(async (req) => {
     // Preparar body específico para cada API e modo
     let requestBody: any;
     
-    // === VEO 3 TEXT-TO-VIDEO ===
-    if (api_provider === 'fal_veo3_fast') {
+    // === VEO 3.1 TEXT-TO-VIDEO ===
+    if (api_provider === 'fal_veo31') {
       requestBody = {
         prompt,
         aspect_ratio,
@@ -278,11 +278,11 @@ serve(async (req) => {
       };
     }
     
-    // === VEO 3 IMAGE-TO-VIDEO ===
-    else if (api_provider === 'fal_veo3_image_to_video') {
+    // === VEO 3.1 IMAGE-TO-VIDEO ===
+    else if (api_provider === 'fal_veo31_image_to_video') {
       if (!input_images || input_images.length < 1) {
         return new Response(
-          JSON.stringify({ error: 'Veo 3 Image-to-Video requer 1 imagem' }),
+          JSON.stringify({ error: 'Veo 3.1 Image-to-Video requer 1 imagem' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

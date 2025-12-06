@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CarouselGallery } from '@/components/creative/CarouselGallery';
 import { CarouselConfigForm, type CarouselConfig } from '@/components/creative/CarouselConfigForm';
 import { CarouselResultModal } from '@/components/creative/CarouselResultModal';
+import { CarouselGenerationProgress } from '@/components/creative/CarouselGenerationProgress';
 import { ApiTierBadge } from '@/components/dashboard/ApiTierBadge';
 import { BYOKCostIndicator } from '@/components/byok/BYOKCostIndicator';
 import { useCarousel } from '@/hooks/useCarousel';
@@ -67,6 +68,7 @@ export default function CreativeCarousel() {
         </TabsContent>
       </Tabs>
 
+      <CarouselGenerationProgress isGenerating={loading} slideCount={slideCount} />
       <CarouselResultModal open={resultModalOpen} onOpenChange={setResultModalOpen} carousel={lastGeneratedCarousel} onRegenerate={() => {
       setResultModalOpen(false);
       // Could implement regeneration logic here
