@@ -46,6 +46,7 @@ interface User {
     creative_images_monthly_limit: number;
     videos_monthly_used: number;
     videos_monthly_limit: number;
+    api_tier?: string;
   };
   order?: {
     order_value: number;
@@ -1687,6 +1688,18 @@ const AdminUsers = () => {
                     {user.subscription && (
                       <Badge variant="outline" className="capitalize">
                         {user.subscription.plan_type}
+                      </Badge>
+                    )}
+                    {/* API Tier Badge */}
+                    {user.usage_limits?.api_tier && (
+                      <Badge 
+                        variant="outline"
+                        className={user.usage_limits.api_tier === 'pro' 
+                          ? "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700" 
+                          : "bg-muted text-muted-foreground"
+                        }
+                      >
+                        {user.usage_limits.api_tier === 'pro' ? '✨ PRO' : '⚡ Standard'}
                       </Badge>
                     )}
                   </div>

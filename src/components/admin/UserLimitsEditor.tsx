@@ -11,10 +11,12 @@ import { Loader2 } from 'lucide-react';
 
 interface UsageLimits {
   plan_type: string;
+  api_tier: string;
   creative_images_daily_limit: number;
   creative_images_monthly_limit: number;
   profile_analysis_daily_limit: number;
   carousels_monthly_limit: number;
+  carousel_images_monthly_limit: number;
   videos_monthly_limit: number;
   video_credits: number;
   kling_image_videos_lifetime_limit: number;
@@ -68,10 +70,12 @@ export const UserLimitsEditor = ({ userId, userName, isOpen, onClose, onSuccess 
         .from('usage_limits')
         .update({
           plan_type: limits.plan_type,
+          api_tier: limits.api_tier,
           creative_images_daily_limit: limits.creative_images_daily_limit,
           creative_images_monthly_limit: limits.creative_images_monthly_limit,
           profile_analysis_daily_limit: limits.profile_analysis_daily_limit,
           carousels_monthly_limit: limits.carousels_monthly_limit,
+          carousel_images_monthly_limit: limits.carousel_images_monthly_limit,
           videos_monthly_limit: limits.videos_monthly_limit,
           video_credits: limits.video_credits,
           kling_image_videos_lifetime_limit: limits.kling_image_videos_lifetime_limit,
@@ -107,18 +111,33 @@ export const UserLimitsEditor = ({ userId, userName, isOpen, onClose, onSuccess 
           </div>
         ) : limits ? (
           <div className="space-y-6">
-            {/* Plano */}
-            <div>
-              <Label>Tipo de Plano</Label>
-              <Select value={limits.plan_type} onValueChange={(value) => setLimits({ ...limits, plan_type: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="basic">Básico</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Plano e API Tier */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Tipo de Plano</Label>
+                <Select value={limits.plan_type} onValueChange={(value) => setLimits({ ...limits, plan_type: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="basic">Básico</SelectItem>
+                    <SelectItem value="lumi">Lumi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>API Tier</Label>
+                <Select value={limits.api_tier || 'standard'} onValueChange={(value) => setLimits({ ...limits, api_tier: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">⚡ Standard (Lovable AI)</SelectItem>
+                    <SelectItem value="pro">✨ PRO (Nano Banana PRO)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Separator />
@@ -169,14 +188,25 @@ export const UserLimitsEditor = ({ userId, userName, isOpen, onClose, onSuccess 
             {/* Carousels */}
             <div>
               <h3 className="font-semibold mb-3">Carousels</h3>
-              <div>
-                <Label>Limite Mensal</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={limits.carousels_monthly_limit}
-                  onChange={(e) => setLimits({ ...limits, carousels_monthly_limit: parseInt(e.target.value) || 0 })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Carrosséis Mensais</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={limits.carousels_monthly_limit}
+                    onChange={(e) => setLimits({ ...limits, carousels_monthly_limit: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>Imagens/Carrossel (Lumi)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={limits.carousel_images_monthly_limit || 0}
+                    onChange={(e) => setLimits({ ...limits, carousel_images_monthly_limit: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
               </div>
             </div>
 
