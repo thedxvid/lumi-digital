@@ -31,6 +31,9 @@ export interface CreativeConfig {
   creativeType: string;
   format: string;
   customPrompt?: string;
+  mainText?: string;
+  secondaryText?: string;
+  callToAction?: string;
 }
 
 export function useCreativeEngine() {
