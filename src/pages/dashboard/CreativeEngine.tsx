@@ -6,6 +6,7 @@ import { ImageUploader } from "@/components/creative/ImageUploader";
 import { CreativeHistoryGallery } from "@/components/creative/CreativeHistoryGallery";
 import { CreativeConfigForm, type CreativeConfig } from "@/components/creative/CreativeConfigForm";
 import { CreativeResultModal } from "@/components/creative/CreativeResultModal";
+import { ApiTierBadge } from "@/components/dashboard/ApiTierBadge";
 import { toast } from "sonner";
 
 export default function CreativeEngine() {
@@ -64,7 +65,10 @@ export default function CreativeEngine() {
   return (
     <>
       <div className="w-full max-w-7xl mx-auto py-6 px-4">
-        <h1 className="text-3xl font-bold mb-2">Máquina de Criativos</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-bold">Máquina de Criativos</h1>
+          <ApiTierBadge size="md" />
+        </div>
         <Tabs defaultValue="create">
           <TabsList><TabsTrigger value="create">Criar</TabsTrigger><TabsTrigger value="results">Resultados</TabsTrigger></TabsList>
           <TabsContent value="create" className="space-y-6 mt-6">

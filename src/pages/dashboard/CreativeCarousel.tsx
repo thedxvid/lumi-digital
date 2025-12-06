@@ -4,7 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CarouselGallery } from '@/components/creative/CarouselGallery';
 import { CarouselConfigForm, type CarouselConfig } from '@/components/creative/CarouselConfigForm';
 import { CarouselResultModal } from '@/components/creative/CarouselResultModal';
+import { ApiTierBadge } from '@/components/dashboard/ApiTierBadge';
 import { useCarousel } from '@/hooks/useCarousel';
+
 export default function CreativeCarousel() {
   const {
     generateCarousel,
@@ -22,10 +24,13 @@ export default function CreativeCarousel() {
   };
   return <div className="w-full max-w-6xl mx-auto space-y-6 px-4">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Sparkles className="w-8 h-8 text-primary" />
-          Carrosséis com IA
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Sparkles className="w-8 h-8 text-primary" />
+            Carrosséis com IA
+          </h1>
+          <ApiTierBadge size="md" />
+        </div>
         <p className="text-muted-foreground">Gere carrosséis de imagens sequenciais para Instagram e redes sociais </p>
       </div>
 
