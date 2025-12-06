@@ -1,5 +1,57 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+
+// Zod schemas for input validation
+const CustomerSchema = z.object({
+  email: z.string().email().max(255),
+  first_name: z.string().max(100).optional().default(''),
+  last_name: z.string().max(100).optional().default(''),
+  mobile: z.string().max(20).optional().default('')
+}).optional();
+
+const ProductSchema = z.object({
+  product_id: z.string().max(100).optional().default(''),
+  product_name: z.string().max(255).optional().default(''),
+  product_offer_id: z.string().max(100).optional().default(''),
+  product_offer_name: z.string().max(255).optional().default('')
+}).optional();
+
+const OrderStatusEnum = z.enum([
+  'paid', 'waiting_payment', 'refused', 'refunded', 
+  'chargeback', 'cancelled', 'abandoned', 'approved'
+]).optional();
+
+// Flexible schema that accepts both flat and nested formats
+const WebhookPayloadSchema = z.object({
+  // Flat format fields
+  id: z.string().max(100).optional(),
+  email: z.string().email().max(255).optional(),
+  name: z.string().max(200).optional(),
+  first_name: z.string().max(100).optional(),
+  phone: z.string().max(20).optional(),
+  status: z.string().max(50).optional(),
+  offer_name: z.string().max(255).optional(),
+  
+  // Nested format fields
+  order_id: z.string().max(100).optional(),
+  order_ref: z.string().max(100).optional(),
+  product_id: z.string().max(100).optional(),
+  product_name: z.string().max(255).optional(),
+  product_type: z.string().max(50).optional(),
+  checkout_link: z.string().url().max(500).optional().nullable(),
+  webhook_event_type: z.string().max(50).optional(),
+  approved_date: z.string().optional(),
+  access_url: z.string().max(500).optional(),
+  Product: ProductSchema,
+  Customer: CustomerSchema,
+  order_status: OrderStatusEnum,
+  payment_method: z.string().max(50).optional(),
+  installments_number: z.number().min(0).max(100).optional(),
+  installment_value: z.number().min(0).optional(),
+  order_value: z.number().min(0).optional(),
+  order_value_formatted: z.string().max(50).optional()
+}).passthrough(); // Allow additional fields we don't validate
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -180,10 +232,27 @@ serve(async (req) => {
     });
 
     const rawPayload = await req.json();
-    console.log('📦 Payload RAW recebido:', JSON.stringify(rawPayload, null, 2));
+    
+    // Validate input with Zod schema
+    const parseResult = WebhookPayloadSchema.safeParse(rawPayload);
+    if (!parseResult.success) {
+      console.error('❌ Payload validation failed:', parseResult.error.issues);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid payload format', details: parseResult.error.issues }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Log only non-sensitive identifiers (not full payload)
+    console.log('📦 Webhook recebido:', {
+      orderId: rawPayload.order_id || rawPayload.id,
+      status: rawPayload.order_status || rawPayload.status,
+      hasCustomer: !!rawPayload.Customer?.email || !!rawPayload.email,
+      productName: rawPayload.product_name || rawPayload.Product?.product_name
+    });
     
     // Normalizar payload para formato padrão
-    const payload = normalizePayload(rawPayload);
+    const payload = normalizePayload(parseResult.data);
     
     console.log('📦 Tipo de evento:', payload.webhook_event_type || 'não especificado');
     console.log('📦 Status do pedido:', payload.order_status);
