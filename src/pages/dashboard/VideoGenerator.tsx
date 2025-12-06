@@ -8,8 +8,10 @@ import { VideoHistoryGallery } from '@/components/video/VideoHistoryGallery';
 import { VideoResultModal } from '@/components/video/VideoResultModal';
 import { CreditsExhaustedModal } from '@/components/video/CreditsExhaustedModal';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { BYOKCostIndicator } from '@/components/byok/BYOKCostIndicator';
 import { useVideoGenerator } from '@/hooks/useVideoGenerator';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { useBYOKCosts } from '@/hooks/useBYOKCosts';
 import { Video, History, AlertCircle, ShoppingCart, Wand2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { VideoConfig, VideoHistoryItem } from '@/types/video';
@@ -20,6 +22,9 @@ const VideoGenerator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { limits } = useUsageLimits();
+  const { hasBYOK, registerCost, estimateVideoCost } = useBYOKCosts();
+  const [selectedModel, setSelectedModel] = useState('kling-2.5-turbo');
+  const [videoDuration, setVideoDuration] = useState(5);
   const {
     loading,
     history,
@@ -102,7 +107,24 @@ const VideoGenerator = () => {
 
 
   const handleGenerate = async (config: VideoConfig) => {
-    await generateVideo(config);
+    // Atualizar modelo e duração selecionados para o indicador
+    const model = config.api_provider || 'kling-2.5-turbo';
+    const durationStr = config.duration || '5s';
+    const durationNum = parseInt(durationStr.replace('s', ''), 10) || 5;
+    
+    setSelectedModel(model);
+    setVideoDuration(durationNum);
+    
+    const result = await generateVideo(config);
+    
+    // Registrar custo BYOK se aplicável
+    if (result && hasBYOK) {
+      const cost = estimateVideoCost(model, durationNum);
+      await registerCost('video', model, cost, { 
+        duration: durationStr,
+        mode: config.mode 
+      });
+    }
   };
   const handleRegenerate = () => {
     if (currentConfig) {
@@ -204,6 +226,13 @@ const VideoGenerator = () => {
         </TabsList>
 
         <TabsContent value="create" className="space-y-6">
+          {hasBYOK && (
+            <BYOKCostIndicator 
+              estimatedCost={estimateVideoCost(selectedModel, videoDuration)} 
+              featureType="video" 
+              model={selectedModel}
+            />
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Criar Novo Vídeo</CardTitle>

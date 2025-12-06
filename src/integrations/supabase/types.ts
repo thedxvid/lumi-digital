@@ -1055,6 +1055,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_byok_costs: {
+        Row: {
+          api_model: string
+          created_at: string | null
+          estimated_cost_usd: number
+          feature_type: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          api_model: string
+          created_at?: string | null
+          estimated_cost_usd: number
+          feature_type: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          api_model?: string
+          created_at?: string | null
+          estimated_cost_usd?: number
+          feature_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_goals: {
         Row: {
           created_at: string | null
