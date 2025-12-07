@@ -35,6 +35,10 @@ export function CreativeConfigForm({
   loading,
   generationMode = 'with-image'
 }: CreativeConfigFormProps) {
+  // Separate states for each generation mode to prevent shared state issue
+  const [promptWithImage, setPromptWithImage] = useState('');
+  const [promptOnly, setPromptOnly] = useState('');
+  
   const [config, setConfig] = useState<CreativeConfig>({
     creativeType: 'social-post',
     format: 'square',
@@ -44,15 +48,22 @@ export function CreativeConfigForm({
     secondaryText: '',
     callToAction: ''
   });
+  
   const updateConfig = (field: keyof CreativeConfig, value: string) => {
     setConfig(prev => ({
       ...prev,
       [field]: value
     }));
   };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onGenerate(config);
+    // Use the correct prompt based on the generation mode
+    const finalConfig = {
+      ...config,
+      customPrompt: generationMode === 'prompt-only' ? promptOnly : promptWithImage
+    };
+    onGenerate(finalConfig);
   };
   return <form onSubmit={handleSubmit} className="space-y-6">
       {generationMode === 'prompt-only' ? <>
@@ -96,9 +107,9 @@ export function CreativeConfigForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Textarea value={config.customPrompt || ''} onChange={e => updateConfig('customPrompt', e.target.value)} placeholder="Ex: Crie um post para Instagram quadrado com fundo azul gradiente, estilo moderno e minimalista, composição centralizada com espaço para texto..." className="min-h-[300px] resize-y" />
+              <Textarea value={promptOnly} onChange={e => setPromptOnly(e.target.value)} placeholder="Ex: Crie um post para Instagram quadrado com fundo azul gradiente, estilo moderno e minimalista, composição centralizada com espaço para texto..." className="min-h-[300px] resize-y" />
               <p className="text-xs text-muted-foreground mt-2">
-                {config.customPrompt?.length || 0} caracteres
+                {promptOnly.length} caracteres
               </p>
             </CardContent>
           </Card>
@@ -181,9 +192,9 @@ export function CreativeConfigForm({
             <CardContent>
               <div className="space-y-2">
                 <Label htmlFor="customPrompt">Descreva o visual que você quer</Label>
-                <Textarea id="customPrompt" value={config.customPrompt || ''} onChange={e => updateConfig('customPrompt', e.target.value)} placeholder="Ex: Fundo com gradiente azul para roxo, estilo moderno e clean, com elementos geométricos sutis..." className="min-h-[120px] resize-y" />
+                <Textarea id="customPrompt" value={promptWithImage} onChange={e => setPromptWithImage(e.target.value)} placeholder="Ex: Fundo com gradiente azul para roxo, estilo moderno e clean, com elementos geométricos sutis..." className="min-h-[120px] resize-y" />
                 <p className="text-xs text-muted-foreground">
-                  {config.customPrompt?.length || 0} caracteres
+                  {promptWithImage.length} caracteres
                 </p>
               </div>
             </CardContent>

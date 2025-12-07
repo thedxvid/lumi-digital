@@ -14,6 +14,9 @@ interface SlideConfig {
   imageMode: 'upload' | 'generate' | 'generate-with-reference';
   uploadedImageIndex: number | null;
   visualInstruction: string;
+  headline?: string;
+  secondaryText?: string;
+  ctaText?: string;
 }
 
 interface GenerateCarouselRequest {
@@ -291,7 +294,46 @@ ${i === 0 ? '\n- This is the FIRST slide - make it eye-catching and engaging' : 
 REMEMBER: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
           `.trim();
         } else {
-          slidePrompt = `
+          // Check if slide has native text elements
+          const hasNativeText = slide.headline || slide.secondaryText || slide.ctaText;
+          
+          if (useProApi && hasNativeText) {
+            // PRO tier with native text - render text directly in the image
+            const textElements: string[] = [];
+            if (slide.headline) textElements.push(`📌 HEADLINE: "${slide.headline}"`);
+            if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
+            if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
+            
+            slidePrompt = `
+🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
+
+VISUAL INSTRUCTION: ${slide.visualInstruction}
+
+TEXT ELEMENTS TO RENDER DIRECTLY ON IMAGE:
+${textElements.join('\n')}
+
+DESIGN SPECIFICATIONS:
+- Square aspect ratio (1:1) optimized for Instagram carousel
+- Theme: ${themeDescriptions[theme] || theme}
+- Color palette: ${paletteDescriptions[colorPalette] || colorPalette}
+- Tone: ${toneDescriptions[tone] || tone}
+${i === 0 ? '\n- This is the FIRST slide - make it eye-catching and engaging to hook the viewer' : ''}
+
+TYPOGRAPHY REQUIREMENTS:
+- Render all text clearly and legibly
+- Use appropriate typography hierarchy (headline larger, secondary smaller)
+- Ensure text contrasts well with background
+- Make the CTA button/text stand out if provided
+- Professional font styling that matches the theme
+
+CRITICAL:
+- Professional visual aesthetic throughout
+- Integrate text naturally into the composition
+- Maintain visual consistency with professional standards
+            `.trim();
+          } else {
+            // Standard tier or no native text - generate visuals only
+            slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
 CRITICAL INSTRUCTION: 
@@ -316,7 +358,8 @@ CRITICAL:
 - Create space for text overlay (text will be added separately)
 - Focus on creating compelling visual backgrounds and elements
 - Maintain visual consistency with professional standards
-          `.trim();
+            `.trim();
+          }
         }
 
         console.log(`Calling ${useProApi ? 'Fal.ai' : 'Lovable AI'} to generate image for slide ${i + 1}...`);
