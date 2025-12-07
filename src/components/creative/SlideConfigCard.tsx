@@ -49,6 +49,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
   const [isOpen, setIsOpen] = useState(slideNumber === 1);
   const [enhancing, setEnhancing] = useState(false);
   const [customColorInput, setCustomColorInput] = useState('');
+  const [isChangingMode, setIsChangingMode] = useState(false);
 
   // Validate hex color
   const isValidHex = (hex: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
@@ -124,10 +125,13 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 {/* Card: Gerar nova imagem */}
                 <div 
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    console.log('[SlideConfigCard] Clicou em generate');
-                    if (disabled) return;
+                    if (isChangingMode || disabled) return;
+                    
+                    setIsChangingMode(true);
                     onChange({ ...slide, imageMode: 'generate', format: 'square' });
+                    setTimeout(() => setIsChangingMode(false), 150);
                   }}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
@@ -155,15 +159,17 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 {/* Card: Usar foto enviada */}
                 <div 
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    console.log('[SlideConfigCard] Clicou em upload, disabled:', disabled, 'uploadedImagesCount:', uploadedImagesCount);
-                    if (disabled) return;
+                    if (isChangingMode || disabled) return;
                     if (uploadedImagesCount === 0) {
                       toast.error('Envie imagens primeiro para usar esta opção');
                       return;
                     }
-                    console.log('[SlideConfigCard] Chamando onChange com imageMode: upload');
+                    
+                    setIsChangingMode(true);
                     onChange({ ...slide, imageMode: 'upload', format: 'original' });
+                    setTimeout(() => setIsChangingMode(false), 150);
                   }}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border transition-colors",
@@ -198,14 +204,17 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 {/* Card: Gerar usando referência */}
                 <div 
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    console.log('[SlideConfigCard] Clicou em generate-with-reference');
-                    if (disabled) return;
+                    if (isChangingMode || disabled) return;
                     if (uploadedImagesCount === 0) {
                       toast.error('Envie imagens primeiro para usar esta opção');
                       return;
                     }
+                    
+                    setIsChangingMode(true);
                     onChange({ ...slide, imageMode: 'generate-with-reference', format: 'square' });
+                    setTimeout(() => setIsChangingMode(false), 150);
                   }}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border transition-colors",
