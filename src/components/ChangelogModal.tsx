@@ -78,13 +78,20 @@ const ChangelogEntryCard = ({ entry, isLatest }: { entry: ChangelogEntry; isLate
   );
 };
 
-export const ChangelogModal = () => {
+interface ChangelogModalProps {
+  trigger?: React.ReactNode;
+}
+
+export const ChangelogModal = ({ trigger }: ChangelogModalProps = {}) => {
   const [open, setOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   
   const latestVersion = getLatestVersion();
   
+  // Auto-open on new version (only when no trigger is provided)
   useEffect(() => {
+    if (trigger) return; // Skip auto-open if trigger is provided
+    
     const lastSeenVersion = localStorage.getItem(CHANGELOG_STORAGE_KEY);
     const sessionKey = 'lumi-changelog-shown-this-session';
     const shownThisSession = sessionStorage.getItem(sessionKey);
@@ -98,18 +105,30 @@ export const ChangelogModal = () => {
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [latestVersion.version]);
+  }, [latestVersion.version, trigger]);
   
   const handleDismiss = () => {
     localStorage.setItem(CHANGELOG_STORAGE_KEY, latestVersion.version);
     setOpen(false);
     setShowHistory(false);
   };
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
   
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <>
+      {/* Trigger button (when provided) */}
+      {trigger && (
+        <div onClick={handleOpen} className="cursor-pointer">
+          {trigger}
+        </div>
+      )}
+      
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -197,5 +216,6 @@ export const ChangelogModal = () => {
         </div>
       )}
     </AnimatePresence>
+    </>
   );
 };

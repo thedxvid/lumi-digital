@@ -10,9 +10,11 @@ import { PurchaseHistory } from './PurchaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useAuthErrors } from '@/hooks/useAuthErrors';
 import { ApiKeyIntegrations } from '../settings/ApiKeyIntegrations';
+import { ChangelogModal } from '../ChangelogModal';
+import { changelog } from '@/data/changelog';
 
 export function SettingsContent() {
   const { user } = useAuth();
@@ -281,6 +283,37 @@ export function SettingsContent() {
 
       {/* Histórico de Compras */}
       <PurchaseHistory />
+
+      {/* Sobre o App */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Sobre o App
+          </CardTitle>
+          <CardDescription>
+            Versão atual e histórico de atualizações
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Versão Atual</Label>
+              <p className="text-sm text-muted-foreground">
+                v{changelog[0]?.version || '1.0.0'}
+              </p>
+            </div>
+            <ChangelogModal 
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Ver Novidades
+                </Button>
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Aparência */}
       <Card>
