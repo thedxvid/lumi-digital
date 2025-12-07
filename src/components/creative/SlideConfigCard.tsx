@@ -1,10 +1,13 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ImageIcon, Sparkles, Edit, Type } from 'lucide-react';
+import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
 
 interface SlideConfigCardProps {
@@ -18,6 +21,35 @@ interface SlideConfigCardProps {
 
 export function SlideConfigCard({ slideNumber, slide, onChange, disabled, uploadedImagesCount, showTextFields = false }: SlideConfigCardProps) {
   const [isOpen, setIsOpen] = useState(slideNumber === 1);
+  const [enhancing, setEnhancing] = useState(false);
+
+  const enhanceVisualPrompt = async () => {
+    if (!slide.visualInstruction.trim()) return;
+    
+    setEnhancing(true);
+    try {
+      // Contexto especial para modo de referência (preservação de identidade)
+      const context = slide.imageMode === 'generate-with-reference' 
+        ? 'identity-preservation-carousel' 
+        : 'carousel-slide';
+      
+      const { data, error } = await supabase.functions.invoke('enhance-prompt', {
+        body: { prompt: slide.visualInstruction, context }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.enhancedPrompt) {
+        onChange({ ...slide, visualInstruction: data.enhancedPrompt });
+        toast.success('Prompt melhorado com instruções de preservação de identidade!');
+      }
+    } catch (error) {
+      console.error('Error enhancing prompt:', error);
+      toast.error('Erro ao melhorar prompt');
+    } finally {
+      setEnhancing(false);
+    }
+  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -122,9 +154,33 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   disabled={disabled}
                   className="min-h-[80px] resize-none"
                 />
+                
+                {/* Botão Melhorar Prompt - aparece para modos de geração */}
+                {(slide.imageMode === 'generate' || slide.imageMode === 'generate-with-reference') && (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={enhanceVisualPrompt}
+                      disabled={enhancing || !slide.visualInstruction.trim() || disabled}
+                      className="gap-2"
+                    >
+                      {enhancing ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-4 h-4" />
+                      )}
+                      {slide.imageMode === 'generate-with-reference' 
+                        ? 'Melhorar Prompt (preservar identidade)'
+                        : 'Melhorar Prompt'}
+                    </Button>
+                  </div>
+                )}
+                
                 {slide.imageMode === 'generate-with-reference' && (
                   <p className="text-xs text-muted-foreground">
-                    A IA usará suas fotos enviadas como referência para manter sua identidade visual
+                    💡 Dica: Clique em "Melhorar Prompt" para adicionar automaticamente instruções de preservação facial e corporal
                   </p>
                 )}
               </div>

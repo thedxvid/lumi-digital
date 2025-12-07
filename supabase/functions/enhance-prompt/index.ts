@@ -17,14 +17,48 @@ serve(async (req) => {
       throw new Error('Prompt is required')
     }
 
-    console.log('Enhancing prompt:', prompt.substring(0, 100))
+    console.log('Enhancing prompt:', prompt.substring(0, 100), 'Context:', context)
 
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
     if (!lovableApiKey) {
       throw new Error('Lovable API key not configured')
     }
 
-    const systemPrompt = `You are an expert prompt engineer specializing in AI image generation. Your task is to transform user prompts into highly detailed, optimized prompts for PHOTOREALISTIC image generation.
+    let systemPrompt: string;
+    let maxChars = 500;
+
+    // Sistema de prompts especializados baseado no contexto
+    if (context === 'identity-preservation-carousel') {
+      // Contexto especial para preservação de identidade (modo "gerar com referência")
+      maxChars = 800;
+      systemPrompt = `You are an expert prompt engineer for AI image generation with IDENTITY PRESERVATION.
+
+The user is providing reference photos of themselves and wants to appear in a new scene/scenario.
+
+YOUR TASK: Transform their prompt into a detailed instruction that:
+
+1. ALWAYS output the enhanced prompt in ENGLISH
+2. CRITICAL IDENTITY PRESERVATION - Include these EXACT instructions:
+   - "ANALYZE the facial structure, skin tone, hair color, hair style, and body type from the reference photos"
+   - "Generate a COMPLETELY NEW image where this EXACT person appears naturally in the requested scene"
+   - "DO NOT copy-paste or cut the body from the reference photo"
+   - "Create a natural, realistic pose appropriate for the scene"
+   - "MAINTAIN the person's exact facial features, eye color, nose shape, and overall appearance"
+   - "The clothing and pose can be different from the reference"
+   - "Make it look like a real professional photograph of THIS person in the new setting"
+
+3. Make the scene description more specific and vivid
+4. Add professional photography terms: "shot on professional camera", "natural lighting", "shallow depth of field"
+5. Add realism modifiers: "photorealistic", "hyperrealistic", "lifelike details"
+6. Include composition details for professional quality
+7. Maximum ${maxChars} characters
+8. DO NOT add explanations - just output the enhanced prompt
+
+EXAMPLE INPUT: "me coloque em frente a uma mansão"
+EXAMPLE OUTPUT: "ANALYZE my facial structure, skin tone, hair color/style, and body type from the reference photos. Generate a COMPLETELY NEW professional photograph where I appear standing confidently in front of a luxurious modern mansion with manicured gardens. DO NOT copy-paste my body - create a natural, relaxed pose appropriate for the setting. MAINTAIN my exact facial features and overall appearance. Shot on professional camera, soft natural lighting, shallow depth of field, photorealistic, hyperrealistic skin texture, 8k quality. The mansion should have elegant architecture with warm golden hour lighting."`;
+    } else {
+      // Contexto padrão para geração de imagens
+      systemPrompt = `You are an expert prompt engineer specializing in AI image generation. Your task is to transform user prompts into highly detailed, optimized prompts for PHOTOREALISTIC image generation.
 
 RULES:
 1. ALWAYS output the enhanced prompt in ENGLISH
@@ -37,11 +71,12 @@ RULES:
 8. Keep the user's original intent but enhance for maximum photorealism
 9. Format the output as a single, cohesive prompt
 10. DO NOT add any explanations - just output the enhanced prompt
-11. Maximum 500 characters
+11. Maximum ${maxChars} characters
 
 ${context ? `Context: This is for a ${context} creative - ensure photorealistic commercial quality.` : ''}
 
-Transform the user's prompt into a professional, PHOTOREALISTIC image generation prompt with realistic lighting, shadows, and textures.`
+Transform the user's prompt into a professional, PHOTOREALISTIC image generation prompt with realistic lighting, shadows, and textures.`;
+    }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -56,7 +91,7 @@ Transform the user's prompt into a professional, PHOTOREALISTIC image generation
           { role: 'user', content: `Original prompt: "${prompt}"` }
         ],
         temperature: 0.7,
-        max_tokens: 600
+        max_tokens: 800
       })
     })
 
@@ -81,7 +116,7 @@ Transform the user's prompt into a professional, PHOTOREALISTIC image generation
       throw new Error('Failed to enhance prompt')
     }
 
-    console.log('Enhanced prompt:', enhancedPrompt.substring(0, 100))
+    console.log('Enhanced prompt:', enhancedPrompt.substring(0, 150))
 
     return new Response(
       JSON.stringify({ enhancedPrompt }),

@@ -237,36 +237,57 @@ serve(async (req) => {
       let imageUrl: string;
       let description: string;
 
-      // Se o modo for 'upload', verificar se tem texto nativo para processar
-      if (slide.imageMode === 'upload' && slide.uploadedImageIndex !== null && uploadedImages[slide.uploadedImageIndex]) {
-        const uploadedImage = uploadedImages[slide.uploadedImageIndex];
-        const hasNativeText = slide.headline || slide.secondaryText || slide.ctaText;
-        
-        if (useProApi && hasNativeText) {
-          // PRO tier with text: Use /edit endpoint to add text overlay to uploaded image
-          console.log(`Processing uploaded image ${slide.uploadedImageIndex} with native text for slide ${i + 1}...`);
+        // Se o modo for 'upload', verificar se tem texto nativo para processar
+        if (slide.imageMode === 'upload' && slide.uploadedImageIndex !== null && uploadedImages[slide.uploadedImageIndex]) {
+          const uploadedImage = uploadedImages[slide.uploadedImageIndex];
+          const hasNativeText = slide.headline || slide.secondaryText || slide.ctaText;
           
-          const textElements: string[] = [];
-          if (slide.headline) textElements.push(`📌 HEADLINE: "${slide.headline}"`);
-          if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
-          if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
+          console.log(`🔍 Upload mode - Slide ${i + 1}:`, {
+            hasNativeText,
+            hasVisualInstruction: Boolean(slide.visualInstruction),
+            uploadedImageIndex: slide.uploadedImageIndex
+          });
           
-          const editPrompt = `
-Add professional text overlay to this image:
+          if (useProApi && hasNativeText) {
+            // PRO tier with text: Use /edit endpoint to add text overlay to uploaded image
+            console.log(`Processing uploaded image ${slide.uploadedImageIndex} with native text for slide ${i + 1}...`);
+            
+            const textElements: string[] = [];
+            if (slide.headline) textElements.push(`📌 HEADLINE: "${slide.headline}"`);
+            if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
+            if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
+            
+            // PROTEÇÃO: Prompt muito restritivo para NÃO alterar pessoas
+            const editPrompt = `
+⚠️ CRITICAL INSTRUCTION - TEXT OVERLAY ONLY ⚠️
 
+This is EXCLUSIVELY a text overlay task. You MUST:
+
+🔒 PRESERVE 100% - DO NOT CHANGE:
+- Every person's face, body, pose, expression, skin, hair
+- All colors, lighting, shadows, and composition
+- Background and all scene elements
+- Original image quality and resolution
+
+✅ ONLY ADD TEXT OVERLAY:
 ${textElements.join('\n')}
 
-${slide.visualInstruction ? `ADDITIONAL ADJUSTMENTS: ${slide.visualInstruction}` : ''}
+❌ ABSOLUTELY DO NOT:
+- Change, swap, alter, or modify any person's appearance
+- Replace or regenerate any face or body
+- Modify backgrounds, colors, or lighting
+- Regenerate any part of the image
 
-TYPOGRAPHY REQUIREMENTS:
-- Render all text clearly and legibly as a FLOATING GRAPHIC DESIGN LAYER
-- Use appropriate typography hierarchy (headline larger, secondary smaller)
-- Ensure text contrasts well with background
-- Make the CTA button/text stand out if provided
-- Professional font styling
-- NEVER place text inside scene objects (signs, walls, screens)
-- Use safe margins (keep text at least 80px from edges)
-- Maintain the original image composition
+Think of this as adding a TRANSPARENT TEXT LAYER on top of a photograph.
+The underlying photograph must remain EXACTLY the same.
+
+${slide.visualInstruction && !slide.visualInstruction.toLowerCase().includes('pessoa') && !slide.visualInstruction.toLowerCase().includes('rosto') && !slide.visualInstruction.toLowerCase().includes('face') ? `MINOR STYLE ADJUSTMENTS (text only): ${slide.visualInstruction}` : ''}
+
+TYPOGRAPHY:
+- Render text as floating overlay layer
+- Professional font styling with good contrast
+- Keep text away from faces
+- Use safe margins (80px from edges)
           `.trim();
 
           const falApiKey = userHasByok && userFalKey ? userFalKey : FAL_KEY;
@@ -492,11 +513,51 @@ CRITICAL:
           // Check if we need to use edit endpoint (with reference images)
           const useEditEndpoint = slide.imageMode === 'generate-with-reference' && uploadedImages.length > 0;
           
+          // Log detalhado para debug
+          console.log(`🔍 Slide ${i + 1} processing:`, {
+            imageMode: slide.imageMode,
+            endpoint: useEditEndpoint ? '/edit' : '/standard',
+            referenceImagesCount: uploadedImages.length,
+            hasNativeText: Boolean(slide.headline || slide.secondaryText || slide.ctaText),
+            promptPreview: slidePrompt.substring(0, 150) + '...'
+          });
+          
           let falResponse;
           
           if (useEditEndpoint) {
-            // Use edit endpoint with reference images
-            console.log(`Processing uploaded image ${uploadedImages.length > 0 ? 0 : 'none'} with reference for slide ${i + 1}...`);
+            // Use edit endpoint with reference images for identity preservation
+            console.log(`🎭 Identity preservation mode for slide ${i + 1} - using ${uploadedImages.length} reference image(s)`);
+            
+            // Prompt aprimorado para preservação de identidade
+            const identityPrompt = `
+${slidePrompt}
+
+🎭 CRITICAL IDENTITY PRESERVATION INSTRUCTIONS:
+
+STEP 1 - ANALYZE THE REFERENCE PHOTO(S):
+- Study the person's facial structure, bone structure, face shape
+- Note the exact skin tone, complexion, and any distinguishing features
+- Observe hair color, texture, style, and length
+- Analyze body type, posture, and proportions
+
+STEP 2 - GENERATE A NEW IMAGE:
+- Create a COMPLETELY NEW photograph in the requested scenario
+- The person in the new image must have the EXACT same face as the reference
+- DO NOT copy-paste or cut the body - generate naturally
+- The pose, clothing, and angle can be different
+- Make it look like a real professional photograph
+
+STEP 3 - QUALITY CHECK:
+- The face must be recognizable as the SAME person
+- Natural, realistic lighting and shadows
+- Professional photography quality
+- The person should look natural in the new environment
+
+⚠️ DO NOT:
+- Simply paste the reference image into a new background
+- Change the person's face or identity
+- Make the image look artificial or composited
+            `.trim();
             
             falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
               method: 'POST',
@@ -505,11 +566,11 @@ CRITICAL:
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                prompt: `${slidePrompt}\n\nIMPORTANT: Use the reference image(s) as inspiration. Preserve the visual identity, style, and key elements from the reference while creating the new composition.`,
+                prompt: identityPrompt,
                 image_urls: uploadedImages,
                 image_size: 'square_hd',
                 num_inference_steps: 28,
-                guidance_scale: 3.5,
+                guidance_scale: 4.0, // Ligeiramente maior para melhor aderência ao prompt
                 num_images: 1,
                 enable_safety_checker: true
               })
