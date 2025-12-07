@@ -1,4 +1,4 @@
-import { Image, FileText, Film, ShoppingCart } from 'lucide-react';
+import { Image, FileText, Film, ShoppingCart, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
@@ -21,6 +21,7 @@ export function UsageLimitBarSidebar() {
       used: limits.creative_images_daily_used,
       limit: limits.creative_images_daily_limit,
       color: 'text-purple-600',
+      isMonthly: false,
     },
     {
       icon: FileText,
@@ -28,6 +29,15 @@ export function UsageLimitBarSidebar() {
       used: limits.profile_analysis_daily_used,
       limit: limits.profile_analysis_daily_limit,
       color: 'text-blue-600',
+      isMonthly: false,
+    },
+    {
+      icon: Layers,
+      name: 'Carrosséis',
+      used: limits.carousel_images_monthly_used || limits.carousels_monthly_used || 0,
+      limit: limits.carousel_images_monthly_limit || limits.carousels_monthly_limit || 0,
+      color: 'text-orange-600',
+      isMonthly: true,
     },
     {
       icon: Film,
@@ -35,9 +45,9 @@ export function UsageLimitBarSidebar() {
       used: (limits.kling_image_videos_lifetime_used || 0) + limits.video_credits_used,
       limit: (limits.kling_image_videos_lifetime_limit || 1) + limits.video_credits,
       color: 'text-green-600',
+      isMonthly: true,
     },
   ];
-
   const getStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-red-500';
     if (percentage >= 80) return 'bg-yellow-500';
@@ -114,7 +124,7 @@ export function UsageLimitBarSidebar() {
 
                     {/* Próxima renovação */}
                     <div className="text-xs text-muted-foreground border-t border-border pt-2">
-                      {feature.name === 'Vídeos' ? (
+                      {feature.isMonthly ? (
                         <>
                           <p className="font-medium mb-1">Renovação Mensal:</p>
                           <p>{getNextMonthlyReset()}</p>
