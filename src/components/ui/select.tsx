@@ -132,6 +132,38 @@ const SelectItem = React.forwardRef<
 ))
 SelectItem.displayName = SelectPrimitive.Item.displayName
 
+interface SelectItemWithIconProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> {
+  icon?: React.ReactNode;
+  subText?: string;
+}
+
+const SelectItemWithIcon = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Item>,
+  SelectItemWithIconProps
+>(({ className, children, icon, subText, ...props }, ref) => (
+  <SelectPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <SelectPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </SelectPrimitive.ItemIndicator>
+    </span>
+    
+    <span className="flex items-center gap-2 w-full">
+      {icon && <span className="flex-shrink-0">{icon}</span>}
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      {subText && <span className="text-xs text-muted-foreground ml-1">{subText}</span>}
+    </span>
+  </SelectPrimitive.Item>
+))
+SelectItemWithIcon.displayName = "SelectItemWithIcon"
+
 const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
@@ -152,6 +184,7 @@ export {
   SelectContent,
   SelectLabel,
   SelectItem,
+  SelectItemWithIcon,
   SelectSeparator,
   SelectScrollUpButton,
   SelectScrollDownButton,
