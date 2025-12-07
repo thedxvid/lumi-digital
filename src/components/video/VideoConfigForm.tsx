@@ -41,13 +41,13 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     requires_user_key: false
   },
   
-  // ===== VEO 3.1 (Apenas BYOK) - Melhor qualidade =====
+  // ===== VEO 3.1 (Apenas BYOK) - Melhor qualidade + Áudio =====
   {
     id: 'fal_veo31',
     name: 'fal_veo31',
     display_name: 'Veo 3.1 (Text-to-Video)',
     cost_per_8s: 0.60,
-    description: 'Google Veo 3.1: melhor qualidade e realismo',
+    description: '🔊 Google Veo 3.1: melhor qualidade, realismo e COM ÁUDIO',
     provider: 'Google Veo',
     mode: 'text-to-video',
     requires_user_key: true
@@ -57,7 +57,7 @@ const VIDEO_APIS: VideoAPIConfig[] = [
     name: 'fal_veo31_image_to_video',
     display_name: 'Veo 3.1 (Image-to-Video)',
     cost_per_8s: 0.60,
-    description: 'Transforma imagens em vídeo com Veo 3.1',
+    description: '🔊 Transforma imagens em vídeo com Veo 3.1 COM ÁUDIO',
     provider: 'Google Veo',
     mode: 'image-to-video',
     requires_images: 1,
@@ -146,13 +146,8 @@ export const VideoConfigForm = ({
     }
   }, [mode, apiProvider, hasFalApiKey]);
 
-  // Filter APIs based on mode and BYOK availability
-  const availableAPIs = VIDEO_APIS.filter(api => {
-    if (api.mode !== mode) return false;
-    // Veo 3 só aparece se tiver BYOK
-    if (api.requires_user_key && !hasFalApiKey) return false;
-    return true;
-  });
+  // Filter APIs based on mode - show all APIs but mark locked ones
+  const availableAPIs = VIDEO_APIS.filter(api => api.mode === mode);
 
   // Update API provider when mode changes
   const handleModeChange = (newMode: VideoMode) => {
@@ -415,25 +410,67 @@ export const VideoConfigForm = ({
                 </span>
               )}
             </Label>
-            <Select value={apiProvider} onValueChange={setApiProvider} disabled={loading}>
+            <Select 
+              value={apiProvider} 
+              onValueChange={(value) => {
+                const selectedApi = VIDEO_APIS.find(api => api.id === value);
+                // Bloquear seleção de Veo 3.1 se não tiver BYOK
+                if (selectedApi?.requires_user_key && !hasFalApiKey) {
+                  toast.info('Veo 3.1 requer créditos extras', {
+                    description: 'Adquira créditos para desbloquear este modelo premium'
+                  });
+                  return;
+                }
+                setApiProvider(value);
+              }} 
+              disabled={loading}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione um modelo de IA" />
               </SelectTrigger>
               <SelectContent className="max-w-[calc(100vw-2rem)]">
-                {availableAPIs.map((api) => (
-                  <SelectItem key={api.id} value={api.id} className="py-3">
-                    <div className="flex flex-col gap-0.5 max-w-full">
-                      <div className="font-medium text-sm leading-tight break-words">
-                        {api.display_name}
+                {availableAPIs.map((api) => {
+                  const isLocked = api.requires_user_key && !hasFalApiKey;
+                  
+                  return (
+                    <SelectItem 
+                      key={api.id} 
+                      value={api.id} 
+                      className={`py-3 ${isLocked ? 'opacity-70' : ''}`}
+                    >
+                      <div className="flex flex-col gap-0.5 max-w-full">
+                        <div className="font-medium text-sm leading-tight break-words flex items-center gap-2">
+                          {api.display_name}
+                          {isLocked && (
+                            <Lock className="h-3.5 w-3.5 text-amber-500" />
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground leading-tight break-words">
+                          {api.description}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground leading-tight break-words">
-                        {api.description}
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+
+            {/* Link para desbloquear Veo 3.1 */}
+            {!hasFalApiKey && (
+              <div className="flex items-center gap-2 text-sm">
+                <Lock className="h-4 w-4 text-amber-500" />
+                <span className="text-muted-foreground">
+                  Quer usar o <strong>Veo 3.1 com áudio</strong>?{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/app/settings')}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Conecte sua chave Fal.ai nas Configurações
+                  </button>
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
