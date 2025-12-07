@@ -102,7 +102,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
     setCustomColorInput(formatted);
     
     if (isValidHex(formatted)) {
-      onChange({ ...slide, textColor: formatted });
+      onChange((prev) => ({ ...prev, textColor: formatted }));
     }
   };
 
@@ -125,7 +125,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
       if (error) throw error;
       
       if (data?.enhancedPrompt) {
-        onChange({ ...slide, visualInstruction: data.enhancedPrompt });
+        onChange((prev) => ({ ...prev, visualInstruction: data.enhancedPrompt }));
         toast.success('Prompt melhorado com instruções de preservação de identidade!');
       }
     } catch (error) {
@@ -256,7 +256,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   <Label>Qual foto usar?</Label>
                   <Select 
                     value={slide.uploadedImageIndex?.toString() || ''} 
-                    onValueChange={(value) => onChange({ ...slide, uploadedImageIndex: parseInt(value) })}
+                    onValueChange={(value) => onChange((prev) => ({ ...prev, uploadedImageIndex: parseInt(value) }))}
                     disabled={disabled}
                   >
                     <SelectTrigger>
@@ -281,7 +281,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 </Label>
                 <Select 
                   value={slide.format || (slide.imageMode === 'upload' ? 'original' : 'square')} 
-                  onValueChange={(value) => onChange({ ...slide, format: value })}
+                  onValueChange={(value) => onChange((prev) => ({ ...prev, format: value }))}
                   disabled={disabled}
                 >
                   <SelectTrigger>
@@ -323,7 +323,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       : 'Ex: fundo branco liso e minimalista, com elementos geométricos sutis...'
                   }
                   value={slide.visualInstruction}
-                  onChange={(e) => onChange({ ...slide, visualInstruction: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    onChange((prev) => ({ ...prev, visualInstruction: value }));
+                  }}
                   disabled={disabled}
                   className="min-h-[80px] resize-none"
                 />
@@ -374,7 +377,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       id={`slide-${slideNumber}-headline`}
                       placeholder="Ex: Transforme seu negócio"
                       value={slide.headline || ''}
-                      onChange={(e) => onChange({ ...slide, headline: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        onChange((prev) => ({ ...prev, headline: value }));
+                      }}
                       disabled={disabled}
                       maxLength={100}
                     />
@@ -388,7 +394,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       id={`slide-${slideNumber}-secondary`}
                       placeholder="Ex: Com estratégias que funcionam"
                       value={slide.secondaryText || ''}
-                      onChange={(e) => onChange({ ...slide, secondaryText: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        onChange((prev) => ({ ...prev, secondaryText: value }));
+                      }}
                       disabled={disabled}
                       maxLength={300}
                     />
@@ -402,7 +411,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       id={`slide-${slideNumber}-cta`}
                       placeholder="Ex: Saiba mais"
                       value={slide.ctaText || ''}
-                      onChange={(e) => onChange({ ...slide, ctaText: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        onChange((prev) => ({ ...prev, ctaText: value }));
+                      }}
                       disabled={disabled}
                       maxLength={40}
                     />
@@ -419,7 +431,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                           key={color.value}
                           type="button"
                           onClick={() => {
-                            onChange({ ...slide, textColor: color.value });
+                            onChange((prev) => ({ ...prev, textColor: color.value }));
                             setCustomColorInput('');
                           }}
                           disabled={disabled}
@@ -451,7 +463,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                         value={slide.textColor || '#FFFFFF'}
                         onChange={(e) => {
                           const color = e.target.value.toUpperCase();
-                          onChange({ ...slide, textColor: color });
+                          onChange((prev) => ({ ...prev, textColor: color }));
                           setCustomColorInput(color);
                         }}
                         disabled={disabled}
