@@ -197,12 +197,12 @@ COMPOSITION REQUIREMENTS:
 ${hasBaseImages ? `• USE THE PROVIDED BASE IMAGE as the main visual element
 • Apply requested transformations/effects to the base image
 • Integrate the base image naturally into the composition` : '• Create a visually striking, professional composition'}
-${textElements.length > 0 ? `• CRITICAL: Keep ALL text at least 100 pixels away from ALL edges (top, bottom, left, right)
-• Leave a "safe zone" of 10% margin on all sides - NO text near edges
-• DO NOT place any text at the very top or very bottom of the image
-• Render all text elements clearly, legibly, and beautifully integrated
-• Use appropriate typography hierarchy (headline larger, secondary smaller)
-• Ensure text contrasts well with background
+${textElements.length > 0 ? `• TEXT AS OVERLAY: Render text as a FLOATING LAYER on top of the image, NOT inside scene objects
+• NEVER place text on signs, walls, screens, papers, billboards, or any physical surfaces in the scene
+• Text floats ABOVE the scene like a professional marketing graphic
+• Keep ALL text at least 100 pixels away from ALL edges
+• Use clear typography with shadow/glow for excellent contrast and readability
+• Typography hierarchy: headline (largest), secondary (medium), CTA (button-like)
 • Make the CTA button stand out if provided` : '• Include any text elements described in the visual direction below'}
 
 VISUAL DIRECTION:
@@ -269,19 +269,24 @@ You MUST use the exact product/object from the provided reference image.
 DO NOT create a similar product - USE the ACTUAL product from the image.
 PRESERVE the product's exact appearance, colors, details, shape, and branding.
 
-${textElements.length > 0 ? `TEXT ELEMENTS TO RENDER ON THE IMAGE:
+${textElements.length > 0 ? `TEXT ELEMENTS TO RENDER AS OVERLAY:
 ${textElements.join('\n')}
 
-TYPOGRAPHY REQUIREMENTS:
-- CRITICAL: Keep ALL text elements at least 100 pixels away from ALL edges (top, bottom, left, right)
-- DO NOT place any text at the very top or very bottom of the image
-- Leave a "safe zone" of at least 10% margin on all sides for text placement
-- Center important text vertically and horizontally when possible
-- Render all text elements clearly and beautifully integrated into the composition
-- Use appropriate typography hierarchy (headline larger, secondary smaller)
-- Ensure text has excellent contrast with background
-- Make the CTA button stand out visually if provided
-- Text must be crisp, readable and professionally styled
+⚠️ CRITICAL TYPOGRAPHY REQUIREMENTS - READ CAREFULLY:
+
+1. TEXT IS AN OVERLAY LAYER - Render text as if it's a FLOATING GRAPHIC DESIGN LAYER on top of the image
+2. NEVER place text inside scene objects (signs, billboards, screens, papers, walls, mirrors, windows, surfaces)
+3. TEXT FLOATS ABOVE THE SCENE - Like a professional advertisement or social media graphic
+4. Position text in EMPTY/SKY/BACKGROUND areas where NO physical objects exist
+5. Use clean typography with shadow/outline/glow for contrast and readability
+6. Text hierarchy: Headline (largest/bold), Secondary (medium), CTA (button-like styling)
+7. Safe margins: Keep text at least 100 pixels from all edges
+8. Style like a professional Instagram/Facebook ad - text OVERLAID on the image, NOT part of the scene
+
+✅ EXAMPLE OF WHAT WE WANT: Marketing poster where text floats elegantly OVER the product photo
+❌ EXAMPLE OF WHAT TO AVOID: Text written ON signs, walls, screens, papers, or any objects in the scene
+
+The text must appear as a SEPARATE DESIGN LAYER that hovers above the visual scene, never integrated into scene elements.
 ` : ''}CREATIVE DIRECTION:
 ${config?.customPrompt || prompt}
 
