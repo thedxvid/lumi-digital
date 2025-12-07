@@ -6,7 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette, RatioIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+// RadioGroup removido - usando divs customizados para evitar conflitos de eventos
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
@@ -119,18 +119,8 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 Como Gerar a Imagem deste Slide
               </Label>
               
-              <RadioGroup 
-                value={slide.imageMode} 
-                onValueChange={(value: 'generate' | 'upload' | 'generate-with-reference') => {
-                  if ((value === 'upload' || value === 'generate-with-reference') && uploadedImagesCount === 0) {
-                    toast.error('Envie imagens primeiro para usar esta opção');
-                    return;
-                  }
-                  const defaultFormat = value === 'upload' ? 'original' : 'square';
-                  onChange({ ...slide, imageMode: value, format: defaultFormat });
-                }}
-                className="grid grid-cols-1 gap-2"
-              >
+              {/* Container customizado - sem RadioGroup para evitar conflitos de eventos */}
+              <div className="grid grid-cols-1 gap-2">
                 {/* Card: Gerar nova imagem */}
                 <div 
                   onClick={() => {
@@ -145,7 +135,17 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     disabled && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  <RadioGroupItem value="generate" id={`generate-${slideNumber}`} />
+                  {/* Indicador visual customizado */}
+                  <div className={cn(
+                    "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                    slide.imageMode === 'generate' 
+                      ? "border-primary" 
+                      : "border-muted-foreground"
+                  )}>
+                    {slide.imageMode === 'generate' && (
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    )}
+                  </div>
                   <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="font-medium text-sm">Gerar nova imagem com IA</span>
                 </div>
@@ -170,7 +170,17 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       : "cursor-pointer"
                   )}
                 >
-                  <RadioGroupItem value="upload" id={`upload-${slideNumber}`} />
+                  {/* Indicador visual customizado */}
+                  <div className={cn(
+                    "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                    slide.imageMode === 'upload' 
+                      ? "border-primary" 
+                      : "border-muted-foreground"
+                  )}>
+                    {slide.imageMode === 'upload' && (
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    )}
+                  </div>
                   <ImageIcon className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Usar uma foto que enviei</span>
@@ -200,7 +210,17 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       : "cursor-pointer"
                   )}
                 >
-                  <RadioGroupItem value="generate-with-reference" id={`reference-${slideNumber}`} />
+                  {/* Indicador visual customizado */}
+                  <div className={cn(
+                    "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                    slide.imageMode === 'generate-with-reference' 
+                      ? "border-primary" 
+                      : "border-muted-foreground"
+                  )}>
+                    {slide.imageMode === 'generate-with-reference' && (
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    )}
+                  </div>
                   <Edit className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Gerar usando minhas fotos de referência</span>
@@ -209,7 +229,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     )}
                   </div>
                 </div>
-              </RadioGroup>
+              </div>
 
               {slide.imageMode === 'upload' && uploadedImagesCount > 0 && (
                 <div className="space-y-2">
