@@ -86,10 +86,16 @@ export const ChangelogModal = () => {
   
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem(CHANGELOG_STORAGE_KEY);
+    const sessionKey = 'lumi-changelog-shown-this-session';
+    const shownThisSession = sessionStorage.getItem(sessionKey);
     
-    if (lastSeenVersion !== latestVersion.version) {
-      // Small delay for better UX
-      const timer = setTimeout(() => setOpen(true), 1000);
+    // Only show if: new version AND not shown this session yet
+    if (lastSeenVersion !== latestVersion.version && !shownThisSession) {
+      // Small delay for better UX after login
+      const timer = setTimeout(() => {
+        setOpen(true);
+        sessionStorage.setItem(sessionKey, 'true');
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [latestVersion.version]);
@@ -103,14 +109,14 @@ export const ChangelogModal = () => {
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleDismiss}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
           />
           
           {/* Modal */}
@@ -119,7 +125,7 @@ export const ChangelogModal = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md"
+            className="relative w-full max-w-md"
           >
             <div className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
               {/* Header */}
@@ -188,7 +194,7 @@ export const ChangelogModal = () => {
               </div>
             </div>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );
