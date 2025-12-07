@@ -381,7 +381,7 @@ CRITICAL:
             });
           }
 
-          const falResponse = await fetch('https://queue.fal.run/fal-ai/nano-banana-pro', {
+          const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
             method: 'POST',
             headers: {
               'Authorization': `Key ${falApiKey}`,
@@ -393,8 +393,7 @@ CRITICAL:
               num_inference_steps: 28,
               guidance_scale: 3.5,
               num_images: 1,
-              enable_safety_checker: true,
-              sync_mode: true
+              enable_safety_checker: true
             })
           });
 
@@ -413,7 +412,12 @@ CRITICAL:
           }
 
           const falData = await falResponse.json();
-          imageUrl = falData.images?.[0]?.url;
+          console.log(`📦 Fal.ai response for slide ${i + 1}:`, JSON.stringify(Object.keys(falData)));
+          
+          // Fallback for multiple URL formats
+          imageUrl = falData.images?.[0]?.url || 
+                     falData.images?.[0]?.image_url ||
+                     (typeof falData.images?.[0] === 'string' ? falData.images[0] : undefined);
           description = slide.visualInstruction || `Slide ${i + 1}`;
 
         } else {
