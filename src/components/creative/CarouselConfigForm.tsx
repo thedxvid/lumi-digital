@@ -105,11 +105,17 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
           key={`slide-${i}`}
           slideNumber={i + 1} 
           slide={slide} 
-          onChange={(s) => {
-            // Fase 1: forma funcional para evitar stale closure
+          onChange={(updater) => {
+            // Suporta tanto objeto direto quanto função updater
             setSlides((prevSlides) => {
               const newSlides = [...prevSlides];
-              newSlides[i] = s;
+              const currentSlide = prevSlides[i];
+              // Se for função, executa com slide atual; senão usa objeto direto
+              const newSlide = typeof updater === 'function' 
+                ? updater(currentSlide) 
+                : updater;
+              console.log('🔄 CarouselConfigForm atualizando slide', i, ':', currentSlide.imageMode, '->', newSlide.imageMode);
+              newSlides[i] = newSlide;
               return newSlides;
             });
           }} 
