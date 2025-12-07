@@ -17,10 +17,8 @@ import {
   Shield,
   BookUser,
   Sparkles,
-  HelpCircle,
   GraduationCap
 } from "lucide-react";
-import { SupportButton } from "@/components/ui/support-button";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -36,7 +34,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 export function AnimatedDashboardSidebar() {
   const [open, setOpen] = useState(true);
   const [contentProductionOpen, setContentProductionOpen] = useState(true);
-  const [supportOpen, setSupportOpen] = useState(false);
   const { signOut, user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminAuth();
   const navigate = useNavigate();
@@ -142,14 +139,6 @@ export function AnimatedDashboardSidebar() {
         <History className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
-    {
-      label: "Suporte",
-      href: "#",
-      icon: (
-        <HelpCircle className="text-foreground h-5 w-5 flex-shrink-0" />
-      ),
-      onClick: () => setSupportOpen(true),
-    },
   ];
 
   const adminLinks = [
@@ -252,20 +241,9 @@ export function AnimatedDashboardSidebar() {
                 </TooltipProvider>
               )}
 
-              {bottomLinks.map((link, idx) => 
-                link.onClick ? (
-                  <button
-                    key={`bottom-${idx}`}
-                    onClick={link.onClick}
-                    className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors w-full text-left"
-                  >
-                    {link.icon}
-                    {open && <span className="text-sm text-foreground">{link.label}</span>}
-                  </button>
-                ) : (
-                  <SidebarLink key={`bottom-${idx}`} link={link} />
-                )
-              )}
+              {bottomLinks.map((link, idx) => (
+                <SidebarLink key={`bottom-${idx}`} link={link} />
+              ))}
             </div>
 
             {/* Links de Admin */}
@@ -385,14 +363,6 @@ export function AnimatedDashboardSidebar() {
           </div>
         </SidebarBody>
       </Sidebar>
-
-      {/* Modal de Suporte (controlado pelo estado) */}
-      <SupportButton 
-        variant="inline"
-        className="hidden"
-        open={supportOpen}
-        onOpenChange={setSupportOpen}
-      />
     </>
   );
 }
