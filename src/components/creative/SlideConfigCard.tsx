@@ -130,29 +130,31 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="generate">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      <span>Gerar nova imagem com IA</span>
-                    </div>
+                  <SelectItem value="generate" className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 flex-shrink-0" />
+                    Gerar nova imagem com IA
                   </SelectItem>
-                  <SelectItem value="upload" disabled={uploadedImagesCount === 0}>
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4" />
-                      <span>Usar uma foto que enviei</span>
-                      {uploadedImagesCount === 0 && (
-                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
-                      )}
-                    </div>
+                  <SelectItem 
+                    value="upload" 
+                    disabled={uploadedImagesCount === 0}
+                    className="flex items-center gap-2"
+                  >
+                    <ImageIcon className="w-4 h-4 flex-shrink-0" />
+                    Usar uma foto que enviei
+                    {uploadedImagesCount === 0 && (
+                      <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
+                    )}
                   </SelectItem>
-                  <SelectItem value="generate-with-reference" disabled={uploadedImagesCount === 0}>
-                    <div className="flex items-center gap-2">
-                      <Edit className="w-4 h-4" />
-                      <span>Gerar usando minhas fotos de referência</span>
-                      {uploadedImagesCount === 0 && (
-                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
-                      )}
-                    </div>
+                  <SelectItem 
+                    value="generate-with-reference" 
+                    disabled={uploadedImagesCount === 0}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="w-4 h-4 flex-shrink-0" />
+                    Gerar usando minhas fotos de referência
+                    {uploadedImagesCount === 0 && (
+                      <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
+                    )}
                   </SelectItem>
                 </SelectContent>
               </Select>
