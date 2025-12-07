@@ -273,11 +273,34 @@ CRITICAL RULES:
 - DO NOT modify, distort, or alter the product itself
 - Only change the environment/context around the product`;
 
+        // Map format to Fal.ai image_size for correct aspect ratio
+        const getFalImageSize = (format: string | undefined, w: number, h: number): string => {
+          const formatMap: Record<string, string> = {
+            'square': 'square_hd',
+            'vertical': 'portrait_4_3',
+            'story-vertical': 'portrait_16_9',
+            'horizontal': 'landscape_16_9',
+            'ad-square': 'square_hd',
+            'ad-horizontal': 'landscape_16_9',
+            'ad-vertical': 'portrait_4_3',
+            'banner-wide': 'landscape_16_9',
+            'banner-ultra': 'landscape_16_9',
+            'product-square': 'square_hd',
+            'product-vertical': 'portrait_4_3'
+          };
+          return formatMap[format || ''] || 
+            (w > h ? 'landscape_16_9' : w < h ? 'portrait_16_9' : 'square_hd');
+        };
+
+        const falImageSize = getFalImageSize(config?.format, width, height);
+        console.log(`📐 Using image_size: ${falImageSize} for format: ${config?.format} (${width}x${height})`);
+
         const falRequestBody: Record<string, any> = {
           prompt: editingPrompt,
-          image_urls: images, // Array of image URLs for /edit endpoint
+          image_urls: images,
+          image_size: falImageSize, // CRITICAL: Set correct aspect ratio to prevent stretching
           num_inference_steps: 28,
-          guidance_scale: 4.5, // Slightly higher for better adherence to reference
+          guidance_scale: 4.5,
           num_images: 1,
           enable_safety_checker: true
         };
