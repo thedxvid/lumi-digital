@@ -130,6 +130,9 @@ export function useCarousel() {
       toast.success('Carrossel gerado com sucesso! 🎨');
       await loadHistory();
       
+      // Disparar evento para atualizar limites na sidebar
+      window.dispatchEvent(new CustomEvent('usage-limits-updated'));
+      
       return data.carousel;
     } catch (error: any) {
       console.error('❌ Error generating carousel:', error);
