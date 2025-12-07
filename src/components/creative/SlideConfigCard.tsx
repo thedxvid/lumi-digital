@@ -3,13 +3,26 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette } from 'lucide-react';
+import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette, RatioIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
 import { cn } from '@/lib/utils';
+
+// Formatos disponíveis para carrossel
+const carouselFormats = [
+  { value: 'square', label: '1:1 Quadrado', dimensions: '1080×1080' },
+  { value: 'vertical', label: '4:5 Vertical', dimensions: '1080×1350' },
+  { value: 'story-vertical', label: '9:16 Stories', dimensions: '1080×1920' },
+  { value: 'horizontal', label: '16:9 Horizontal', dimensions: '1200×675' },
+];
+
+const uploadFormats = [
+  { value: 'original', label: 'Manter Original', dimensions: 'Sem alteração' },
+  ...carouselFormats,
+];
 
 const textColorOptions = [
   { value: '#FFFFFF', label: 'Branco', className: 'bg-white border border-gray-300' },
@@ -162,6 +175,38 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   </Select>
                 </div>
               )}
+
+              {/* Format Selector */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <RatioIcon className="w-4 h-4" />
+                  Formato da Imagem
+                </Label>
+                <Select 
+                  value={slide.format || (slide.imageMode === 'upload' ? 'original' : 'square')} 
+                  onValueChange={(value) => onChange({ ...slide, format: value })}
+                  disabled={disabled}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(slide.imageMode === 'upload' ? uploadFormats : carouselFormats).map((format) => (
+                      <SelectItem key={format.value} value={format.value}>
+                        <div className="flex items-center justify-between gap-3">
+                          <span>{format.label}</span>
+                          <span className="text-xs text-muted-foreground">{format.dimensions}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {slide.imageMode === 'upload' && slide.format === 'original' && (
+                  <p className="text-xs text-muted-foreground">
+                    A imagem será usada com suas dimensões originais
+                  </p>
+                )}
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor={`slide-${slideNumber}-visual`}>
