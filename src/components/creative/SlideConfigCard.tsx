@@ -129,8 +129,8 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 )}
               </div>
 
-              {/* Native Text Fields for PRO - shown when generating images */}
-              {showTextFields && slide.imageMode === 'generate' && (
+              {/* Native Text Fields for PRO - shown for all image modes */}
+              {showTextFields && (
                 <div className="space-y-3 pt-3 border-t border-border">
                   <Label className="flex items-center gap-2 text-primary">
                     <Sparkles className="w-4 h-4" />
