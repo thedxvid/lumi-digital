@@ -119,8 +119,11 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
               </Label>
               
               <Select 
-                value={uploadedImagesCount === 0 && slide.imageMode !== 'generate' ? 'generate' : slide.imageMode} 
-                onValueChange={(value: any) => onChange({ ...slide, imageMode: value })}
+                value={slide.imageMode} 
+                onValueChange={(value: 'generate' | 'upload' | 'generate-with-reference') => {
+                  const defaultFormat = value === 'upload' ? 'original' : 'square';
+                  onChange({ ...slide, imageMode: value, format: defaultFormat });
+                }}
                 disabled={disabled}
               >
                 <SelectTrigger>
