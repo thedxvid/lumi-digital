@@ -52,23 +52,24 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
     { imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
   ]);
 
-  // Ajustar número de slides quando imageCount mudar
+  // Fase 2: useEffect com forma funcional para evitar resetar estado
   useEffect(() => {
-    if (slides.length < imageCount) {
-      // Adicionar mais slides
-      const newSlides = [...slides];
-      while (newSlides.length < imageCount) {
-        newSlides.push({ 
-          imageMode: 'generate', 
-          uploadedImageIndex: null, 
-          visualInstruction: '' 
-        });
+    setSlides((prevSlides) => {
+      if (prevSlides.length < imageCount) {
+        const newSlides = [...prevSlides];
+        while (newSlides.length < imageCount) {
+          newSlides.push({ 
+            imageMode: 'generate', 
+            uploadedImageIndex: null, 
+            visualInstruction: '' 
+          });
+        }
+        return newSlides;
+      } else if (prevSlides.length > imageCount) {
+        return prevSlides.slice(0, imageCount);
       }
-      setSlides(newSlides);
-    } else if (slides.length > imageCount) {
-      // Remover slides excedentes
-      setSlides(slides.slice(0, imageCount));
-    }
+      return prevSlides;
+    });
   }, [imageCount]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -101,13 +102,16 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
       <CarouselImageUploader images={uploadedImages} onImagesChange={setUploadedImages} maxImages={10} />
       {slides.slice(0, imageCount).map((slide, i) => (
         <SlideConfigCard 
-          key={i} 
+          key={`slide-${i}`}
           slideNumber={i + 1} 
           slide={slide} 
           onChange={(s) => {
-            const newSlides = [...slides];
-            newSlides[i] = s;
-            setSlides(newSlides);
+            // Fase 1: forma funcional para evitar stale closure
+            setSlides((prevSlides) => {
+              const newSlides = [...prevSlides];
+              newSlides[i] = s;
+              return newSlides;
+            });
           }} 
           disabled={loading}
           uploadedImagesCount={uploadedImages.length}
