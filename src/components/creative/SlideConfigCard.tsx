@@ -133,27 +133,33 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 className="grid grid-cols-1 gap-2"
               >
                 {/* Card: Gerar nova imagem */}
-                <label className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                  slide.imageMode === 'generate' 
-                    ? "border-primary bg-primary/10" 
-                    : "border-border hover:border-primary/50 hover:bg-accent/30"
-                )}>
+                <label 
+                  htmlFor={`generate-${slideNumber}`}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                    slide.imageMode === 'generate' 
+                      ? "border-primary bg-primary/10" 
+                      : "border-border hover:border-primary/50 hover:bg-accent/30"
+                  )}
+                >
                   <RadioGroupItem value="generate" id={`generate-${slideNumber}`} />
                   <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="font-medium text-sm">Gerar nova imagem com IA</span>
                 </label>
 
                 {/* Card: Usar foto enviada */}
-                <label className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                  slide.imageMode === 'upload' 
-                    ? "border-primary bg-primary/10" 
-                    : "border-border hover:border-primary/50 hover:bg-accent/30",
-                  uploadedImagesCount === 0 
-                    ? "opacity-50 cursor-not-allowed" 
-                    : "cursor-pointer"
-                )}>
+                <label 
+                  htmlFor={`upload-${slideNumber}`}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                    slide.imageMode === 'upload' 
+                      ? "border-primary bg-primary/10" 
+                      : "border-border hover:border-primary/50 hover:bg-accent/30",
+                    uploadedImagesCount === 0 
+                      ? "opacity-50 cursor-not-allowed" 
+                      : "cursor-pointer"
+                  )}
+                >
                 <RadioGroupItem 
                   value="upload" 
                   id={`upload-${slideNumber}`}
@@ -168,15 +174,18 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 </label>
 
                 {/* Card: Gerar usando referência */}
-                <label className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                  slide.imageMode === 'generate-with-reference' 
-                    ? "border-primary bg-primary/10" 
-                    : "border-border hover:border-primary/50 hover:bg-accent/30",
-                  uploadedImagesCount === 0 
-                    ? "opacity-50 cursor-not-allowed" 
-                    : "cursor-pointer"
-                )}>
+                <label 
+                  htmlFor={`reference-${slideNumber}`}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                    slide.imageMode === 'generate-with-reference' 
+                      ? "border-primary bg-primary/10" 
+                      : "border-border hover:border-primary/50 hover:bg-accent/30",
+                    uploadedImagesCount === 0 
+                      ? "opacity-50 cursor-not-allowed" 
+                      : "cursor-pointer"
+                  )}
+                >
                 <RadioGroupItem 
                   value="generate-with-reference" 
                   id={`reference-${slideNumber}`}
