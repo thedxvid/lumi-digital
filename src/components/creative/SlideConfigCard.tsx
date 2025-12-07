@@ -137,7 +137,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     Texto Nativo (PRO) - Renderizado pela IA
                   </Label>
                   <div className="space-y-2">
-                    <Label htmlFor={`slide-${slideNumber}-headline`} className="text-sm">Headline / Título</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`slide-${slideNumber}-headline`} className="text-sm">Headline / Título</Label>
+                      <span className="text-xs text-muted-foreground">{(slide.headline || '').length}/100</span>
+                    </div>
                     <Input
                       id={`slide-${slideNumber}-headline`}
                       placeholder="Ex: Transforme seu negócio"
@@ -148,18 +151,24 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`slide-${slideNumber}-secondary`} className="text-sm">Texto Secundário</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`slide-${slideNumber}-secondary`} className="text-sm">Texto Secundário</Label>
+                      <span className="text-xs text-muted-foreground">{(slide.secondaryText || '').length}/300</span>
+                    </div>
                     <Input
                       id={`slide-${slideNumber}-secondary`}
                       placeholder="Ex: Com estratégias que funcionam"
                       value={slide.secondaryText || ''}
                       onChange={(e) => onChange({ ...slide, secondaryText: e.target.value })}
                       disabled={disabled}
-                      maxLength={150}
+                      maxLength={300}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`slide-${slideNumber}-cta`} className="text-sm">Call to Action</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`slide-${slideNumber}-cta`} className="text-sm">Call to Action</Label>
+                      <span className="text-xs text-muted-foreground">{(slide.ctaText || '').length}/40</span>
+                    </div>
                     <Input
                       id={`slide-${slideNumber}-cta`}
                       placeholder="Ex: Saiba mais"
