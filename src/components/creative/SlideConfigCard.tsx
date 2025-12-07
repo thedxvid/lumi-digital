@@ -53,12 +53,25 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
 
   // Handler sem useCallback - captura slide corretamente a cada render
   const handleModeChange = (newMode: 'generate' | 'upload' | 'generate-with-reference', e: React.MouseEvent) => {
+    console.log('🔵 handleModeChange chamado:', {
+      newMode,
+      slideNumber,
+      currentImageMode: slide.imageMode,
+      changingModeRef: changingModeRef.current,
+      disabled,
+      uploadedImagesCount
+    });
+    
     e.preventDefault();
     e.stopPropagation();
     
-    if (changingModeRef.current || disabled) return;
+    if (changingModeRef.current || disabled) {
+      console.log('🔴 BLOQUEADO:', { changingModeRef: changingModeRef.current, disabled });
+      return;
+    }
     
     if ((newMode === 'upload' || newMode === 'generate-with-reference') && uploadedImagesCount === 0) {
+      console.log('🔴 BLOQUEADO: sem imagens enviadas');
       toast.error('Envie imagens primeiro para usar esta opção');
       return;
     }
@@ -75,10 +88,12 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
       newSlide.format = 'original';
     }
     
+    console.log('🟢 Chamando onChange com:', newSlide);
     onChange(newSlide);
     
     setTimeout(() => {
       changingModeRef.current = false;
+      console.log('🟡 changingModeRef resetado');
     }, 150);
   };
 
