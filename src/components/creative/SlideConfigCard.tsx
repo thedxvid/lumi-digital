@@ -121,6 +121,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
               <Select 
                 value={slide.imageMode} 
                 onValueChange={(value: 'generate' | 'upload' | 'generate-with-reference') => {
+                  // Ignorar seleção se não houver imagens para modos que precisam delas
+                  if ((value === 'upload' || value === 'generate-with-reference') && uploadedImagesCount === 0) {
+                    return;
+                  }
                   const defaultFormat = value === 'upload' ? 'original' : 'square';
                   onChange({ ...slide, imageMode: value, format: defaultFormat });
                 }}
@@ -130,31 +134,35 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="generate" className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 flex-shrink-0" />
-                    Gerar nova imagem com IA
+                  <SelectItem value="generate">
+                    <div className="inline-flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Gerar nova imagem com IA</span>
+                    </div>
                   </SelectItem>
                   <SelectItem 
                     value="upload" 
-                    disabled={uploadedImagesCount === 0}
-                    className="flex items-center gap-2"
+                    className={uploadedImagesCount === 0 ? 'opacity-50' : ''}
                   >
-                    <ImageIcon className="w-4 h-4 flex-shrink-0" />
-                    Usar uma foto que enviei
-                    {uploadedImagesCount === 0 && (
-                      <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
-                    )}
+                    <div className="inline-flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      <span>Usar uma foto que enviei</span>
+                      {uploadedImagesCount === 0 && (
+                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
+                      )}
+                    </div>
                   </SelectItem>
                   <SelectItem 
-                    value="generate-with-reference" 
-                    disabled={uploadedImagesCount === 0}
-                    className="flex items-center gap-2"
+                    value="generate-with-reference"
+                    className={uploadedImagesCount === 0 ? 'opacity-50' : ''}
                   >
-                    <Edit className="w-4 h-4 flex-shrink-0" />
-                    Gerar usando minhas fotos de referência
-                    {uploadedImagesCount === 0 && (
-                      <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
-                    )}
+                    <div className="inline-flex items-center gap-2">
+                      <Edit className="w-4 h-4" />
+                      <span>Gerar usando minhas fotos de referência</span>
+                      {uploadedImagesCount === 0 && (
+                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
+                      )}
+                    </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
