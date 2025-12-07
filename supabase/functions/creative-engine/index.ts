@@ -197,7 +197,10 @@ COMPOSITION REQUIREMENTS:
 ${hasBaseImages ? `• USE THE PROVIDED BASE IMAGE as the main visual element
 • Apply requested transformations/effects to the base image
 • Integrate the base image naturally into the composition` : '• Create a visually striking, professional composition'}
-${textElements.length > 0 ? `• Render all text elements clearly, legibly, and beautifully integrated
+${textElements.length > 0 ? `• CRITICAL: Keep ALL text at least 100 pixels away from ALL edges (top, bottom, left, right)
+• Leave a "safe zone" of 10% margin on all sides - NO text near edges
+• DO NOT place any text at the very top or very bottom of the image
+• Render all text elements clearly, legibly, and beautifully integrated
 • Use appropriate typography hierarchy (headline larger, secondary smaller)
 • Ensure text contrasts well with background
 • Make the CTA button stand out if provided` : '• Include any text elements described in the visual direction below'}
@@ -270,6 +273,10 @@ ${textElements.length > 0 ? `TEXT ELEMENTS TO RENDER ON THE IMAGE:
 ${textElements.join('\n')}
 
 TYPOGRAPHY REQUIREMENTS:
+- CRITICAL: Keep ALL text elements at least 100 pixels away from ALL edges (top, bottom, left, right)
+- DO NOT place any text at the very top or very bottom of the image
+- Leave a "safe zone" of at least 10% margin on all sides for text placement
+- Center important text vertically and horizontally when possible
 - Render all text elements clearly and beautifully integrated into the composition
 - Use appropriate typography hierarchy (headline larger, secondary smaller)
 - Ensure text has excellent contrast with background
