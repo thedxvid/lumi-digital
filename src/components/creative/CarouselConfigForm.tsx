@@ -21,6 +21,7 @@ export interface SlideConfig {
   secondaryText?: string;
   ctaText?: string;
   textColor?: string;
+  format?: string; // 'square', 'vertical', 'story-vertical', 'horizontal', 'original'
 }
 
 export interface CarouselConfig {

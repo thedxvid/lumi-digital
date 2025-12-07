@@ -18,7 +18,17 @@ interface SlideConfig {
   secondaryText?: string;
   ctaText?: string;
   textColor?: string;
+  format?: string; // 'square', 'vertical', 'story-vertical', 'horizontal', 'original'
 }
+
+// Mapeamento de formato para image_size do Fal.ai
+const formatToFalSize: Record<string, string | null> = {
+  'square': 'square_hd',
+  'vertical': 'portrait_4_3',
+  'story-vertical': 'portrait_16_9',
+  'horizontal': 'landscape_16_9',
+  'original': null, // Não passa image_size para preservar dimensões originais
+};
 
 interface GenerateCarouselRequest {
   title: string;
@@ -300,21 +310,33 @@ TYPOGRAPHY:
 
           const falApiKey = userHasByok && userFalKey ? userFalKey : FAL_KEY;
           
+          // Determinar image_size baseado no formato selecionado
+          const selectedFormat = slide.format || 'original';
+          const falImageSize = formatToFalSize[selectedFormat];
+          
+          console.log(`📐 Upload mode format: ${selectedFormat} -> image_size: ${falImageSize || 'not set (preserve original)'}`);
+          
+          const editRequestBody: any = {
+            prompt: editPrompt,
+            image_urls: [uploadedImage],
+            num_inference_steps: 28,
+            guidance_scale: 4.5,
+            num_images: 1,
+            enable_safety_checker: true
+          };
+          
+          // Só adiciona image_size se não for 'original'
+          if (falImageSize) {
+            editRequestBody.image_size = falImageSize;
+          }
+          
           const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
             method: 'POST',
             headers: {
               'Authorization': `Key ${falApiKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              prompt: editPrompt,
-              image_urls: [uploadedImage],
-              image_size: 'square_hd',
-              num_inference_steps: 28,
-              guidance_scale: 4.5,
-              num_images: 1,
-              enable_safety_checker: true
-            })
+            body: JSON.stringify(editRequestBody)
           });
 
           if (!falResponse.ok) {
@@ -581,6 +603,12 @@ STEP 3 - QUALITY CHECK:
 - Make the image look artificial or composited
             `.trim();
             
+            // Determinar image_size baseado no formato selecionado
+            const selectedFormat = slide.format || 'square';
+            const falImageSize = formatToFalSize[selectedFormat] || 'square_hd';
+            
+            console.log(`📐 Generate-with-reference format: ${selectedFormat} -> image_size: ${falImageSize}`);
+            
             falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
               method: 'POST',
               headers: {
@@ -590,15 +618,20 @@ STEP 3 - QUALITY CHECK:
               body: JSON.stringify({
                 prompt: identityPrompt,
                 image_urls: uploadedImages,
-                image_size: 'square_hd',
+                image_size: falImageSize,
                 num_inference_steps: 28,
-                guidance_scale: 4.0, // Ligeiramente maior para melhor aderência ao prompt
+                guidance_scale: 4.0,
                 num_images: 1,
                 enable_safety_checker: true
               })
             });
           } else {
             // Standard generation without reference images
+            const selectedFormat = slide.format || 'square';
+            const falImageSize = formatToFalSize[selectedFormat] || 'square_hd';
+            
+            console.log(`📐 Generate format: ${selectedFormat} -> image_size: ${falImageSize}`);
+            
             falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
               method: 'POST',
               headers: {
@@ -607,7 +640,7 @@ STEP 3 - QUALITY CHECK:
               },
               body: JSON.stringify({
                 prompt: slidePrompt,
-                image_size: 'square_hd',
+                image_size: falImageSize,
                 num_inference_steps: 28,
                 guidance_scale: 3.5,
                 num_images: 1,
