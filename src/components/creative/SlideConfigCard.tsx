@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette, RatioIcon } from 'lucide-react';
 import { useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectItemWithIcon, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
@@ -134,36 +134,28 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="generate">
-                    <div className="inline-flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      <span>Gerar nova imagem com IA</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem 
+                  <SelectItemWithIcon 
+                    value="generate"
+                    icon={<Sparkles className="w-4 h-4" />}
+                  >
+                    Gerar nova imagem com IA
+                  </SelectItemWithIcon>
+                  <SelectItemWithIcon 
                     value="upload" 
+                    icon={<ImageIcon className="w-4 h-4" />}
+                    subText={uploadedImagesCount === 0 ? "(envie imagens primeiro)" : undefined}
                     className={uploadedImagesCount === 0 ? 'opacity-50' : ''}
                   >
-                    <div className="inline-flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4" />
-                      <span>Usar uma foto que enviei</span>
-                      {uploadedImagesCount === 0 && (
-                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                  <SelectItem 
+                    Usar uma foto que enviei
+                  </SelectItemWithIcon>
+                  <SelectItemWithIcon 
                     value="generate-with-reference"
+                    icon={<Edit className="w-4 h-4" />}
+                    subText={uploadedImagesCount === 0 ? "(envie imagens primeiro)" : undefined}
                     className={uploadedImagesCount === 0 ? 'opacity-50' : ''}
                   >
-                    <div className="inline-flex items-center gap-2">
-                      <Edit className="w-4 h-4" />
-                      <span>Gerar usando minhas fotos de referência</span>
-                      {uploadedImagesCount === 0 && (
-                        <span className="text-xs text-muted-foreground ml-1">(envie imagens primeiro)</span>
-                      )}
-                    </div>
-                  </SelectItem>
+                    Gerar usando minhas fotos de referência
+                  </SelectItemWithIcon>
                 </SelectContent>
               </Select>
 
