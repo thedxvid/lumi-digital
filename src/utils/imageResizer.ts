@@ -1,5 +1,7 @@
 /**
- * Resizes an image to exact dimensions while maintaining quality
+ * Resizes an image to exact dimensions using "cover" strategy
+ * This scales the image to cover the entire canvas while maintaining aspect ratio,
+ * then crops any excess - NEVER stretches or distorts the image
  */
 export const resizeImage = async (
   imageDataUrl: string,
@@ -25,8 +27,29 @@ export const resizeImage = async (
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Draw image scaled to exact dimensions
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      // Calculate aspect ratios
+      const imgAspect = img.width / img.height;
+      const targetAspect = targetWidth / targetHeight;
+      
+      let drawWidth, drawHeight, offsetX, offsetY;
+      
+      // Use "cover" strategy - scale to cover entire canvas, then crop
+      if (imgAspect > targetAspect) {
+        // Image is wider than target - fit by height, crop width
+        drawHeight = targetHeight;
+        drawWidth = img.width * (targetHeight / img.height);
+        offsetX = (targetWidth - drawWidth) / 2;
+        offsetY = 0;
+      } else {
+        // Image is taller than target - fit by width, crop height
+        drawWidth = targetWidth;
+        drawHeight = img.height * (targetWidth / img.width);
+        offsetX = 0;
+        offsetY = (targetHeight - drawHeight) / 2;
+      }
+      
+      // Draw image centered with cover scaling (no distortion)
+      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
       
       // Convert to data URL with high quality
       resolve(canvas.toDataURL('image/png', 1.0));
