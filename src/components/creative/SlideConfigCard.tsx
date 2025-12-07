@@ -154,11 +154,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     ? "opacity-50 cursor-not-allowed" 
                     : "cursor-pointer"
                 )}>
-                  <RadioGroupItem 
-                    value="upload" 
-                    id={`upload-${slideNumber}`} 
-                    disabled={uploadedImagesCount === 0}
-                  />
+                <RadioGroupItem 
+                  value="upload" 
+                  id={`upload-${slideNumber}`}
+                />
                   <ImageIcon className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Usar uma foto que enviei</span>
@@ -178,11 +177,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     ? "opacity-50 cursor-not-allowed" 
                     : "cursor-pointer"
                 )}>
-                  <RadioGroupItem 
-                    value="generate-with-reference" 
-                    id={`reference-${slideNumber}`}
-                    disabled={uploadedImagesCount === 0}
-                  />
+                <RadioGroupItem 
+                  value="generate-with-reference" 
+                  id={`reference-${slideNumber}`}
+                />
                   <Edit className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Gerar usando minhas fotos de referência</span>
