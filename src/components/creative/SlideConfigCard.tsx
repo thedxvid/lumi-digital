@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette, RatioIcon } from 'lucide-react';
 import { useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectItemWithIcon, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
@@ -118,46 +119,79 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 Como Gerar a Imagem deste Slide
               </Label>
               
-              <Select 
+              <RadioGroup 
                 value={slide.imageMode} 
                 onValueChange={(value: 'generate' | 'upload' | 'generate-with-reference') => {
-                  // Ignorar seleção se não houver imagens para modos que precisam delas
                   if ((value === 'upload' || value === 'generate-with-reference') && uploadedImagesCount === 0) {
+                    toast.error('Envie imagens primeiro para usar esta opção');
                     return;
                   }
                   const defaultFormat = value === 'upload' ? 'original' : 'square';
                   onChange({ ...slide, imageMode: value, format: defaultFormat });
                 }}
                 disabled={disabled}
+                className="grid grid-cols-1 gap-2"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItemWithIcon 
-                    value="generate"
-                    icon={<Sparkles className="w-4 h-4" />}
-                  >
-                    Gerar nova imagem com IA
-                  </SelectItemWithIcon>
-                  <SelectItemWithIcon 
+                {/* Card: Gerar nova imagem */}
+                <label className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                  slide.imageMode === 'generate' 
+                    ? "border-primary bg-primary/10" 
+                    : "border-border hover:border-primary/50 hover:bg-accent/30"
+                )}>
+                  <RadioGroupItem value="generate" id={`generate-${slideNumber}`} />
+                  <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="font-medium text-sm">Gerar nova imagem com IA</span>
+                </label>
+
+                {/* Card: Usar foto enviada */}
+                <label className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                  slide.imageMode === 'upload' 
+                    ? "border-primary bg-primary/10" 
+                    : "border-border hover:border-primary/50 hover:bg-accent/30",
+                  uploadedImagesCount === 0 
+                    ? "opacity-50 cursor-not-allowed" 
+                    : "cursor-pointer"
+                )}>
+                  <RadioGroupItem 
                     value="upload" 
-                    icon={<ImageIcon className="w-4 h-4" />}
-                    subText={uploadedImagesCount === 0 ? "(envie imagens primeiro)" : undefined}
-                    className={uploadedImagesCount === 0 ? 'opacity-50' : ''}
-                  >
-                    Usar uma foto que enviei
-                  </SelectItemWithIcon>
-                  <SelectItemWithIcon 
-                    value="generate-with-reference"
-                    icon={<Edit className="w-4 h-4" />}
-                    subText={uploadedImagesCount === 0 ? "(envie imagens primeiro)" : undefined}
-                    className={uploadedImagesCount === 0 ? 'opacity-50' : ''}
-                  >
-                    Gerar usando minhas fotos de referência
-                  </SelectItemWithIcon>
-                </SelectContent>
-              </Select>
+                    id={`upload-${slideNumber}`} 
+                    disabled={uploadedImagesCount === 0}
+                  />
+                  <ImageIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">Usar uma foto que enviei</span>
+                    {uploadedImagesCount === 0 && (
+                      <span className="text-xs text-muted-foreground">(envie imagens primeiro)</span>
+                    )}
+                  </div>
+                </label>
+
+                {/* Card: Gerar usando referência */}
+                <label className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                  slide.imageMode === 'generate-with-reference' 
+                    ? "border-primary bg-primary/10" 
+                    : "border-border hover:border-primary/50 hover:bg-accent/30",
+                  uploadedImagesCount === 0 
+                    ? "opacity-50 cursor-not-allowed" 
+                    : "cursor-pointer"
+                )}>
+                  <RadioGroupItem 
+                    value="generate-with-reference" 
+                    id={`reference-${slideNumber}`}
+                    disabled={uploadedImagesCount === 0}
+                  />
+                  <Edit className="w-4 h-4 text-primary flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">Gerar usando minhas fotos de referência</span>
+                    {uploadedImagesCount === 0 && (
+                      <span className="text-xs text-muted-foreground">(envie imagens primeiro)</span>
+                    )}
+                  </div>
+                </label>
+              </RadioGroup>
 
               {slide.imageMode === 'upload' && uploadedImagesCount > 0 && (
                 <div className="space-y-2">
