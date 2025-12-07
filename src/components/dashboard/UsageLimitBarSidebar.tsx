@@ -33,9 +33,9 @@ export function UsageLimitBarSidebar() {
     },
     {
       icon: Layers,
-      name: 'Carrosséis',
-      used: limits.carousel_images_monthly_used || limits.carousels_monthly_used || 0,
-      limit: limits.carousel_images_monthly_limit || limits.carousels_monthly_limit || 0,
+      name: 'Imgs Carrossel',
+      used: limits.carousel_images_monthly_used || 0,
+      limit: limits.carousel_images_monthly_limit || 30,
       color: 'text-orange-600',
       isMonthly: true,
     },
