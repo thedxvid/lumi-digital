@@ -237,17 +237,136 @@ serve(async (req) => {
       let imageUrl: string;
       let description: string;
 
-      // Se o modo for 'upload', usar diretamente a imagem enviada
+      // Se o modo for 'upload', verificar se tem texto nativo para processar
       if (slide.imageMode === 'upload' && slide.uploadedImageIndex !== null && uploadedImages[slide.uploadedImageIndex]) {
-        console.log(`Using uploaded image ${slide.uploadedImageIndex} for slide ${i + 1}`);
-        imageUrl = uploadedImages[slide.uploadedImageIndex];
-        description = slide.visualInstruction || `Slide ${i + 1}`;
+        const uploadedImage = uploadedImages[slide.uploadedImageIndex];
+        const hasNativeText = slide.headline || slide.secondaryText || slide.ctaText;
+        
+        if (useProApi && hasNativeText) {
+          // PRO tier with text: Use /edit endpoint to add text overlay to uploaded image
+          console.log(`Processing uploaded image ${slide.uploadedImageIndex} with native text for slide ${i + 1}...`);
+          
+          const textElements: string[] = [];
+          if (slide.headline) textElements.push(`📌 HEADLINE: "${slide.headline}"`);
+          if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
+          if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
+          
+          const editPrompt = `
+Add professional text overlay to this image:
+
+${textElements.join('\n')}
+
+${slide.visualInstruction ? `ADDITIONAL ADJUSTMENTS: ${slide.visualInstruction}` : ''}
+
+TYPOGRAPHY REQUIREMENTS:
+- Render all text clearly and legibly as a FLOATING GRAPHIC DESIGN LAYER
+- Use appropriate typography hierarchy (headline larger, secondary smaller)
+- Ensure text contrasts well with background
+- Make the CTA button/text stand out if provided
+- Professional font styling
+- NEVER place text inside scene objects (signs, walls, screens)
+- Use safe margins (keep text at least 80px from edges)
+- Maintain the original image composition
+          `.trim();
+
+          const falApiKey = userHasByok && userFalKey ? userFalKey : FAL_KEY;
+          
+          const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Key ${falApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              prompt: editPrompt,
+              image_urls: [uploadedImage],
+              image_size: 'square_hd',
+              num_inference_steps: 28,
+              guidance_scale: 4.5,
+              num_images: 1,
+              enable_safety_checker: true
+            })
+          });
+
+          if (!falResponse.ok) {
+            const errorText = await falResponse.text();
+            console.error(`Fal.ai /edit API error for slide ${i + 1}:`, falResponse.status, errorText);
+            
+            if (falResponse.status === 429) {
+              throw new Error("Rate limit exceeded. Please try again in a few moments.");
+            }
+            if (falResponse.status === 402 || falResponse.status === 401) {
+              throw new Error("Insufficient Fal.ai credits or invalid API key.");
+            }
+            
+            throw new Error(`Failed to add text to image for slide ${i + 1}: ${falResponse.status}`);
+          }
+
+          const falData = await falResponse.json();
+          console.log(`📦 Fal.ai /edit response for slide ${i + 1}:`, JSON.stringify(Object.keys(falData)));
+          
+          imageUrl = falData.images?.[0]?.url || 
+                     falData.images?.[0]?.image_url ||
+                     (typeof falData.images?.[0] === 'string' ? falData.images[0] : undefined);
+          
+          if (!imageUrl) {
+            console.error(`No image URL from /edit for slide ${i + 1}, falling back to original`);
+            imageUrl = uploadedImage;
+          }
+          
+          description = slide.headline || slide.visualInstruction || `Slide ${i + 1}`;
+        } else {
+          // No text or standard tier: use original uploaded image
+          console.log(`Using uploaded image ${slide.uploadedImageIndex} directly for slide ${i + 1}`);
+          imageUrl = uploadedImage;
+          description = slide.visualInstruction || `Slide ${i + 1}`;
+        }
       } else {
         // Build the prompt
         let slidePrompt: string;
 
         if (slide.imageMode === 'generate-with-reference') {
-          slidePrompt = `
+          // Check if slide has native text elements for generate-with-reference mode
+          const hasNativeText = slide.headline || slide.secondaryText || slide.ctaText;
+          
+          if (useProApi && hasNativeText) {
+            // PRO tier with native text - include text in the generation
+            const textElements: string[] = [];
+            if (slide.headline) textElements.push(`📌 HEADLINE: "${slide.headline}"`);
+            if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
+            if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
+            
+            slidePrompt = `
+🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
+
+VISUAL INSTRUCTION: ${slide.visualInstruction}
+
+TEXT ELEMENTS TO RENDER DIRECTLY ON IMAGE:
+${textElements.join('\n')}
+
+THEME: ${themeDescriptions[theme] || theme}
+COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
+
+CRITICAL DESIGN REQUIREMENTS:
+- Use the reference images provided to maintain the person's visual identity
+- Keep the person's face, hair, body type, and overall appearance identical to the reference photos
+- DO NOT change or replace the person
+- Apply the visual transformation/scenario requested while preserving identity
+- Make it look natural and realistic
+- Square aspect ratio (1:1) for Instagram carousel
+
+TYPOGRAPHY REQUIREMENTS:
+- Render all text clearly and legibly as a FLOATING GRAPHIC DESIGN LAYER
+- Use appropriate typography hierarchy (headline larger, secondary smaller)
+- Ensure text contrasts well with background
+- Make the CTA button/text stand out if provided
+- Professional font styling
+- NEVER place text inside scene objects (signs, walls, screens)
+- Use safe margins (keep text at least 80px from edges)
+            `.trim();
+          } else {
+            // Standard tier or no native text
+            slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
 VISUAL INSTRUCTION: ${slide.visualInstruction}
@@ -268,7 +387,8 @@ CRITICAL DESIGN REQUIREMENTS:
 - Square aspect ratio (1:1) for Instagram carousel
 
 IMPORTANT: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
-          `.trim();
+            `.trim();
+          }
         } else if (generationMode === 'prompt-only' && customPrompt) {
           slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
