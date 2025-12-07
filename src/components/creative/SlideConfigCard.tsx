@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette, RatioIcon } from 'lucide-react';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -51,8 +51,8 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
   // Fase 4: useRef para controle de mudança de modo (persiste entre re-renders)
   const changingModeRef = useRef(false);
 
-  // Fase 4: useCallback para handlers de mudança de modo
-  const handleModeChange = useCallback((newMode: 'generate' | 'upload' | 'generate-with-reference', e: React.MouseEvent) => {
+  // Handler sem useCallback - captura slide corretamente a cada render
+  const handleModeChange = (newMode: 'generate' | 'upload' | 'generate-with-reference', e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -65,13 +65,22 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
     
     changingModeRef.current = true;
     
-    const format = newMode === 'upload' ? 'original' : 'square';
-    onChange({ ...slide, imageMode: newMode, format });
+    // Não forçar format - apenas define 'original' para upload se não tiver formato
+    const newSlide: SlideConfig = { 
+      ...slide, 
+      imageMode: newMode 
+    };
+    
+    if (newMode === 'upload' && !slide.format) {
+      newSlide.format = 'original';
+    }
+    
+    onChange(newSlide);
     
     setTimeout(() => {
       changingModeRef.current = false;
     }, 150);
-  }, [disabled, uploadedImagesCount, onChange, slide]);
+  };
 
   // Validate hex color
   const isValidHex = (hex: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
