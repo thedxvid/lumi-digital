@@ -506,10 +506,6 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                         : 'Padrão: Branco com sombra'}
                     </p>
                   </div>
-
-                  <p className="text-xs text-muted-foreground">
-                    O texto será renderizado diretamente na imagem pelo modelo Nano Banana PRO
-                  </p>
                 </div>
               )}
             </div>
