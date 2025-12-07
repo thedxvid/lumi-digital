@@ -1,7 +1,7 @@
 /**
- * Resizes an image to exact dimensions using "cover" strategy
- * This scales the image to cover the entire canvas while maintaining aspect ratio,
- * then crops any excess - NEVER stretches or distorts the image
+ * Resizes an image to exact dimensions using "contain" strategy
+ * This scales the image to fit entirely within the canvas (preserving ALL content),
+ * and fills any empty areas with a background color - NEVER crops content
  */
 export const resizeImage = async (
   imageDataUrl: string,
@@ -13,6 +13,32 @@ export const resizeImage = async (
     img.crossOrigin = 'anonymous';
     
     img.onload = () => {
+      // Check if aspect ratios are close enough (within 5%) to skip resizing
+      const imgAspect = img.width / img.height;
+      const targetAspect = targetWidth / targetHeight;
+      const aspectDifference = Math.abs(imgAspect - targetAspect) / targetAspect;
+      
+      // If aspect ratio is very close, use original image scaled to fit
+      if (aspectDifference < 0.05) {
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Simply scale to target dimensions (aspect ratios are close enough)
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL('image/png', 1.0));
+        return;
+      }
+
       const canvas = document.createElement('canvas');
       canvas.width = targetWidth;
       canvas.height = targetHeight;
@@ -27,28 +53,28 @@ export const resizeImage = async (
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Calculate aspect ratios
-      const imgAspect = img.width / img.height;
-      const targetAspect = targetWidth / targetHeight;
+      // Fill background with dark color to match creative aesthetics
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
       
       let drawWidth, drawHeight, offsetX, offsetY;
       
-      // Use "cover" strategy - scale to cover entire canvas, then crop
+      // Use "contain" strategy - scale to fit entirely, preserve ALL content
       if (imgAspect > targetAspect) {
-        // Image is wider than target - fit by height, crop width
-        drawHeight = targetHeight;
-        drawWidth = img.width * (targetHeight / img.height);
-        offsetX = (targetWidth - drawWidth) / 2;
-        offsetY = 0;
-      } else {
-        // Image is taller than target - fit by width, crop height
+        // Image is wider than target - fit by width
         drawWidth = targetWidth;
-        drawHeight = img.height * (targetWidth / img.width);
+        drawHeight = targetWidth / imgAspect;
         offsetX = 0;
         offsetY = (targetHeight - drawHeight) / 2;
+      } else {
+        // Image is taller than target - fit by height
+        drawHeight = targetHeight;
+        drawWidth = targetHeight * imgAspect;
+        offsetX = (targetWidth - drawWidth) / 2;
+        offsetY = 0;
       }
       
-      // Draw image centered with cover scaling (no distortion)
+      // Draw image centered with contain scaling (preserves all content)
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
       
       // Convert to data URL with high quality
