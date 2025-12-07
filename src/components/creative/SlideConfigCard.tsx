@@ -34,6 +34,25 @@ interface SlideConfigCardProps {
 export function SlideConfigCard({ slideNumber, slide, onChange, disabled, uploadedImagesCount, showTextFields = false }: SlideConfigCardProps) {
   const [isOpen, setIsOpen] = useState(slideNumber === 1);
   const [enhancing, setEnhancing] = useState(false);
+  const [customColorInput, setCustomColorInput] = useState('');
+
+  // Validate hex color
+  const isValidHex = (hex: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
+  
+  const handleCustomColorChange = (value: string) => {
+    // Auto-add # if not present
+    let formatted = value.toUpperCase();
+    if (formatted && !formatted.startsWith('#')) {
+      formatted = '#' + formatted;
+    }
+    setCustomColorInput(formatted);
+    
+    if (isValidHex(formatted)) {
+      onChange({ ...slide, textColor: formatted });
+    }
+  };
+
+  const isCustomColor = slide.textColor && !textColorOptions.some(c => c.value === slide.textColor);
 
   const enhanceVisualPrompt = async () => {
     if (!slide.visualInstruction.trim()) return;
@@ -247,17 +266,20 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     />
                   </div>
                   {/* Text Color Selector */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Label className="flex items-center gap-2 text-sm">
                       <Palette className="w-4 h-4" />
                       Cor do Texto
                     </Label>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {textColorOptions.map((color) => (
                         <button
                           key={color.value}
                           type="button"
-                          onClick={() => onChange({ ...slide, textColor: color.value })}
+                          onClick={() => {
+                            onChange({ ...slide, textColor: color.value });
+                            setCustomColorInput('');
+                          }}
                           disabled={disabled}
                           className={cn(
                             "w-8 h-8 rounded-full transition-all hover:scale-110 focus:outline-none",
@@ -268,9 +290,46 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                           title={color.label}
                         />
                       ))}
+                      
+                      {/* Custom color preview */}
+                      {isCustomColor && (
+                        <div
+                          className="w-8 h-8 rounded-full ring-2 ring-primary ring-offset-2"
+                          style={{ backgroundColor: slide.textColor }}
+                          title={`Personalizada: ${slide.textColor}`}
+                        />
+                      )}
                     </div>
+                    
+                    {/* Custom hex input */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 relative">
+                        <Input
+                          placeholder="#FF5733"
+                          value={customColorInput}
+                          onChange={(e) => handleCustomColorChange(e.target.value)}
+                          disabled={disabled}
+                          maxLength={7}
+                          className="font-mono text-sm"
+                        />
+                        {customColorInput && !isValidHex(customColorInput) && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-destructive">
+                            Inválido
+                          </span>
+                        )}
+                      </div>
+                      {customColorInput && isValidHex(customColorInput) && (
+                        <div
+                          className="w-8 h-8 rounded border border-border flex-shrink-0"
+                          style={{ backgroundColor: customColorInput }}
+                        />
+                      )}
+                    </div>
+                    
                     <p className="text-xs text-muted-foreground">
-                      {slide.textColor ? `Cor selecionada: ${textColorOptions.find(c => c.value === slide.textColor)?.label || slide.textColor}` : 'Padrão: Branco com sombra'}
+                      {slide.textColor 
+                        ? `Cor: ${textColorOptions.find(c => c.value === slide.textColor)?.label || slide.textColor}` 
+                        : 'Padrão: Branco com sombra'}
                     </p>
                   </div>
 
