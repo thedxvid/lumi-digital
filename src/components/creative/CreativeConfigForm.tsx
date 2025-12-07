@@ -7,7 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { CreativeTypeSelector } from "./CreativeTypeSelector";
 import { FormatSelector } from "./FormatSelector";
-import { Loader2, Sparkles, Type, RatioIcon } from "lucide-react";
+import { Loader2, Sparkles, Type, RatioIcon, Wand2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const ASPECT_RATIOS = [
   { value: '1:1', label: 'Quadrado', description: '1:1' },
@@ -25,19 +27,21 @@ export interface CreativeConfig {
   secondaryText?: string;
   callToAction?: string;
 }
+
 interface CreativeConfigFormProps {
   onGenerate: (config: CreativeConfig) => void;
   loading: boolean;
   generationMode?: 'with-image' | 'prompt-only';
 }
+
 export function CreativeConfigForm({
   onGenerate,
   loading,
   generationMode = 'with-image'
 }: CreativeConfigFormProps) {
-  // Separate states for each generation mode to prevent shared state issue
   const [promptWithImage, setPromptWithImage] = useState('');
   const [promptOnly, setPromptOnly] = useState('');
+  const [enhancing, setEnhancing] = useState(false);
   
   const [config, setConfig] = useState<CreativeConfig>({
     creativeType: 'social-post',
@@ -55,19 +59,55 @@ export function CreativeConfigForm({
       [field]: value
     }));
   };
+
+  const enhancePrompt = async (isPromptOnly: boolean) => {
+    const currentPrompt = isPromptOnly ? promptOnly : promptWithImage;
+    
+    if (!currentPrompt.trim()) {
+      toast.error('Digite um prompt primeiro');
+      return;
+    }
+
+    setEnhancing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enhance-prompt', {
+        body: { 
+          prompt: currentPrompt,
+          context: config.creativeType
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.enhancedPrompt) {
+        if (isPromptOnly) {
+          setPromptOnly(data.enhancedPrompt);
+        } else {
+          setPromptWithImage(data.enhancedPrompt);
+        }
+        toast.success('Prompt melhorado com sucesso!');
+      }
+    } catch (error) {
+      console.error('Error enhancing prompt:', error);
+      toast.error('Erro ao melhorar o prompt');
+    } finally {
+      setEnhancing(false);
+    }
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Use the correct prompt based on the generation mode
     const finalConfig = {
       ...config,
       customPrompt: generationMode === 'prompt-only' ? promptOnly : promptWithImage
     };
     onGenerate(finalConfig);
   };
-  return <form onSubmit={handleSubmit} className="space-y-6">
-      {generationMode === 'prompt-only' ? <>
-          {/* Aspect Ratio Selector for prompt-only mode */}
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {generationMode === 'prompt-only' ? (
+        <>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -106,14 +146,38 @@ export function CreativeConfigForm({
                 Descreva detalhadamente o criativo que você deseja gerar. Seja específico sobre cores, estilo, composição e formato.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Textarea value={promptOnly} onChange={e => setPromptOnly(e.target.value)} placeholder="Ex: Crie um post para Instagram quadrado com fundo azul gradiente, estilo moderno e minimalista, composição centralizada com espaço para texto..." className="min-h-[300px] resize-y" />
-              <p className="text-xs text-muted-foreground mt-2">
-                {promptOnly.length} caracteres
-              </p>
+            <CardContent className="space-y-3">
+              <Textarea 
+                value={promptOnly} 
+                onChange={e => setPromptOnly(e.target.value)} 
+                placeholder="Ex: Crie um post para Instagram quadrado com fundo azul gradiente, estilo moderno e minimalista, composição centralizada com espaço para texto..." 
+                className="min-h-[300px] resize-y" 
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  {promptOnly.length} caracteres
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => enhancePrompt(true)}
+                  disabled={enhancing || !promptOnly.trim()}
+                  className="gap-2"
+                >
+                  {enhancing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4" />
+                  )}
+                  Melhorar Prompt
+                </Button>
+              </div>
             </CardContent>
           </Card>
-        </> : <>
+        </>
+      ) : (
+        <>
           <Card>
             <CardHeader>
               <CardTitle>Tipo e Formato</CardTitle>
@@ -181,34 +245,63 @@ export function CreativeConfigForm({
 
           <Card>
             <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              Prompt Visual
-            </CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Prompt Visual
+              </CardTitle>
               <CardDescription>
                 Descreva o estilo visual, cores e composição do criativo.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="customPrompt">Descreva o visual que você quer</Label>
-                <Textarea id="customPrompt" value={promptWithImage} onChange={e => setPromptWithImage(e.target.value)} placeholder="Ex: Fundo com gradiente azul para roxo, estilo moderno e clean, com elementos geométricos sutis..." className="min-h-[120px] resize-y" />
+                <Textarea 
+                  id="customPrompt" 
+                  value={promptWithImage} 
+                  onChange={e => setPromptWithImage(e.target.value)} 
+                  placeholder="Ex: Fundo com gradiente azul para roxo, estilo moderno e clean, com elementos geométricos sutis..." 
+                  className="min-h-[120px] resize-y" 
+                />
+              </div>
+              <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   {promptWithImage.length} caracteres
                 </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => enhancePrompt(false)}
+                  disabled={enhancing || !promptWithImage.trim()}
+                  className="gap-2"
+                >
+                  {enhancing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4" />
+                  )}
+                  Melhorar Prompt
+                </Button>
               </div>
             </CardContent>
           </Card>
-        </>}
+        </>
+      )}
 
       <Button type="submit" size="lg" className="w-full" disabled={loading}>
-        {loading ? <>
+        {loading ? (
+          <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Gerando Criativo...
-          </> : <>
+          </>
+        ) : (
+          <>
             <Sparkles className="w-4 h-4 mr-2" />
             Gerar Criativo Base
-          </>}
+          </>
+        )}
       </Button>
-    </form>;
+    </form>
+  );
 }
