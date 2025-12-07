@@ -4,9 +4,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette, RatioIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// RadioGroup removido - usando divs customizados para evitar conflitos de eventos
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
@@ -49,7 +48,30 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
   const [isOpen, setIsOpen] = useState(slideNumber === 1);
   const [enhancing, setEnhancing] = useState(false);
   const [customColorInput, setCustomColorInput] = useState('');
-  const [isChangingMode, setIsChangingMode] = useState(false);
+  // Fase 4: useRef para controle de mudança de modo (persiste entre re-renders)
+  const changingModeRef = useRef(false);
+
+  // Fase 4: useCallback para handlers de mudança de modo
+  const handleModeChange = useCallback((newMode: 'generate' | 'upload' | 'generate-with-reference', e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (changingModeRef.current || disabled) return;
+    
+    if ((newMode === 'upload' || newMode === 'generate-with-reference') && uploadedImagesCount === 0) {
+      toast.error('Envie imagens primeiro para usar esta opção');
+      return;
+    }
+    
+    changingModeRef.current = true;
+    
+    const format = newMode === 'upload' ? 'original' : 'square';
+    onChange({ ...slide, imageMode: newMode, format });
+    
+    setTimeout(() => {
+      changingModeRef.current = false;
+    }, 150);
+  }, [disabled, uploadedImagesCount, onChange, slide]);
 
   // Validate hex color
   const isValidHex = (hex: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
@@ -120,19 +142,11 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 Como Gerar a Imagem deste Slide
               </Label>
               
-              {/* Container customizado - sem RadioGroup para evitar conflitos de eventos */}
+              {/* Container customizado - usando useRef para controle de cliques */}
               <div className="grid grid-cols-1 gap-2">
                 {/* Card: Gerar nova imagem */}
                 <div 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (isChangingMode || disabled) return;
-                    
-                    setIsChangingMode(true);
-                    onChange({ ...slide, imageMode: 'generate', format: 'square' });
-                    setTimeout(() => setIsChangingMode(false), 150);
-                  }}
+                  onClick={(e) => handleModeChange('generate', e)}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
                     slide.imageMode === 'generate' 
@@ -141,7 +155,6 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                     disabled && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  {/* Indicador visual customizado */}
                   <div className={cn(
                     "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
                     slide.imageMode === 'generate' 
@@ -158,19 +171,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
 
                 {/* Card: Usar foto enviada */}
                 <div 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (isChangingMode || disabled) return;
-                    if (uploadedImagesCount === 0) {
-                      toast.error('Envie imagens primeiro para usar esta opção');
-                      return;
-                    }
-                    
-                    setIsChangingMode(true);
-                    onChange({ ...slide, imageMode: 'upload', format: 'original' });
-                    setTimeout(() => setIsChangingMode(false), 150);
-                  }}
+                  onClick={(e) => handleModeChange('upload', e)}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border transition-colors",
                     slide.imageMode === 'upload' 
@@ -181,7 +182,6 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       : "cursor-pointer"
                   )}
                 >
-                  {/* Indicador visual customizado */}
                   <div className={cn(
                     "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
                     slide.imageMode === 'upload' 
@@ -203,19 +203,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
 
                 {/* Card: Gerar usando referência */}
                 <div 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (isChangingMode || disabled) return;
-                    if (uploadedImagesCount === 0) {
-                      toast.error('Envie imagens primeiro para usar esta opção');
-                      return;
-                    }
-                    
-                    setIsChangingMode(true);
-                    onChange({ ...slide, imageMode: 'generate-with-reference', format: 'square' });
-                    setTimeout(() => setIsChangingMode(false), 150);
-                  }}
+                  onClick={(e) => handleModeChange('generate-with-reference', e)}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border transition-colors",
                     slide.imageMode === 'generate-with-reference' 
@@ -226,7 +214,6 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       : "cursor-pointer"
                   )}
                 >
-                  {/* Indicador visual customizado */}
                   <div className={cn(
                     "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0",
                     slide.imageMode === 'generate-with-reference' 
