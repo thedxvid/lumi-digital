@@ -253,14 +253,29 @@ OUTPUT SIZE: ${width}x${height} pixels`;
         console.log('🚀 Using Fal.ai Nano Banana PRO /edit endpoint (image-to-image)')
         console.log(`📸 Processing ${images.length} base image(s)`)
 
-        // Build editing prompt that preserves the original product
+        // Build text elements section for PRO users
+        const textElements: string[] = [];
+        if (config?.mainText) textElements.push(`📌 MAIN TEXT/HEADLINE: "${config.mainText}"`);
+        if (config?.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${config.secondaryText}"`);
+        if (config?.callToAction) textElements.push(`🔘 CALL TO ACTION BUTTON: "${config.callToAction}"`);
+
+        // Build editing prompt that preserves the original product AND includes text
         const editingPrompt = `EDITING INSTRUCTION - USE THE PROVIDED IMAGE AS THE PRIMARY ELEMENT:
 
 You MUST use the exact product/object from the provided reference image.
 DO NOT create a similar product - USE the ACTUAL product from the image.
 PRESERVE the product's exact appearance, colors, details, shape, and branding.
 
-CREATIVE DIRECTION:
+${textElements.length > 0 ? `TEXT ELEMENTS TO RENDER ON THE IMAGE:
+${textElements.join('\n')}
+
+TYPOGRAPHY REQUIREMENTS:
+- Render all text elements clearly and beautifully integrated into the composition
+- Use appropriate typography hierarchy (headline larger, secondary smaller)
+- Ensure text has excellent contrast with background
+- Make the CTA button stand out visually if provided
+- Text must be crisp, readable and professionally styled
+` : ''}CREATIVE DIRECTION:
 ${config?.customPrompt || prompt}
 
 QUALITY REQUIREMENTS:
