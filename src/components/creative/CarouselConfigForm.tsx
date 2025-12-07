@@ -114,6 +114,13 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
           showTextFields={true}
         />
       ))}
+      {!canGenerate && !loading && (
+        <p className="text-xs text-muted-foreground text-center">
+          {!title.trim() 
+            ? 'Preencha o título do carrossel'
+            : 'Configure todas as instruções visuais ou selecione as fotos para cada slide'}
+        </p>
+      )}
       <Button type="submit" className="w-full" disabled={loading || !canGenerate}>
         {loading ? (
           <>
