@@ -146,7 +146,8 @@ serve(async (req) => {
 
     if (userApiKey?.is_valid) {
       userHasByok = true;
-      const encryptionKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.substring(0, 32) || '';
+      // Use the same encryption key as creative-engine for consistency
+      const encryptionKey = 'lumi-api-key-secret-2024';
       const { data: decryptedKey } = await supabase.rpc('decrypt_api_key', {
         encrypted_text: userApiKey.api_key_encrypted,
         encryption_key: encryptionKey
