@@ -300,32 +300,32 @@ CRITICAL RULES:
 - DO NOT modify, distort, or alter the product itself
 - Only change the environment/context around the product`;
 
-        // Map format to Fal.ai image_size for correct aspect ratio
-        const getFalImageSize = (format: string | undefined, w: number, h: number): string => {
+        // Map format to Fal.ai aspect_ratio for correct dimensions
+        const getFalAspectRatio = (format: string | undefined, w: number, h: number): string => {
           const formatMap: Record<string, string> = {
-            'square': 'square_hd',
-            'vertical': 'portrait_4_3',
-            'story-vertical': 'portrait_16_9',
-            'horizontal': 'landscape_16_9',
-            'ad-square': 'square_hd',
-            'ad-horizontal': 'landscape_16_9',
-            'ad-vertical': 'portrait_4_3',
-            'banner-wide': 'landscape_16_9',
-            'banner-ultra': 'landscape_16_9',
-            'product-square': 'square_hd',
-            'product-vertical': 'portrait_4_3'
+            'square': '1:1',
+            'vertical': '4:5',
+            'story-vertical': '9:16',
+            'horizontal': '16:9',
+            'ad-square': '1:1',
+            'ad-horizontal': '16:9',
+            'ad-vertical': '4:5',
+            'banner-wide': '16:9',
+            'banner-ultra': '21:9',
+            'product-square': '1:1',
+            'product-vertical': '4:5'
           };
           return formatMap[format || ''] || 
-            (w > h ? 'landscape_16_9' : w < h ? 'portrait_16_9' : 'square_hd');
+            (w > h ? '16:9' : w < h ? '9:16' : '1:1');
         };
 
-        const falImageSize = getFalImageSize(config?.format, width, height);
-        console.log(`📐 Using image_size: ${falImageSize} for format: ${config?.format} (${width}x${height})`);
+        const falAspectRatio = getFalAspectRatio(config?.format, width, height);
+        console.log(`📐 Using aspect_ratio: ${falAspectRatio} for format: ${config?.format} (${width}x${height})`);
 
         const falRequestBody: Record<string, any> = {
           prompt: editingPrompt,
           image_urls: images,
-          image_size: falImageSize, // CRITICAL: Set correct aspect ratio to prevent stretching
+          aspect_ratio: falAspectRatio, // CRITICAL: Set correct aspect ratio to prevent stretching
           num_inference_steps: 28,
           guidance_scale: 4.5,
           num_images: 1,
@@ -375,27 +375,27 @@ CRITICAL RULES:
         // ===== TEXT-TO-IMAGE MODE: Use standard endpoint =====
         console.log('🚀 Using Fal.ai Nano Banana PRO (text-to-image)')
 
-        // Use the same getFalImageSize function for consistent aspect ratio mapping
-        const getFalImageSizeTextToImage = (format: string | undefined, w: number, h: number): string => {
+        // Use consistent aspect_ratio mapping for text-to-image
+        const getFalAspectRatioTextToImage = (format: string | undefined, w: number, h: number): string => {
           const formatMap: Record<string, string> = {
-            'square': 'square_hd',
-            'vertical': 'portrait_4_3',
-            'story-vertical': 'portrait_16_9',
-            'horizontal': 'landscape_16_9',
-            'ad-square': 'square_hd',
-            'ad-horizontal': 'landscape_16_9',
-            'ad-vertical': 'portrait_4_3',
-            'banner-wide': 'landscape_16_9',
-            'banner-ultra': 'landscape_16_9',
-            'product-square': 'square_hd',
-            'product-vertical': 'portrait_4_3'
+            'square': '1:1',
+            'vertical': '4:5',
+            'story-vertical': '9:16',
+            'horizontal': '16:9',
+            'ad-square': '1:1',
+            'ad-horizontal': '16:9',
+            'ad-vertical': '4:5',
+            'banner-wide': '16:9',
+            'banner-ultra': '21:9',
+            'product-square': '1:1',
+            'product-vertical': '4:5'
           };
           return formatMap[format || ''] || 
-            (w > h ? 'landscape_16_9' : w < h ? 'portrait_16_9' : 'square_hd');
+            (w > h ? '16:9' : w < h ? '9:16' : '1:1');
         };
 
-        const falAspectRatio = getFalImageSizeTextToImage(config?.format, width, height);
-        console.log(`📐 Text-to-image using image_size: ${falAspectRatio} for format: ${config?.format} (${width}x${height})`);
+        const falAspectRatioForGeneration = getFalAspectRatioTextToImage(config?.format, width, height);
+        console.log(`📐 Text-to-image using aspect_ratio: ${falAspectRatioForGeneration} for format: ${config?.format} (${width}x${height})`);
 
         // Add quality modifiers to the prompt
         const enhancedPromptWithQuality = `${enhancedPrompt}
@@ -405,7 +405,7 @@ ${qualityModifiers}`;
 
         const falRequestBody: Record<string, any> = {
           prompt: enhancedPromptWithQuality,
-          image_size: falAspectRatio,
+          aspect_ratio: falAspectRatioForGeneration,
           num_inference_steps: 28,
           guidance_scale: 3.5,
           num_images: 1,

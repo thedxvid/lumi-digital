@@ -21,13 +21,13 @@ interface SlideConfig {
   format?: string; // 'square', 'vertical', 'story-vertical', 'horizontal', 'original'
 }
 
-// Mapeamento de formato para image_size do Fal.ai
-const formatToFalSize: Record<string, string | null> = {
-  'square': 'square_hd',
-  'vertical': 'portrait_4_3',
-  'story-vertical': 'portrait_16_9',
-  'horizontal': 'landscape_16_9',
-  'original': null, // Não passa image_size para preservar dimensões originais
+// Mapeamento de formato para aspect_ratio do Fal.ai (valores corretos)
+const formatToFalAspectRatio: Record<string, string | null> = {
+  'square': '1:1',
+  'vertical': '4:5',
+  'story-vertical': '9:16',
+  'horizontal': '16:9',
+  'original': null, // Não passa aspect_ratio para preservar dimensões originais
 };
 
 interface GenerateCarouselRequest {
@@ -310,11 +310,11 @@ TYPOGRAPHY:
 
           const falApiKey = userHasByok && userFalKey ? userFalKey : FAL_KEY;
           
-          // Determinar image_size baseado no formato selecionado
+          // Determinar aspect_ratio baseado no formato selecionado
           const selectedFormat = slide.format || 'original';
-          const falImageSize = formatToFalSize[selectedFormat];
+          const falAspectRatio = formatToFalAspectRatio[selectedFormat];
           
-          console.log(`📐 Upload mode format: ${selectedFormat} -> image_size: ${falImageSize || 'not set (preserve original)'}`);
+          console.log(`📐 Upload mode format: ${selectedFormat} -> aspect_ratio: ${falAspectRatio || 'not set (preserve original)'}`);
           
           const editRequestBody: any = {
             prompt: editPrompt,
@@ -325,9 +325,9 @@ TYPOGRAPHY:
             enable_safety_checker: true
           };
           
-          // Só adiciona image_size se não for 'original'
-          if (falImageSize) {
-            editRequestBody.image_size = falImageSize;
+          // Só adiciona aspect_ratio se não for 'original'
+          if (falAspectRatio) {
+            editRequestBody.aspect_ratio = falAspectRatio;
           }
           
           const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
@@ -603,11 +603,11 @@ STEP 3 - QUALITY CHECK:
 - Make the image look artificial or composited
             `.trim();
             
-            // Determinar image_size baseado no formato selecionado
+            // Determinar aspect_ratio baseado no formato selecionado
             const selectedFormat = slide.format || 'square';
-            const falImageSize = formatToFalSize[selectedFormat] || 'square_hd';
+            const falAspectRatio = formatToFalAspectRatio[selectedFormat] || '1:1';
             
-            console.log(`📐 Generate-with-reference format: ${selectedFormat} -> image_size: ${falImageSize}`);
+            console.log(`📐 Generate-with-reference format: ${selectedFormat} -> aspect_ratio: ${falAspectRatio}`);
             
             falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
               method: 'POST',
@@ -618,7 +618,7 @@ STEP 3 - QUALITY CHECK:
               body: JSON.stringify({
                 prompt: identityPrompt,
                 image_urls: uploadedImages,
-                image_size: falImageSize,
+                aspect_ratio: falAspectRatio,
                 num_inference_steps: 28,
                 guidance_scale: 4.0,
                 num_images: 1,
@@ -628,9 +628,9 @@ STEP 3 - QUALITY CHECK:
           } else {
             // Standard generation without reference images
             const selectedFormat = slide.format || 'square';
-            const falImageSize = formatToFalSize[selectedFormat] || 'square_hd';
+            const falAspectRatio = formatToFalAspectRatio[selectedFormat] || '1:1';
             
-            console.log(`📐 Generate format: ${selectedFormat} -> image_size: ${falImageSize}`);
+            console.log(`📐 Generate format: ${selectedFormat} -> aspect_ratio: ${falAspectRatio}`);
             
             falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
               method: 'POST',
@@ -640,7 +640,7 @@ STEP 3 - QUALITY CHECK:
               },
               body: JSON.stringify({
                 prompt: slidePrompt,
-                image_size: falImageSize,
+                aspect_ratio: falAspectRatio,
                 num_inference_steps: 28,
                 guidance_scale: 3.5,
                 num_images: 1,
