@@ -3,12 +3,24 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2 } from 'lucide-react';
+import { ChevronDown, ImageIcon, Sparkles, Edit, Wand2, Loader2, Palette } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
+import { cn } from '@/lib/utils';
+
+const textColorOptions = [
+  { value: '#FFFFFF', label: 'Branco', className: 'bg-white border border-gray-300' },
+  { value: '#000000', label: 'Preto', className: 'bg-black' },
+  { value: '#FFD700', label: 'Dourado', className: 'bg-yellow-500' },
+  { value: '#FF6B6B', label: 'Vermelho', className: 'bg-red-400' },
+  { value: '#4ECDC4', label: 'Turquesa', className: 'bg-teal-400' },
+  { value: '#A855F7', label: 'Roxo', className: 'bg-purple-500' },
+  { value: '#3B82F6', label: 'Azul', className: 'bg-blue-500' },
+  { value: '#22C55E', label: 'Verde', className: 'bg-green-500' },
+];
 
 interface SlideConfigCardProps {
   slideNumber: number;
@@ -234,6 +246,34 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       maxLength={40}
                     />
                   </div>
+                  {/* Text Color Selector */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-sm">
+                      <Palette className="w-4 h-4" />
+                      Cor do Texto
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {textColorOptions.map((color) => (
+                        <button
+                          key={color.value}
+                          type="button"
+                          onClick={() => onChange({ ...slide, textColor: color.value })}
+                          disabled={disabled}
+                          className={cn(
+                            "w-8 h-8 rounded-full transition-all hover:scale-110 focus:outline-none",
+                            color.className,
+                            slide.textColor === color.value && "ring-2 ring-primary ring-offset-2",
+                            !slide.textColor && color.value === '#FFFFFF' && "ring-2 ring-primary/50 ring-offset-1"
+                          )}
+                          title={color.label}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {slide.textColor ? `Cor selecionada: ${textColorOptions.find(c => c.value === slide.textColor)?.label || slide.textColor}` : 'Padrão: Branco com sombra'}
+                    </p>
+                  </div>
+
                   <p className="text-xs text-muted-foreground">
                     O texto será renderizado diretamente na imagem pelo modelo Nano Banana PRO
                   </p>

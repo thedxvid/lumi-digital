@@ -20,6 +20,7 @@ export interface SlideConfig {
   headline?: string;
   secondaryText?: string;
   ctaText?: string;
+  textColor?: string;
 }
 
 export interface CarouselConfig {

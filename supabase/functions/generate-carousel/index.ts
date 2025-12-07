@@ -17,6 +17,7 @@ interface SlideConfig {
   headline?: string;
   secondaryText?: string;
   ctaText?: string;
+  textColor?: string;
 }
 
 interface GenerateCarouselRequest {
@@ -257,6 +258,11 @@ serve(async (req) => {
             if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
             if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
             
+            // Text color instruction for upload mode
+            const colorInstruction = slide.textColor 
+              ? `TEXT COLOR: Use ${slide.textColor} for all text.`
+              : 'TEXT COLOR: Use white (#FFFFFF) with shadow.';
+            
             // PROTEÇÃO: Prompt muito restritivo para NÃO alterar pessoas
             const editPrompt = `
 ⚠️ CRITICAL INSTRUCTION - TEXT OVERLAY ONLY ⚠️
@@ -272,6 +278,8 @@ This is EXCLUSIVELY a text overlay task. You MUST:
 ✅ ONLY ADD TEXT OVERLAY:
 ${textElements.join('\n')}
 
+${colorInstruction}
+
 ❌ ABSOLUTELY DO NOT:
 - Change, swap, alter, or modify any person's appearance
 - Replace or regenerate any face or body
@@ -284,7 +292,7 @@ The underlying photograph must remain EXACTLY the same.
 ${slide.visualInstruction && !slide.visualInstruction.toLowerCase().includes('pessoa') && !slide.visualInstruction.toLowerCase().includes('rosto') && !slide.visualInstruction.toLowerCase().includes('face') ? `MINOR STYLE ADJUSTMENTS (text only): ${slide.visualInstruction}` : ''}
 
 TYPOGRAPHY:
-- Render text as floating overlay layer
+- Render text as floating overlay layer in the specified color
 - Professional font styling with good contrast
 - Keep text away from faces
 - Use safe margins (80px from edges)
@@ -357,6 +365,11 @@ TYPOGRAPHY:
             if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
             if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
             
+            // Text color instruction for generate-with-reference
+            const colorInstruction = slide.textColor 
+              ? `TEXT COLOR: Use ${slide.textColor} for all text elements. Ensure good contrast.`
+              : 'TEXT COLOR: Use white (#FFFFFF) with subtle shadow for readability.';
+            
             slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
@@ -364,6 +377,8 @@ VISUAL INSTRUCTION: ${slide.visualInstruction}
 
 TEXT ELEMENTS TO RENDER DIRECTLY ON IMAGE:
 ${textElements.join('\n')}
+
+${colorInstruction}
 
 THEME: ${themeDescriptions[theme] || theme}
 COLOR PALETTE: ${paletteDescriptions[colorPalette] || colorPalette}
@@ -377,7 +392,7 @@ CRITICAL DESIGN REQUIREMENTS:
 - Square aspect ratio (1:1) for Instagram carousel
 
 TYPOGRAPHY REQUIREMENTS:
-- Render all text clearly and legibly as a FLOATING GRAPHIC DESIGN LAYER
+- Render all text clearly and legibly in the specified color as a FLOATING GRAPHIC DESIGN LAYER
 - Use appropriate typography hierarchy (headline larger, secondary smaller)
 - Ensure text contrasts well with background
 - Make the CTA button/text stand out if provided
@@ -446,6 +461,11 @@ REMEMBER: NO TEXT, NO WORDS, NO LETTERS - ONLY VISUAL ELEMENTS
             if (slide.secondaryText) textElements.push(`📝 SECONDARY TEXT: "${slide.secondaryText}"`);
             if (slide.ctaText) textElements.push(`🔘 CALL TO ACTION: "${slide.ctaText}"`);
             
+            // Text color instruction
+            const colorInstruction = slide.textColor 
+              ? `TEXT COLOR: Use ${slide.textColor} for all text elements. Ensure good contrast with background.`
+              : 'TEXT COLOR: Use white (#FFFFFF) with subtle shadow for readability.';
+            
             slidePrompt = `
 🎨 CAROUSEL SLIDE ${i + 1} OF ${imageCount}
 
@@ -453,6 +473,8 @@ VISUAL INSTRUCTION: ${slide.visualInstruction}
 
 TEXT ELEMENTS TO RENDER DIRECTLY ON IMAGE:
 ${textElements.join('\n')}
+
+${colorInstruction}
 
 DESIGN SPECIFICATIONS:
 - Square aspect ratio (1:1) optimized for Instagram carousel
@@ -462,7 +484,7 @@ DESIGN SPECIFICATIONS:
 ${i === 0 ? '\n- This is the FIRST slide - make it eye-catching and engaging to hook the viewer' : ''}
 
 TYPOGRAPHY REQUIREMENTS:
-- Render all text clearly and legibly
+- Render all text clearly and legibly in the specified color
 - Use appropriate typography hierarchy (headline larger, secondary smaller)
 - Ensure text contrasts well with background
 - Make the CTA button/text stand out if provided
