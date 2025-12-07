@@ -164,6 +164,7 @@ serve(async (req) => {
     const aspectRatio = (width / height).toFixed(2);
     
     let enhancedPrompt = prompt;
+    const hasBaseImages = images.length > 0;
     
     if (config) {
       // PRO tier ALWAYS uses full creative freedom with native text generation
@@ -183,13 +184,20 @@ FORMAT: ${config.format}
 DIMENSIONS: ${dimensions} pixels (Aspect Ratio ${aspectRatio}:1)
 ${width > height ? 'ORIENTATION: Horizontal/Landscape' : width < height ? 'ORIENTATION: Vertical/Portrait' : 'ORIENTATION: Square'}
 
-${textElements.length > 0 ? `TEXT ELEMENTS TO INCLUDE:\n${textElements.join('\n')}` : ''}
+${hasBaseImages ? `🖼️ BASE IMAGE PROVIDED:
+CRITICAL: You MUST use the provided base image as the foundation for this creative.
+Transform, enhance, and build upon the base image according to the visual direction below.
+The base image is the PRIMARY element - integrate text and effects around it.
+DO NOT ignore or replace the base image.
+
+` : ''}${textElements.length > 0 ? `TEXT ELEMENTS TO INCLUDE:\n${textElements.join('\n')}` : ''}
 
 COMPOSITION REQUIREMENTS:
 • Create image in EXACTLY ${dimensions} dimensions (${width}x${height} pixels)
 • Maintain ${aspectRatio}:1 aspect ratio precisely
-• Create a visually striking, professional composition
-• Integrate provided images seamlessly if any
+${hasBaseImages ? `• USE THE PROVIDED BASE IMAGE as the main visual element
+• Apply requested transformations/effects to the base image
+• Integrate the base image naturally into the composition` : '• Create a visually striking, professional composition'}
 ${textElements.length > 0 ? `• Render all text elements clearly, legibly, and beautifully integrated
 • Use appropriate typography hierarchy (headline larger, secondary smaller)
 • Ensure text contrasts well with background
@@ -247,6 +255,24 @@ OUTPUT SIZE: ${width}x${height} pixels`;
                             width < height ? 'portrait_9_16' : 
                             'square_hd';
 
+      // Build request body - include base image if provided for image-to-image
+      const falRequestBody: Record<string, any> = {
+        prompt: enhancedPrompt,
+        image_size: falAspectRatio,
+        num_inference_steps: 28,
+        guidance_scale: 3.5,
+        num_images: 1,
+        enable_safety_checker: true
+      };
+
+      // If base images are provided, include them in the prompt context
+      // Nano Banana PRO supports image understanding via multimodal input
+      if (images.length > 0) {
+        console.log(`📸 Including ${images.length} base image(s) in generation request`)
+        // Add image URLs to the prompt for the model to use as reference
+        falRequestBody.image_url = images[0]; // Use first image as primary reference
+      }
+
       // Use the synchronous endpoint directly for immediate results
       const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
         method: 'POST',
@@ -254,14 +280,7 @@ OUTPUT SIZE: ${width}x${height} pixels`;
           'Authorization': `Key ${falApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: enhancedPrompt,
-          image_size: falAspectRatio,
-          num_inference_steps: 28,
-          guidance_scale: 3.5,
-          num_images: 1,
-          enable_safety_checker: true
-        })
+        body: JSON.stringify(falRequestBody)
       })
 
       if (!falResponse.ok) {

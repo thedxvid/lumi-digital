@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ImageIcon, Sparkles, Edit } from 'lucide-react';
+import { ChevronDown, ImageIcon, Sparkles, Edit, Type } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { SlideConfig } from './CarouselConfigForm';
@@ -13,9 +13,10 @@ interface SlideConfigCardProps {
   onChange: (slide: SlideConfig) => void;
   disabled: boolean;
   uploadedImagesCount: number;
+  showTextFields?: boolean;
 }
 
-export function SlideConfigCard({ slideNumber, slide, onChange, disabled, uploadedImagesCount }: SlideConfigCardProps) {
+export function SlideConfigCard({ slideNumber, slide, onChange, disabled, uploadedImagesCount, showTextFields = false }: SlideConfigCardProps) {
   const [isOpen, setIsOpen] = useState(slideNumber === 1);
 
   return (
@@ -127,6 +128,52 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   </p>
                 )}
               </div>
+
+              {/* Native Text Fields for PRO - shown when generating images */}
+              {showTextFields && slide.imageMode === 'generate' && (
+                <div className="space-y-3 pt-3 border-t border-border">
+                  <Label className="flex items-center gap-2 text-primary">
+                    <Sparkles className="w-4 h-4" />
+                    Texto Nativo (PRO) - Renderizado pela IA
+                  </Label>
+                  <div className="space-y-2">
+                    <Label htmlFor={`slide-${slideNumber}-headline`} className="text-sm">Headline / Título</Label>
+                    <Input
+                      id={`slide-${slideNumber}-headline`}
+                      placeholder="Ex: Transforme seu negócio"
+                      value={slide.headline || ''}
+                      onChange={(e) => onChange({ ...slide, headline: e.target.value })}
+                      disabled={disabled}
+                      maxLength={50}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`slide-${slideNumber}-secondary`} className="text-sm">Texto Secundário</Label>
+                    <Input
+                      id={`slide-${slideNumber}-secondary`}
+                      placeholder="Ex: Com estratégias que funcionam"
+                      value={slide.secondaryText || ''}
+                      onChange={(e) => onChange({ ...slide, secondaryText: e.target.value })}
+                      disabled={disabled}
+                      maxLength={80}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`slide-${slideNumber}-cta`} className="text-sm">Call to Action</Label>
+                    <Input
+                      id={`slide-${slideNumber}-cta`}
+                      placeholder="Ex: Saiba mais"
+                      value={slide.ctaText || ''}
+                      onChange={(e) => onChange({ ...slide, ctaText: e.target.value })}
+                      disabled={disabled}
+                      maxLength={25}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    O texto será renderizado diretamente na imagem pelo modelo Nano Banana PRO
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </CollapsibleContent>

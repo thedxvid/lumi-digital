@@ -15,6 +15,9 @@ export interface SlideConfig {
   imageMode: 'upload' | 'generate' | 'generate-with-reference';
   uploadedImageIndex: number | null;
   visualInstruction: string;
+  headline?: string;
+  secondaryText?: string;
+  ctaText?: string;
 }
 
 export interface CarouselConfig {
@@ -127,6 +130,7 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
               }} 
               disabled={loading}
               uploadedImagesCount={uploadedImages.length}
+              showTextFields={true}
             />
           ))}
         </>
