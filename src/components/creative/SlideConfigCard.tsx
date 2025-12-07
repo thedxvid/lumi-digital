@@ -144,7 +144,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       value={slide.headline || ''}
                       onChange={(e) => onChange({ ...slide, headline: e.target.value })}
                       disabled={disabled}
-                      maxLength={50}
+                      maxLength={100}
                     />
                   </div>
                   <div className="space-y-2">
@@ -155,7 +155,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       value={slide.secondaryText || ''}
                       onChange={(e) => onChange({ ...slide, secondaryText: e.target.value })}
                       disabled={disabled}
-                      maxLength={80}
+                      maxLength={150}
                     />
                   </div>
                   <div className="space-y-2">
@@ -166,7 +166,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       value={slide.ctaText || ''}
                       onChange={(e) => onChange({ ...slide, ctaText: e.target.value })}
                       disabled={disabled}
-                      maxLength={25}
+                      maxLength={40}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
