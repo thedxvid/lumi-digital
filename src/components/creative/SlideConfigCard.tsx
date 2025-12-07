@@ -129,42 +129,48 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   const defaultFormat = value === 'upload' ? 'original' : 'square';
                   onChange({ ...slide, imageMode: value, format: defaultFormat });
                 }}
-                disabled={disabled}
                 className="grid grid-cols-1 gap-2"
               >
                 {/* Card: Gerar nova imagem */}
-                <label 
-                  htmlFor={`generate-${slideNumber}`}
+                <div 
+                  onClick={() => {
+                    if (disabled) return;
+                    onChange({ ...slide, imageMode: 'generate', format: 'square' });
+                  }}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
                     slide.imageMode === 'generate' 
                       ? "border-primary bg-primary/10" 
-                      : "border-border hover:border-primary/50 hover:bg-accent/30"
+                      : "border-border hover:border-primary/50 hover:bg-accent/30",
+                    disabled && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   <RadioGroupItem value="generate" id={`generate-${slideNumber}`} />
                   <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="font-medium text-sm">Gerar nova imagem com IA</span>
-                </label>
+                </div>
 
                 {/* Card: Usar foto enviada */}
-                {/* Card: Usar foto enviada */}
-                <label 
-                  htmlFor={`upload-${slideNumber}`}
+                <div 
+                  onClick={() => {
+                    if (disabled) return;
+                    if (uploadedImagesCount === 0) {
+                      toast.error('Envie imagens primeiro para usar esta opção');
+                      return;
+                    }
+                    onChange({ ...slide, imageMode: 'upload', format: 'original' });
+                  }}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border transition-colors",
                     slide.imageMode === 'upload' 
                       ? "border-primary bg-primary/10" 
                       : "border-border hover:border-primary/50 hover:bg-accent/30",
-                    uploadedImagesCount === 0 
+                    uploadedImagesCount === 0 || disabled
                       ? "opacity-50 cursor-not-allowed" 
                       : "cursor-pointer"
                   )}
                 >
-                  <RadioGroupItem 
-                    value="upload" 
-                    id={`upload-${slideNumber}`}
-                  />
+                  <RadioGroupItem value="upload" id={`upload-${slideNumber}`} />
                   <ImageIcon className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Usar uma foto que enviei</span>
@@ -172,25 +178,29 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       <span className="text-xs text-muted-foreground">(envie imagens primeiro)</span>
                     )}
                   </div>
-                </label>
+                </div>
 
                 {/* Card: Gerar usando referência */}
-                <label 
-                  htmlFor={`reference-${slideNumber}`}
+                <div 
+                  onClick={() => {
+                    if (disabled) return;
+                    if (uploadedImagesCount === 0) {
+                      toast.error('Envie imagens primeiro para usar esta opção');
+                      return;
+                    }
+                    onChange({ ...slide, imageMode: 'generate-with-reference', format: 'square' });
+                  }}
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-lg border transition-colors",
                     slide.imageMode === 'generate-with-reference' 
                       ? "border-primary bg-primary/10" 
                       : "border-border hover:border-primary/50 hover:bg-accent/30",
-                    uploadedImagesCount === 0 
+                    uploadedImagesCount === 0 || disabled
                       ? "opacity-50 cursor-not-allowed" 
                       : "cursor-pointer"
                   )}
                 >
-                  <RadioGroupItem 
-                    value="generate-with-reference" 
-                    id={`reference-${slideNumber}`}
-                  />
+                  <RadioGroupItem value="generate-with-reference" id={`reference-${slideNumber}`} />
                   <Edit className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Gerar usando minhas fotos de referência</span>
@@ -198,7 +208,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       <span className="text-xs text-muted-foreground">(envie imagens primeiro)</span>
                     )}
                   </div>
-                </label>
+                </div>
               </RadioGroup>
 
               {slide.imageMode === 'upload' && uploadedImagesCount > 0 && (
