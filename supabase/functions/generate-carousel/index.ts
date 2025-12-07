@@ -489,33 +489,49 @@ CRITICAL:
           // Use Fal.ai Nano Banana PRO
           const falApiKey = userHasByok && userFalKey ? userFalKey : FAL_KEY;
 
-          const messageContent: any[] = [{ type: "text", text: slidePrompt }];
+          // Check if we need to use edit endpoint (with reference images)
+          const useEditEndpoint = slide.imageMode === 'generate-with-reference' && uploadedImages.length > 0;
           
-          // Add reference images if mode is generate-with-reference
-          if (slide.imageMode === 'generate-with-reference') {
-            uploadedImages.forEach((img) => {
-              messageContent.push({
-                type: "image_url",
-                image_url: { url: img }
-              });
+          let falResponse;
+          
+          if (useEditEndpoint) {
+            // Use edit endpoint with reference images
+            console.log(`Processing uploaded image ${uploadedImages.length > 0 ? 0 : 'none'} with reference for slide ${i + 1}...`);
+            
+            falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Key ${falApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                prompt: `${slidePrompt}\n\nIMPORTANT: Use the reference image(s) as inspiration. Preserve the visual identity, style, and key elements from the reference while creating the new composition.`,
+                image_urls: uploadedImages,
+                image_size: 'square_hd',
+                num_inference_steps: 28,
+                guidance_scale: 3.5,
+                num_images: 1,
+                enable_safety_checker: true
+              })
+            });
+          } else {
+            // Standard generation without reference images
+            falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Key ${falApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                prompt: slidePrompt,
+                image_size: 'square_hd',
+                num_inference_steps: 28,
+                guidance_scale: 3.5,
+                num_images: 1,
+                enable_safety_checker: true
+              })
             });
           }
-
-          const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Key ${falApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              prompt: slidePrompt,
-              image_size: 'square_hd',
-              num_inference_steps: 28,
-              guidance_scale: 3.5,
-              num_images: 1,
-              enable_safety_checker: true
-            })
-          });
 
           if (!falResponse.ok) {
             const errorText = await falResponse.text();
