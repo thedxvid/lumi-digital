@@ -148,6 +148,7 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                 </label>
 
                 {/* Card: Usar foto enviada */}
+                {/* Card: Usar foto enviada */}
                 <label 
                   htmlFor={`upload-${slideNumber}`}
                   className={cn(
@@ -160,10 +161,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       : "cursor-pointer"
                   )}
                 >
-                <RadioGroupItem 
-                  value="upload" 
-                  id={`upload-${slideNumber}`}
-                />
+                  <RadioGroupItem 
+                    value="upload" 
+                    id={`upload-${slideNumber}`}
+                  />
                   <ImageIcon className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Usar uma foto que enviei</span>
@@ -186,10 +187,10 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       : "cursor-pointer"
                   )}
                 >
-                <RadioGroupItem 
-                  value="generate-with-reference" 
-                  id={`reference-${slideNumber}`}
-                />
+                  <RadioGroupItem 
+                    value="generate-with-reference" 
+                    id={`reference-${slideNumber}`}
+                  />
                   <Edit className="w-4 h-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">Gerar usando minhas fotos de referência</span>
