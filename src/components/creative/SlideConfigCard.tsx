@@ -123,7 +123,9 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
               <div className="grid grid-cols-1 gap-2">
                 {/* Card: Gerar nova imagem */}
                 <div 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('[SlideConfigCard] Clicou em generate');
                     if (disabled) return;
                     onChange({ ...slide, imageMode: 'generate', format: 'square' });
                   }}
@@ -152,12 +154,15 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
 
                 {/* Card: Usar foto enviada */}
                 <div 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('[SlideConfigCard] Clicou em upload, disabled:', disabled, 'uploadedImagesCount:', uploadedImagesCount);
                     if (disabled) return;
                     if (uploadedImagesCount === 0) {
                       toast.error('Envie imagens primeiro para usar esta opção');
                       return;
                     }
+                    console.log('[SlideConfigCard] Chamando onChange com imageMode: upload');
                     onChange({ ...slide, imageMode: 'upload', format: 'original' });
                   }}
                   className={cn(
@@ -192,7 +197,9 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
 
                 {/* Card: Gerar usando referência */}
                 <div 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('[SlideConfigCard] Clicou em generate-with-reference');
                     if (disabled) return;
                     if (uploadedImagesCount === 0) {
                       toast.error('Envie imagens primeiro para usar esta opção');
