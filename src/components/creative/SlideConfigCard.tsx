@@ -11,16 +11,16 @@ import { toast } from 'sonner';
 import type { SlideConfig } from './CarouselConfigForm';
 import { cn } from '@/lib/utils';
 
-// Formatos disponíveis para carrossel
+// Formatos disponíveis para carrossel com descrições de uso
 const carouselFormats = [
-  { value: 'square', label: '1:1 Quadrado', dimensions: '1080×1080' },
-  { value: 'vertical', label: '4:5 Vertical', dimensions: '1080×1350' },
-  { value: 'story-vertical', label: '9:16 Stories', dimensions: '1080×1920' },
-  { value: 'horizontal', label: '16:9 Horizontal', dimensions: '1200×675' },
+  { value: 'square', label: '1:1 Quadrado', dimensions: '1080×1080', description: 'Feed Instagram/Facebook', isDefault: true },
+  { value: 'vertical', label: '4:5 Vertical', dimensions: '1080×1350', description: 'Feed otimizado (mais visível)' },
+  { value: 'story-vertical', label: '9:16 Stories', dimensions: '1080×1920', description: 'Stories/Reels/TikTok' },
+  { value: 'horizontal', label: '16:9 Horizontal', dimensions: '1200×675', description: 'YouTube/LinkedIn' },
 ];
 
 const uploadFormats = [
-  { value: 'original', label: 'Manter Original', dimensions: 'Sem alteração' },
+  { value: 'original', label: 'Manter Original', dimensions: 'Sem alteração', description: 'Preserva dimensões da imagem' },
   ...carouselFormats,
 ];
 
@@ -290,9 +290,20 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                   <SelectContent>
                     {(slide.imageMode === 'upload' ? uploadFormats : carouselFormats).map((format) => (
                       <SelectItem key={format.value} value={format.value}>
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{format.label}</span>
-                          <span className="text-xs text-muted-foreground">{format.dimensions}</span>
+                        <div className="flex flex-col gap-0.5 py-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{format.label}</span>
+                            {'isDefault' in format && format.isDefault && (
+                              <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                                Padrão
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <span>{format.dimensions}</span>
+                            <span>•</span>
+                            <span>{format.description}</span>
+                          </div>
                         </div>
                       </SelectItem>
                     ))}
