@@ -165,7 +165,6 @@ serve(async (req) => {
     
     let enhancedPrompt = prompt;
     const hasBaseImages = images.length > 0;
-    
     if (config) {
       // PRO tier ALWAYS uses full creative freedom with native text generation
       // The Nano Banana PRO model can render text directly from prompts
@@ -238,121 +237,190 @@ OUTPUT SIZE: ${width}x${height} pixels`;
     }
 
     let baseImage: string | undefined
-
     // Route to appropriate API based on tier
     if (apiTier === 'pro') {
-      // Use Fal.ai Nano Banana PRO
-      console.log('🚀 Using Fal.ai Nano Banana PRO API')
-      
       const falApiKey = userHasByok && userFalKey ? userFalKey : Deno.env.get('FAL_KEY')
       
       if (!falApiKey) {
         throw new Error('Fal.ai API key not configured')
       }
 
-      // Map aspect ratio for Fal.ai
-      const falAspectRatio = width > height ? 'landscape_16_9' : 
-                            width < height ? 'portrait_9_16' : 
-                            'square_hd';
+      // Quality and style modifiers for better results
+      const qualityModifiers = "hyperrealistic, professional photography, studio lighting, sharp focus, high detail, 8k quality, NO blur effects, NO vignette, NO soft edges, crisp borders";
 
-      // Build request body - include base image if provided for image-to-image
-      const falRequestBody: Record<string, any> = {
-        prompt: enhancedPrompt,
-        image_size: falAspectRatio,
-        num_inference_steps: 28,
-        guidance_scale: 3.5,
-        num_images: 1,
-        enable_safety_checker: true
-      };
+      if (hasBaseImages) {
+        // ===== IMAGE-TO-IMAGE MODE: Use /edit endpoint =====
+        console.log('🚀 Using Fal.ai Nano Banana PRO /edit endpoint (image-to-image)')
+        console.log(`📸 Processing ${images.length} base image(s)`)
 
-      // If base images are provided, include them in the prompt context
-      // Nano Banana PRO supports image understanding via multimodal input
-      if (images.length > 0) {
-        console.log(`📸 Including ${images.length} base image(s) in generation request`)
-        // Add image URLs to the prompt for the model to use as reference
-        falRequestBody.image_url = images[0]; // Use first image as primary reference
-      }
+        // Build editing prompt that preserves the original product
+        const editingPrompt = `EDITING INSTRUCTION - USE THE PROVIDED IMAGE AS THE PRIMARY ELEMENT:
 
-      // Use the synchronous endpoint directly for immediate results
-      const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${falApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(falRequestBody)
-      })
+You MUST use the exact product/object from the provided reference image.
+DO NOT create a similar product - USE the ACTUAL product from the image.
+PRESERVE the product's exact appearance, colors, details, shape, and branding.
 
-      if (!falResponse.ok) {
-        const errorText = await falResponse.text()
-        console.error('Fal.ai API error:', falResponse.status, errorText)
-        
-        if (falResponse.status === 429) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.'
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
-          )
-        }
+CREATIVE DIRECTION:
+${config?.customPrompt || prompt}
 
-        if (falResponse.status === 402 || falResponse.status === 401) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'Créditos Fal.ai esgotados ou chave inválida. Verifique sua configuração.'
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
-          )
-        }
+QUALITY REQUIREMENTS:
+${qualityModifiers}
 
-        throw new Error(`Fal.ai API error: ${falResponse.status}`)
-      }
+CRITICAL RULES:
+- The product from the reference image MUST appear EXACTLY as provided
+- Integrate the product naturally into the new scene
+- The product is the HERO element of this composition
+- DO NOT modify, distort, or alter the product itself
+- Only change the environment/context around the product`;
 
-      const falData = await falResponse.json()
-      console.log('📦 Fal.ai response keys:', JSON.stringify(Object.keys(falData)))
-      
-      // Handle both sync and queue responses
-      let imageData = falData
-      
-      // If we got a queue response, poll for the result
-      if (falData.status && falData.response_url) {
-        console.log('⏳ Got queue response, polling for result...')
-        let attempts = 0
-        const maxAttempts = 60 // Max 60 seconds
-        
-        while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
+        const falRequestBody: Record<string, any> = {
+          prompt: editingPrompt,
+          image_urls: images, // Array of image URLs for /edit endpoint
+          num_inference_steps: 28,
+          guidance_scale: 4.5, // Slightly higher for better adherence to reference
+          num_images: 1,
+          enable_safety_checker: true
+        };
+
+        const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro/edit', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Key ${falApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(falRequestBody)
+        })
+
+        if (!falResponse.ok) {
+          const errorText = await falResponse.text()
+          console.error('Fal.ai /edit API error:', falResponse.status, errorText)
           
-          const statusResponse = await fetch(falData.response_url, {
-            headers: { 'Authorization': `Key ${falApiKey}` }
-          })
-          
-          if (statusResponse.ok) {
-            const statusData = await statusResponse.json()
-            console.log('📦 Poll response status:', statusData.status)
-            
-            if (statusData.status === 'COMPLETED' || statusData.images) {
-              imageData = statusData
-              break
-            } else if (statusData.status === 'FAILED') {
-              throw new Error('Fal.ai generation failed')
-            }
+          if (falResponse.status === 429) {
+            return new Response(
+              JSON.stringify({ error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+            )
           }
-          attempts++
+
+          if (falResponse.status === 402 || falResponse.status === 401) {
+            return new Response(
+              JSON.stringify({ error: 'Créditos Fal.ai esgotados ou chave inválida. Verifique sua configuração.' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+            )
+          }
+
+          throw new Error(`Fal.ai /edit API error: ${falResponse.status}`)
+        }
+
+        const falData = await falResponse.json()
+        console.log('📦 Fal.ai /edit response keys:', JSON.stringify(Object.keys(falData)))
+        
+        baseImage = falData.images?.[0]?.url || 
+                    falData.images?.[0]?.image_url ||
+                    (typeof falData.images?.[0] === 'string' ? falData.images[0] : undefined)
+
+        console.log('✅ Fal.ai /edit image generated, baseImage exists:', !!baseImage)
+
+      } else {
+        // ===== TEXT-TO-IMAGE MODE: Use standard endpoint =====
+        console.log('🚀 Using Fal.ai Nano Banana PRO (text-to-image)')
+
+        // Map aspect ratio for Fal.ai
+        const falAspectRatio = width > height ? 'landscape_16_9' : 
+                              width < height ? 'portrait_9_16' : 
+                              'square_hd';
+
+        // Add quality modifiers to the prompt
+        const enhancedPromptWithQuality = `${enhancedPrompt}
+
+QUALITY REQUIREMENTS:
+${qualityModifiers}`;
+
+        const falRequestBody: Record<string, any> = {
+          prompt: enhancedPromptWithQuality,
+          image_size: falAspectRatio,
+          num_inference_steps: 28,
+          guidance_scale: 3.5,
+          num_images: 1,
+          enable_safety_checker: true
+        };
+
+        const falResponse = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Key ${falApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(falRequestBody)
+        })
+
+        if (!falResponse.ok) {
+          const errorText = await falResponse.text()
+          console.error('Fal.ai API error:', falResponse.status, errorText)
+          
+          if (falResponse.status === 429) {
+            return new Response(
+              JSON.stringify({ error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+            )
+          }
+
+          if (falResponse.status === 402 || falResponse.status === 401) {
+            return new Response(
+              JSON.stringify({ error: 'Créditos Fal.ai esgotados ou chave inválida. Verifique sua configuração.' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+            )
+          }
+
+          throw new Error(`Fal.ai API error: ${falResponse.status}`)
+        }
+
+        const falData = await falResponse.json()
+        console.log('📦 Fal.ai response keys:', JSON.stringify(Object.keys(falData)))
+        
+        // Handle both sync and queue responses
+        let imageData = falData
+        
+        // If we got a queue response, poll for the result
+        if (falData.status && falData.response_url) {
+          console.log('⏳ Got queue response, polling for result...')
+          let attempts = 0
+          const maxAttempts = 60 // Max 60 seconds
+          
+          while (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            
+            const statusResponse = await fetch(falData.response_url, {
+              headers: { 'Authorization': `Key ${falApiKey}` }
+            })
+            
+            if (statusResponse.ok) {
+              const statusData = await statusResponse.json()
+              console.log('📦 Poll response status:', statusData.status)
+              
+              if (statusData.status === 'COMPLETED' || statusData.images) {
+                imageData = statusData
+                break
+              } else if (statusData.status === 'FAILED') {
+                throw new Error('Fal.ai generation failed')
+              }
+            }
+            attempts++
+          }
+          
+          if (attempts >= maxAttempts) {
+            throw new Error('Fal.ai generation timed out')
+          }
         }
         
-        if (attempts >= maxAttempts) {
-          throw new Error('Fal.ai generation timed out')
-        }
-      }
-      
-      // Extract image from the result
-      baseImage = imageData.images?.[0]?.url || 
-                  imageData.images?.[0]?.image_url ||
-                  imageData.output?.images?.[0]?.url ||
-                  (typeof imageData.images?.[0] === 'string' ? imageData.images[0] : undefined)
+        // Extract image from the result
+        baseImage = imageData.images?.[0]?.url || 
+                    imageData.images?.[0]?.image_url ||
+                    imageData.output?.images?.[0]?.url ||
+                    (typeof imageData.images?.[0] === 'string' ? imageData.images[0] : undefined)
 
-      console.log('✅ Fal.ai Nano Banana PRO image generated, baseImage exists:', !!baseImage)
+        console.log('✅ Fal.ai Nano Banana PRO image generated, baseImage exists:', !!baseImage)
+      }
 
       // Track API cost for Fal.ai
       if (userId) {
@@ -360,8 +428,12 @@ OUTPUT SIZE: ${width}x${height} pixels`;
           user_id: userId,
           feature_type: 'creative_image',
           api_provider: userHasByok ? 'fal_ai_byok' : 'fal_ai',
-          cost_usd: userHasByok ? 0 : 0.003, // BYOK users don't cost us
-          metadata: { format: config?.format, prompt: prompt.substring(0, 100), model: 'nano-banana-pro' }
+          cost_usd: userHasByok ? 0 : 0.003,
+          metadata: { 
+            format: config?.format, 
+            prompt: prompt.substring(0, 100), 
+            model: hasBaseImages ? 'nano-banana-pro/edit' : 'nano-banana-pro' 
+          }
         })
       }
 
