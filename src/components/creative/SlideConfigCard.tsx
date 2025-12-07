@@ -301,8 +301,23 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                       )}
                     </div>
                     
-                    {/* Custom hex input */}
+                    {/* Custom color input with native picker */}
                     <div className="flex items-center gap-2">
+                      {/* Native color picker */}
+                      <input
+                        type="color"
+                        value={slide.textColor || '#FFFFFF'}
+                        onChange={(e) => {
+                          const color = e.target.value.toUpperCase();
+                          onChange({ ...slide, textColor: color });
+                          setCustomColorInput(color);
+                        }}
+                        disabled={disabled}
+                        className="w-10 h-10 rounded cursor-pointer border border-border bg-transparent p-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Escolher cor"
+                      />
+                      
+                      {/* Hex input */}
                       <div className="flex-1 relative">
                         <Input
                           placeholder="#FF5733"
@@ -318,12 +333,6 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
                           </span>
                         )}
                       </div>
-                      {customColorInput && isValidHex(customColorInput) && (
-                        <div
-                          className="w-8 h-8 rounded border border-border flex-shrink-0"
-                          style={{ backgroundColor: customColorInput }}
-                        />
-                      )}
                     </div>
                     
                     <p className="text-xs text-muted-foreground">
