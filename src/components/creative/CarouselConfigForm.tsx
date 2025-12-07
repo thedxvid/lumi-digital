@@ -7,9 +7,11 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Wand2 } from 'lucide-react';
 import { SlideConfigCard } from './SlideConfigCard';
 import { CarouselImageUploader } from './CarouselImageUploader';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface SlideConfig {
   imageMode: 'upload' | 'generate' | 'generate-with-reference';
@@ -48,11 +50,37 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
   const [callToAction, setCallToAction] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [enhancing, setEnhancing] = useState(false);
   const [slides, setSlides] = useState<SlideConfig[]>([
     { imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
     { imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
     { imageMode: 'generate', uploadedImageIndex: null, visualInstruction: '' },
   ]);
+
+  const enhancePrompt = async () => {
+    if (!customPrompt.trim()) {
+      toast.error('Digite um prompt primeiro');
+      return;
+    }
+    
+    setEnhancing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enhance-prompt', {
+        body: { prompt: customPrompt, context: 'carousel' }
+      });
+      
+      if (error) throw error;
+      if (data?.enhancedPrompt) {
+        setCustomPrompt(data.enhancedPrompt);
+        toast.success('Prompt melhorado com sucesso!');
+      }
+    } catch (error) {
+      console.error('Error enhancing prompt:', error);
+      toast.error('Erro ao melhorar o prompt');
+    } finally {
+      setEnhancing(false);
+    }
+  };
 
   // Ajustar número de slides quando imageCount mudar
   useEffect(() => {
@@ -149,6 +177,19 @@ export function CarouselConfigForm({ loading, onGenerate }: CarouselConfigFormPr
               className="min-h-[200px]" 
               disabled={loading} 
             />
+            <div className="flex justify-end mt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={enhancePrompt}
+                disabled={enhancing || !customPrompt.trim() || loading}
+                className="gap-2"
+              >
+                {enhancing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                Melhorar Prompt
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -97,8 +97,20 @@ export function CreativeConfigForm({
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Map aspectRatio to format for prompt-only mode
+    const aspectRatioToFormat: Record<string, string> = {
+      '1:1': 'square',
+      '9:16': 'story-vertical',
+      '16:9': 'horizontal',
+      '4:5': 'vertical'
+    };
+    
     const finalConfig = {
       ...config,
+      format: generationMode === 'prompt-only' 
+        ? aspectRatioToFormat[config.aspectRatio || '1:1'] || 'square'
+        : config.format,
       customPrompt: generationMode === 'prompt-only' ? promptOnly : promptWithImage
     };
     onGenerate(finalConfig);

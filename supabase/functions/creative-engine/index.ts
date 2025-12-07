@@ -348,10 +348,27 @@ CRITICAL RULES:
         // ===== TEXT-TO-IMAGE MODE: Use standard endpoint =====
         console.log('🚀 Using Fal.ai Nano Banana PRO (text-to-image)')
 
-        // Map aspect ratio for Fal.ai
-        const falAspectRatio = width > height ? 'landscape_16_9' : 
-                              width < height ? 'portrait_9_16' : 
-                              'square_hd';
+        // Use the same getFalImageSize function for consistent aspect ratio mapping
+        const getFalImageSizeTextToImage = (format: string | undefined, w: number, h: number): string => {
+          const formatMap: Record<string, string> = {
+            'square': 'square_hd',
+            'vertical': 'portrait_4_3',
+            'story-vertical': 'portrait_16_9',
+            'horizontal': 'landscape_16_9',
+            'ad-square': 'square_hd',
+            'ad-horizontal': 'landscape_16_9',
+            'ad-vertical': 'portrait_4_3',
+            'banner-wide': 'landscape_16_9',
+            'banner-ultra': 'landscape_16_9',
+            'product-square': 'square_hd',
+            'product-vertical': 'portrait_4_3'
+          };
+          return formatMap[format || ''] || 
+            (w > h ? 'landscape_16_9' : w < h ? 'portrait_16_9' : 'square_hd');
+        };
+
+        const falAspectRatio = getFalImageSizeTextToImage(config?.format, width, height);
+        console.log(`📐 Text-to-image using image_size: ${falAspectRatio} for format: ${config?.format} (${width}x${height})`);
 
         // Add quality modifiers to the prompt
         const enhancedPromptWithQuality = `${enhancedPrompt}
