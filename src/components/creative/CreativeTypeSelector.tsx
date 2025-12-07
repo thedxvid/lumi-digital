@@ -1,6 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface CreativeType {
   value: string;
@@ -12,7 +11,7 @@ export interface CreativeType {
 const creativeTypes: CreativeType[] = [
   {
     value: 'social-post',
-    label: 'Post para Redes Sociais',
+    label: 'Post Redes Sociais',
     icon: '📱',
     description: 'Instagram, Facebook, LinkedIn'
   },
@@ -67,31 +66,33 @@ interface CreativeTypeSelectorProps {
 
 export function CreativeTypeSelector({ value, onChange }: CreativeTypeSelectorProps) {
   return (
-    <div className="space-y-3">
-      <Label className="text-base font-semibold">Tipo de Criativo</Label>
-      <RadioGroup value={value} onValueChange={onChange} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {creativeTypes.map((type) => (
-          <Card
-            key={type.value}
-            className={`relative cursor-pointer transition-all hover:border-primary ${
-              value === type.value ? 'border-primary bg-primary/5' : ''
-            }`}
-          >
-            <label htmlFor={type.value} className="cursor-pointer block p-4">
-              <div className="flex items-start gap-3">
-                <RadioGroupItem value={type.value} id={type.value} className="mt-1" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-2xl">{type.icon}</span>
-                    <span className="font-medium">{type.label}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{type.description}</p>
-                </div>
-              </div>
-            </label>
-          </Card>
-        ))}
-      </RadioGroup>
+    <div className="space-y-2">
+      <Label className="text-sm font-medium">Tipo de Criativo</Label>
+      <TooltipProvider delayDuration={300}>
+        <div className="flex flex-wrap gap-2">
+          {creativeTypes.map((type) => (
+            <Tooltip key={type.value}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => onChange(type.value)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all
+                    ${value === type.value 
+                      ? 'border-primary bg-primary/10 text-primary font-medium' 
+                      : 'border-border hover:border-primary/50 hover:bg-muted'
+                    }`}
+                >
+                  <span className="text-base">{type.icon}</span>
+                  <span>{type.label}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {type.description}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
