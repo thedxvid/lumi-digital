@@ -38,7 +38,7 @@ const textColorOptions = [
 interface SlideConfigCardProps {
   slideNumber: number;
   slide: SlideConfig;
-  onChange: (slide: SlideConfig) => void;
+  onChange: (slide: SlideConfig | ((prev: SlideConfig) => SlideConfig)) => void;
   disabled: boolean;
   uploadedImagesCount: number;
   showTextFields?: boolean;
@@ -51,16 +51,9 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
   // Fase 4: useRef para controle de mudança de modo (persiste entre re-renders)
   const changingModeRef = useRef(false);
 
-  // Handler sem useCallback - captura slide corretamente a cada render
+  // Handler usando função updater para garantir estado mais recente
   const handleModeChange = (newMode: 'generate' | 'upload' | 'generate-with-reference', e: React.MouseEvent) => {
-    console.log('🔵 handleModeChange chamado:', {
-      newMode,
-      slideNumber,
-      currentImageMode: slide.imageMode,
-      changingModeRef: changingModeRef.current,
-      disabled,
-      uploadedImagesCount
-    });
+    console.log('🔵 handleModeChange chamado:', { newMode, slideNumber, currentImageMode: slide.imageMode });
     
     e.preventDefault();
     e.stopPropagation();
@@ -76,20 +69,20 @@ export function SlideConfigCard({ slideNumber, slide, onChange, disabled, upload
       return;
     }
     
+    if (newMode === slide.imageMode) return;
+    
     changingModeRef.current = true;
     
-    // Não forçar format - apenas define 'original' para upload se não tiver formato
-    const newSlide: SlideConfig = { 
-      ...slide, 
-      imageMode: newMode 
-    };
-    
-    if (newMode === 'upload' && !slide.format) {
-      newSlide.format = 'original';
-    }
-    
-    console.log('🟢 Chamando onChange com:', newSlide);
-    onChange(newSlide);
+    // Usando função updater para garantir estado mais recente
+    onChange((prevSlide) => {
+      console.log('🟢 Função updater executando com prevSlide:', prevSlide.imageMode, '-> newMode:', newMode);
+      return {
+        ...prevSlide,
+        imageMode: newMode,
+        uploadedImageIndex: newMode === 'upload' ? prevSlide.uploadedImageIndex : null,
+        format: newMode === 'upload' ? 'original' : (prevSlide.format || 'square'),
+      };
+    });
     
     setTimeout(() => {
       changingModeRef.current = false;
