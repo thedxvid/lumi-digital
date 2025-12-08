@@ -1,12 +1,8 @@
-import * as React from "react";
-import { Home, MessageSquare, BookUser, History, HelpCircle } from "lucide-react";
+import { Home, MessageSquare, Lightbulb, Images, Video } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { SupportButton } from "@/components/ui/support-button";
 
 export function MobileBottomNav() {
-  const [supportOpen, setSupportOpen] = React.useState(false);
-
   const links = [
     {
       label: "Início",
@@ -19,60 +15,47 @@ export function MobileBottomNav() {
       icon: MessageSquare,
     },
     {
-      label: "Produtos",
-      href: "/app/contexts",
-      icon: BookUser,
+      label: "Criativos",
+      href: "/app/creative-engine",
+      icon: Lightbulb,
     },
     {
-      label: "Histórico",
-      href: "/app/history",
-      icon: History,
+      label: "Carrossel",
+      href: "/app/carousel",
+      icon: Images,
+    },
+    {
+      label: "Vídeos",
+      href: "/app/video-generator",
+      icon: Video,
     },
   ];
 
   return (
-    <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 pb-safe">
-        <div className="flex items-center justify-around px-1 py-2">
-          {links.map((link) => {
-            const Icon = link.icon;
-            return (
-              <NavLink
-                key={link.href}
-                to={link.href}
-                end={link.href === "/app"}
-                className={({ isActive }) =>
-                  cn(
-                    "flex flex-col items-center justify-center gap-0.5 px-1.5 py-1.5 rounded-md transition-colors flex-1 max-w-[70px]",
-                    isActive
-                      ? "text-lumi-gold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )
-                }
-              >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                <span className="text-[9px] font-medium leading-tight text-center">{link.label}</span>
-              </NavLink>
-            );
-          })}
-          
-          {/* Botão de Suporte */}
-          <button
-            onClick={() => setSupportOpen(true)}
-            className="flex flex-col items-center justify-center gap-0.5 px-1.5 py-1.5 rounded-md transition-colors flex-1 max-w-[70px] text-muted-foreground hover:text-foreground"
-          >
-            <HelpCircle className="h-5 w-5 flex-shrink-0" />
-            <span className="text-[9px] font-medium leading-tight text-center">Suporte</span>
-          </button>
-        </div>
-      </nav>
-      
-      <SupportButton 
-        variant="inline" 
-        className="hidden"
-        open={supportOpen}
-        onOpenChange={setSupportOpen}
-      />
-    </>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 pb-safe">
+      <div className="flex items-center justify-around px-1 py-2">
+        {links.map((link) => {
+          const Icon = link.icon;
+          return (
+            <NavLink
+              key={link.href}
+              to={link.href}
+              end={link.href === "/app"}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-0.5 px-1.5 py-1.5 rounded-md transition-colors flex-1 max-w-[70px]",
+                  isActive
+                    ? "text-lumi-gold"
+                    : "text-muted-foreground hover:text-foreground"
+                )
+              }
+            >
+              <Icon className="h-5 w-5 flex-shrink-0" />
+              <span className="text-[9px] font-medium leading-tight text-center">{link.label}</span>
+            </NavLink>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
