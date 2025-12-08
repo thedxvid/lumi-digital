@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Wand2, Lock } from 'lucide-react';
+import { Loader2, Wand2, Lock } from 'lucide-react';
 import type { VideoConfig, VideoAPIConfig, VideoMode } from '@/types/video';
 import { VideoModeSelector } from './VideoModeSelector';
 import { VideoImageUploader } from './VideoImageUploader';
@@ -89,7 +89,6 @@ export const VideoConfigForm = ({
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
-  const [suggestingPrompt, setSuggestingPrompt] = useState(false);
   const [enhancingPrompt, setEnhancingPrompt] = useState(false);
   const [apiProvider, setApiProvider] = useState<string>(
     initialMode === 'image-to-video' ? 'fal_kling_v25_image_to_video' : 'fal_kling_v25_turbo'
@@ -168,41 +167,6 @@ export const VideoConfigForm = ({
   // Get selected API config
   const selectedAPI = VIDEO_APIS.find(api => api.id === apiProvider);
   const maxImages = selectedAPI?.requires_images || 1;
-
-  const handleSuggestSafePrompt = async () => {
-    if (!prompt || prompt.trim().length < 5) {
-      toast.error('Digite um prompt primeiro para reformulá-lo');
-      return;
-    }
-
-    setSuggestingPrompt(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('suggest-safe-prompt', {
-        body: { prompt: prompt.trim(), mode: 'safe' }
-      });
-
-      if (error) {
-        console.error('Error suggesting prompt:', error);
-        toast.error('Erro ao sugerir prompt alternativo');
-        return;
-      }
-
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-
-      if (data?.suggested) {
-        setPrompt(data.suggested);
-        toast.success('Prompt reformulado! Marcas e conteúdo sensível foram removidos.');
-      }
-    } catch (error) {
-      console.error('Error suggesting prompt:', error);
-      toast.error('Erro ao processar solicitação');
-    } finally {
-      setSuggestingPrompt(false);
-    }
-  };
 
   const handleEnhancePrompt = async () => {
     if (!prompt || prompt.trim().length < 5) {
@@ -353,49 +317,27 @@ export const VideoConfigForm = ({
                   {prompt.length} caracteres {prompt.length < 10 && `(faltam ${10 - prompt.length})`}
                 </p>
               )}
-              <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto w-full sm:w-auto">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSuggestSafePrompt}
-                  disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
-                  className="w-full sm:w-auto sm:flex-shrink-0"
-                >
-                  {suggestingPrompt ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Reformulando...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Prompt Seguro
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={handleEnhancePrompt}
-                  disabled={loading || suggestingPrompt || enhancingPrompt || prompt.trim().length < 5}
-                  data-enhance-prompt
-                  className="w-full sm:w-auto sm:flex-shrink-0 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                >
-                  {enhancingPrompt ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Melhorando...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Melhorar Prompt
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={handleEnhancePrompt}
+                disabled={loading || enhancingPrompt || prompt.trim().length < 5}
+                data-enhance-prompt
+                className="sm:ml-auto bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                {enhancingPrompt ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Melhorando...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Melhorar Prompt
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -577,7 +519,7 @@ export const VideoConfigForm = ({
           </>
         ) : (
           <>
-            <Sparkles className="mr-2 h-5 w-5" />
+            <Wand2 className="mr-2 h-5 w-5" />
             Gerar Vídeo
           </>
         )}
