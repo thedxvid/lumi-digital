@@ -9,6 +9,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    date: "2024-12-08",
+    title: "Kling v2.6 Pro - Vídeos com Áudio!",
+    description: "Novo modelo de geração de vídeos mais realista e com áudio integrado",
+    highlights: [
+      "🔊 Vídeos agora são gerados COM ÁUDIO automaticamente",
+      "Novo modelo Kling v2.6 Pro com qualidade ultra-realista",
+      "Movimentos mais naturais e cinematográficos",
+      "Melhor preservação de detalhes faciais e corporais"
+    ],
+    type: 'feature'
+  },
+  {
     version: "1.2.0",
     date: "2024-12-07",
     title: "Seletor de Cor para Texto do Carrossel",
