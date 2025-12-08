@@ -53,11 +53,17 @@ EXEMPLOS:
 
 Retorne APENAS o prompt reformulado, sem explicações adicionais.`;
     } else if (mode === 'enhance') {
-      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Kling). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
+      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Kling/Veo). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
+
+REGRA CRÍTICA - PRESERVAR DIÁLOGOS E FALAS:
+- Se o prompt contém DIÁLOGOS, FALAS ou TEXTOS que personagens devem falar, você DEVE preservá-los EXATAMENTE como estão
+- Diálogos em português, inglês ou qualquer língua devem ser MANTIDOS na língua original
+- Exemplos de diálogos: "Pessoa: 'Olá, tudo bem?'", "Apresentador diz: 'Confira isso!'", aspas com falas, etc
+- NUNCA traduza ou modifique o conteúdo de diálogos/falas - apenas preserve-os no prompt melhorado
 
 DIRETRIZES OBRIGATÓRIAS:
 
-1. **TRADUZIR PARA INGLÊS** - Modelos funcionam MUITO melhor em inglês. Sempre traduza.
+1. **DESCRIÇÃO DA CENA EM INGLÊS** - Traduza descrições visuais para inglês, MAS PRESERVE DIÁLOGOS na língua original
 
 2. **ESTRUTURA CINEMATOGRÁFICA:**
    - Comece com enquadramento (Wide shot, Medium shot, Close-up, etc)
@@ -75,19 +81,15 @@ DIRETRIZES OBRIGATÓRIAS:
    - Use substantivos concretos: "five-story apartment building" ao invés de "big building"
    - Evite linguagem vaga: "beautiful", "nice", "good"
 
-5. **ESTILO/ESTÉTICA:**
-   - Estabeleça estilo no início (ex: "Cinematic, 35mm film", "Anime style", "Documentary realism")
-
-6. **FÍSICA REALISTA:**
+5. **FÍSICA REALISTA:**
    - Descreva movimentos plausíveis que poderiam acontecer na duração do vídeo
-   - Evite múltiplas ações complexas
+
+EXEMPLO COM DIÁLOGO (PRESERVAR FALAS):
+ENTRADA: "Uma entrevista de rua. Apresentador: 'Você ouviu a notícia?' Pessoa: 'Sim! É incrível!'"
+SAÍDA: "Medium shot, documentary style street interview in a busy city center. A professional presenter holding a microphone speaks to a casually dressed person. Natural daylight, urban background with pedestrians. Dialogue - Presenter: 'Você ouviu a notícia?' Person: 'Sim! É incrível!' Handheld camera movement, realistic documentary aesthetic."
 
 FORMATO DE SAÍDA:
-Retorne APENAS o prompt melhorado em INGLÊS, estruturado e otimizado. Seja específico, cinematográfico e detalhado.
-
-EXEMPLO TRANSFORMAÇÃO:
-RUIM: "Um gato andando na rua"
-BOM: "Medium shot at eye level of a sleek orange tabby cat with white paws walking confidently down a cobblestone street. Soft afternoon sunlight casts long shadows. The cat's tail sways gently as it moves. Color palette: warm amber, grey stone, cream white. Static camera, 35mm film aesthetic, shallow depth of field."`;
+Retorne APENAS o prompt melhorado, preservando diálogos exatamente como escritos. Seja específico, cinematográfico e detalhado.`;
     }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
