@@ -17,27 +17,27 @@ import { useApiKeyIntegrations } from '@/hooks/useApiKeyIntegrations';
 import { useNavigate } from 'react-router-dom';
 
 const VIDEO_APIS: VideoAPIConfig[] = [
-  // ===== KLING (Disponível para todos) =====
+  // ===== KLING v2.6 PRO (Disponível para todos) =====
   {
-    id: 'fal_kling_v25_turbo',
-    name: 'fal_kling_v25_turbo',
-    display_name: 'Kling v2.5 Turbo Pro (Text-to-Video)',
+    id: 'fal_kling_v26_pro',
+    name: 'fal_kling_v26_pro',
+    display_name: 'Kling v2.6 Pro (Text-to-Video)',
     cost_per_8s: 0.60,
-    description: 'Movimento fluido e visual cinematográfico (sem áudio)',
+    description: '🔊 Movimento ultra-realista COM ÁUDIO integrado',
     provider: 'Kling AI',
     mode: 'text-to-video',
     requires_user_key: false
   },
   {
-    id: 'fal_kling_v25_image_to_video',
-    name: 'fal_kling_v25_image_to_video',
-    display_name: 'Kling v2.5 Turbo Pro (Image-to-Video)',
+    id: 'fal_kling_v26_image_to_video',
+    name: 'fal_kling_v26_image_to_video',
+    display_name: 'Kling v2.6 Pro (Image-to-Video)',
     cost_per_8s: 0.60,
-    description: 'Gera vídeo a partir de 1 imagem (sem áudio)',
+    description: '🔊 Gera vídeo realista a partir de 1 imagem COM ÁUDIO',
     provider: 'Kling AI',
     mode: 'image-to-video',
     requires_images: 1,
-    endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
+    endpoint: 'https://fal.run/fal-ai/kling-video/v2.6/pro/image-to-video',
     requires_user_key: false
   },
   
@@ -91,7 +91,7 @@ export const VideoConfigForm = ({
   const [enhancePrompt, setEnhancePrompt] = useState(true);
   const [enhancingPrompt, setEnhancingPrompt] = useState(false);
   const [apiProvider, setApiProvider] = useState<string>(
-    initialMode === 'image-to-video' ? 'fal_kling_v25_image_to_video' : 'fal_kling_v25_turbo'
+    initialMode === 'image-to-video' ? 'fal_kling_v26_image_to_video' : 'fal_kling_v26_pro'
   );
 
   // Verificar se usuário tem API key válida do fal.ai
@@ -108,7 +108,7 @@ export const VideoConfigForm = ({
       console.log('✅ Setting input images with preloaded image');
       setInputImages([preloadedImage]);
       setMode('image-to-video');
-      setApiProvider('fal_kling_v25_image_to_video');
+      setApiProvider('fal_kling_v26_image_to_video');
     }
   }, [preloadedImage]);
 
@@ -118,9 +118,9 @@ export const VideoConfigForm = ({
     if (selectedAPI?.requires_user_key && !hasFalApiKey) {
       console.log('🚫 Resetando para modelo padrão - Veo 3 requer BYOK');
       if (mode === 'image-to-video') {
-        setApiProvider('fal_kling_v25_image_to_video');
+        setApiProvider('fal_kling_v26_image_to_video');
       } else {
-        setApiProvider('fal_kling_v25_turbo');
+        setApiProvider('fal_kling_v26_pro');
       }
       toast.info('Veo 3 requer conexão com sua API Fal.ai', {
         description: 'Conecte sua API nas Configurações para usar este modelo'
@@ -138,8 +138,8 @@ export const VideoConfigForm = ({
     if (!currentIsValid && validForMode.length > 0) {
       // Seleciona o primeiro modelo disponível para o modo
       const defaultApi = mode === 'image-to-video' 
-        ? 'fal_kling_v25_image_to_video' 
-        : 'fal_kling_v25_turbo';
+        ? 'fal_kling_v26_image_to_video' 
+        : 'fal_kling_v26_pro';
       console.log('🔄 Sincronizando modelo de IA:', defaultApi);
       setApiProvider(defaultApi);
     }
@@ -158,9 +158,9 @@ export const VideoConfigForm = ({
     }
     // Always set the correct API for the mode - now we only have one API per mode
     if (newMode === 'image-to-video') {
-      setApiProvider('fal_kling_v25_image_to_video');
+      setApiProvider('fal_kling_v26_image_to_video');
     } else {
-      setApiProvider('fal_kling_v25_turbo');
+      setApiProvider('fal_kling_v26_pro');
     }
   };
 

@@ -23,7 +23,7 @@ const VideoGenerationSchema = z.object({
   enhance_prompt: z.boolean().optional().default(true),
   seed: z.number().int().optional(),
   auto_fix: z.boolean().optional().default(true),
-  api_provider: z.string().optional().default('fal_kling_v25_turbo')
+  api_provider: z.string().optional().default('fal_kling_v26_pro')
 });
 
 serve(async (req) => {
@@ -206,14 +206,14 @@ serve(async (req) => {
       authPrefix: string,
       requiresUserKey?: boolean
     }> = {
-      fal_kling_v25_turbo: {
-        endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/text-to-video',
+      fal_kling_v26_pro: {
+        endpoint: 'https://fal.run/fal-ai/kling-video/v2.6/pro/text-to-video',
         key: FAL_KEY,
         authPrefix: 'Key',
         requiresUserKey: false
       },
-      fal_kling_v25_image_to_video: {
-        endpoint: 'https://fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video',
+      fal_kling_v26_image_to_video: {
+        endpoint: 'https://fal.run/fal-ai/kling-video/v2.6/pro/image-to-video',
         key: FAL_KEY,
         authPrefix: 'Key',
         requiresUserKey: false
@@ -297,8 +297,8 @@ serve(async (req) => {
     
     // Handle image-to-video mode
     else if (mode === 'image-to-video') {
-      if (api_provider === 'fal_kling_v25_image_to_video') {
-        // Kling Image-to-Video requires 1 image
+      if (api_provider === 'fal_kling_v26_image_to_video') {
+        // Kling v2.6 Image-to-Video requires 1 image
         if (!input_images || input_images.length < 1) {
           return new Response(
             JSON.stringify({ error: 'Este modelo requer 1 imagem' }),
@@ -322,8 +322,8 @@ serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } else if (api_provider === 'fal_kling_v25_turbo') {
-      // Kling v2.5 Text-to-Video usa parâmetros específicos
+    } else if (api_provider === 'fal_kling_v26_pro') {
+      // Kling v2.6 Pro Text-to-Video usa parâmetros específicos
       const durationSeconds = parseInt(duration.replace('s', ''));
       const klingDuration = durationSeconds <= 5 ? "5" : "10";
       
