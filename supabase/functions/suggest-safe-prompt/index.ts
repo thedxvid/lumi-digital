@@ -53,43 +53,39 @@ EXEMPLOS:
 
 Retorne APENAS o prompt reformulado, sem explicações adicionais.`;
     } else if (mode === 'enhance') {
-      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Kling/Veo). Sua tarefa é melhorar prompts seguindo as melhores práticas oficiais.
+      systemPrompt = `Você é um especialista em engenharia de prompts para geração de vídeo AI (Kling/Veo). Sua tarefa é melhorar prompts seguindo as melhores práticas.
 
-REGRA CRÍTICA - PRESERVAR DIÁLOGOS E FALAS:
-- Se o prompt contém DIÁLOGOS, FALAS ou TEXTOS que personagens devem falar, você DEVE preservá-los EXATAMENTE como estão
-- Diálogos em português, inglês ou qualquer língua devem ser MANTIDOS na língua original
-- Exemplos de diálogos: "Pessoa: 'Olá, tudo bem?'", "Apresentador diz: 'Confira isso!'", aspas com falas, etc
-- NUNCA traduza ou modifique o conteúdo de diálogos/falas - apenas preserve-os no prompt melhorado
+REGRA CRÍTICA - GERAR EM PORTUGUÊS:
+- O prompt melhorado DEVE ser escrito em PORTUGUÊS para que o usuário possa visualizar e editar
+- Preserve DIÁLOGOS e FALAS exatamente como escritos, na língua original
 
 DIRETRIZES OBRIGATÓRIAS:
 
-1. **DESCRIÇÃO DA CENA EM INGLÊS** - Traduza descrições visuais para inglês, MAS PRESERVE DIÁLOGOS na língua original
-
-2. **ESTRUTURA CINEMATOGRÁFICA:**
-   - Comece com enquadramento (Wide shot, Medium shot, Close-up, etc)
-   - Especifique ângulo de câmera (Eye level, Low angle, High angle, Bird's eye)
+1. **ESTRUTURA CINEMATOGRÁFICA:**
+   - Comece com enquadramento (Plano geral, Plano médio, Close-up, etc)
+   - Especifique ângulo de câmera (Nível dos olhos, Ângulo baixo, Ângulo alto)
    - Uma ação clara e específica por vídeo
-   - Um movimento de câmera claro (ou "static shot")
+   - Um movimento de câmera claro (ou "câmera estática")
 
-3. **DETALHES VISUAIS:**
+2. **DETALHES VISUAIS:**
    - Sujeito principal com 2-3 características visuais distintas
-   - 3-5 cores âncora específicas (ex: "deep azure blue, golden yellow, forest green")
-   - Qualidade e fonte de luz específica (ex: "soft morning sunlight through windows")
+   - 3-5 cores âncora específicas (ex: "azul profundo, dourado, verde floresta")
+   - Qualidade e fonte de luz específica (ex: "luz suave da manhã através das janelas")
 
-4. **LINGUAGEM PRECISA:**
-   - Use verbos específicos: "sprints" ao invés de "moves quickly"
-   - Use substantivos concretos: "five-story apartment building" ao invés de "big building"
-   - Evite linguagem vaga: "beautiful", "nice", "good"
+3. **LINGUAGEM PRECISA:**
+   - Use verbos específicos: "corre rapidamente" ao invés de "se move"
+   - Use substantivos concretos: "prédio de cinco andares" ao invés de "prédio grande"
+   - Evite linguagem vaga: "bonito", "legal", "bom"
 
-5. **FÍSICA REALISTA:**
+4. **FÍSICA REALISTA:**
    - Descreva movimentos plausíveis que poderiam acontecer na duração do vídeo
 
 EXEMPLO COM DIÁLOGO (PRESERVAR FALAS):
 ENTRADA: "Uma entrevista de rua. Apresentador: 'Você ouviu a notícia?' Pessoa: 'Sim! É incrível!'"
-SAÍDA: "Medium shot, documentary style street interview in a busy city center. A professional presenter holding a microphone speaks to a casually dressed person. Natural daylight, urban background with pedestrians. Dialogue - Presenter: 'Você ouviu a notícia?' Person: 'Sim! É incrível!' Handheld camera movement, realistic documentary aesthetic."
+SAÍDA: "Plano médio, estilo documentário de entrevista de rua em um centro urbano movimentado. Um apresentador profissional segurando um microfone conversa com uma pessoa vestida casualmente. Luz natural do dia, fundo urbano com pedestres. Diálogo - Apresentador: 'Você ouviu a notícia?' Pessoa: 'Sim! É incrível!' Câmera na mão, estética de documentário realista."
 
 FORMATO DE SAÍDA:
-Retorne APENAS o prompt melhorado, preservando diálogos exatamente como escritos. Seja específico, cinematográfico e detalhado.`;
+Retorne APENAS o prompt melhorado em PORTUGUÊS, preservando diálogos. Seja específico, cinematográfico e detalhado.`;
     }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
