@@ -428,7 +428,7 @@ export const VideoConfigForm = ({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione um modelo de IA" />
               </SelectTrigger>
-              <SelectContent className="max-w-[calc(100vw-2rem)]">
+              <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
                 {availableAPIs.map((api) => {
                   const isLocked = api.requires_user_key && !hasFalApiKey;
                   
@@ -438,14 +438,14 @@ export const VideoConfigForm = ({
                       value={api.id} 
                       className={`py-3 ${isLocked ? 'opacity-70' : ''}`}
                     >
-                      <div className="flex flex-col gap-0.5 max-w-full">
-                        <div className="font-medium text-sm leading-tight break-words flex items-center gap-2">
-                          {api.display_name}
+                      <div className="flex flex-col gap-0.5 w-full overflow-hidden">
+                        <div className="font-medium text-sm leading-tight flex items-center gap-2 flex-wrap">
+                          <span className="break-words">{api.display_name}</span>
                           {isLocked && (
-                            <Lock className="h-3.5 w-3.5 text-amber-500" />
+                            <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground leading-tight break-words">
+                        <div className="text-xs text-muted-foreground leading-tight break-words whitespace-normal">
                           {api.description}
                         </div>
                       </div>
