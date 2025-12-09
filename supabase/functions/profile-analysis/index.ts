@@ -72,14 +72,18 @@ Você é capaz de identificar TUDO sobre um perfil apenas olhando a imagem: nich
 - Priorize ações de alto impacto com baixo esforço
 - Use exemplos concretos do próprio perfil analisado`;
 
+    const additionalImages: string[] = data.additionalImages || [];
+    const hasAdditionalImages = additionalImages.length > 0;
+
     const userPrompt = `🎯 ANÁLISE COMPLETA DE PERFIL
 
 **Informações Básicas:**
 - Plataforma: ${data.platform}
 - Tipo de Perfil: ${data.profileType}
+${hasAdditionalImages ? `- Imagens Adicionais: ${additionalImages.length} screenshot(s) de posts/conteúdo fornecido(s)` : ''}
 
 **SUA MISSÃO:**
-Analise profundamente a imagem do perfil anexada e forneça uma análise COMPLETA e EXPERT, identificando automaticamente:
+Analise profundamente ${hasAdditionalImages ? 'TODAS as imagens fornecidas (perfil + posts/conteúdos)' : 'a imagem do perfil anexada'} e forneça uma análise COMPLETA e EXPERT, identificando automaticamente:
 
 ✓ Nicho/Segmento (deduza pela identidade visual e conteúdo)
 ✓ Produto/Serviço oferecido (identifique pelo posicionamento)
@@ -90,9 +94,16 @@ Analise profundamente a imagem do perfil anexada e forneça uma análise COMPLET
 ✓ Pontos cegos críticos que impedem crescimento
 ✓ Oportunidades não exploradas
 ✓ Plano de ação priorizado
-
+${hasAdditionalImages ? `
+**ANÁLISE DE CONTEÚDO EXTRA:**
+Além do perfil, analise também os posts/stories/conteúdos fornecidos para avaliar:
+- Consistência visual entre perfil e conteúdo
+- Qualidade e variedade dos posts
+- Padrões de engajamento visíveis
+- Alinhamento do conteúdo com posicionamento do perfil
+` : ''}
 **TAREFA:**
-Analise profundamente este perfil na imagem anexada e forneça insights acionáveis estruturados.`;
+Analise profundamente este perfil${hasAdditionalImages ? ' e seus conteúdos' : ''} e forneça insights acionáveis estruturados.`;
 
     // Definição da estrutura de resposta usando tool calling
     const analysisSchema = {
@@ -211,7 +222,17 @@ Analise profundamente este perfil na imagem anexada e forneça insights acionáv
       }
     };
 
-    console.log('🤖 Chamando Lovable AI...');
+    // Montar array de imagens para a API
+    const imageContents: Array<{ type: 'image_url'; image_url: { url: string } }> = [
+      { type: 'image_url', image_url: { url: data.image } }
+    ];
+    
+    // Adicionar imagens extras se existirem
+    for (const additionalImg of additionalImages) {
+      imageContents.push({ type: 'image_url', image_url: { url: additionalImg } });
+    }
+
+    console.log(`🤖 Chamando Lovable AI com ${imageContents.length} imagem(ns)...`);
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -226,10 +247,7 @@ Analise profundamente este perfil na imagem anexada e forneça insights acionáv
             role: 'user',
             content: [
               { type: 'text', text: userPrompt },
-              {
-                type: 'image_url',
-                image_url: { url: data.image }
-              }
+              ...imageContents
             ]
           }
         ],

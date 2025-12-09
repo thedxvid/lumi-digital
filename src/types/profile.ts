@@ -1,5 +1,6 @@
 export interface ProfileAnalysisInput {
   image: string;
+  additionalImages?: string[];
   niche: string;
   product: string;
   targetAudience: string;
