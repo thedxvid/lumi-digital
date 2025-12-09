@@ -12,6 +12,7 @@ import type { ProfileAnalysisInput } from '@/types/profile';
 
 export default function ProfileAnalysis() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
   const [currentPlatform, setCurrentPlatform] = useState<string>('');
   const {
     loading,
@@ -24,7 +25,7 @@ export default function ProfileAnalysis() {
     currentResult,
   } = useProfileAnalysis();
 
-  const handleSubmit = async (formData: Omit<ProfileAnalysisInput, 'image'>) => {
+  const handleSubmit = async (formData: Omit<ProfileAnalysisInput, 'image' | 'additionalImages'>) => {
     if (!profileImage) {
       alert('Por favor, adicione uma imagem do perfil');
       return;
@@ -33,6 +34,7 @@ export default function ProfileAnalysis() {
     const input: ProfileAnalysisInput = {
       ...formData,
       image: profileImage,
+      additionalImages: additionalImages.length > 0 ? additionalImages : undefined,
     };
 
     setCurrentPlatform(formData.platform);
@@ -74,6 +76,9 @@ export default function ProfileAnalysis() {
                 <ProfileImageUploader
                   image={profileImage}
                   onImageChange={setProfileImage}
+                  additionalImages={additionalImages}
+                  onAdditionalImagesChange={setAdditionalImages}
+                  maxAdditionalImages={5}
                 />
               </CardContent>
             </Card>
