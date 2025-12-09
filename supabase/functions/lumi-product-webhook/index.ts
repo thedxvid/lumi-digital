@@ -37,7 +37,7 @@ const LumiWebhookPayloadSchema = z.object({
   product_id: z.string().max(100).optional(),
   product_name: z.string().max(255).optional(),
   product_type: z.string().max(50).optional(),
-  checkout_link: z.string().url().max(500).optional().nullable(),
+  checkout_link: z.string().max(500).optional().nullable(), // Aceita códigos curtos ou URLs completas
   webhook_event_type: z.string().max(50).optional(),
   approved_date: z.string().optional(),
   Product: ProductSchema,
