@@ -16,7 +16,7 @@ const VideoGenerationSchema = z.object({
   prompt: z.string().max(2000, 'Prompt muito longo').optional(),
   input_images: z.array(z.string().url('URL de imagem inválida')).optional(),
   aspect_ratio: z.enum(['16:9', '9:16', '1:1']).optional().default('16:9'),
-  duration: z.string().regex(/^\d+s$/, 'Duração inválida').optional().default('8s'),
+  duration: z.enum(['4s', '6s', '8s', '10s']).optional().default('8s'),
   resolution: z.string().optional().default('720p'),
   generate_audio: z.boolean().optional().default(true),
   negative_prompt: z.string().max(1000).optional(),
