@@ -5,7 +5,7 @@ export interface VideoGenerationRequest {
   prompt: string;
   input_images?: string[];
   aspect_ratio?: '9:16' | '16:9' | '1:1';
-  duration?: '4s' | '6s' | '8s';
+  duration?: '4s' | '6s' | '8s' | '10s';
   resolution?: '720p' | '1080p';
   generate_audio?: boolean;
   negative_prompt?: string;
@@ -43,7 +43,7 @@ export interface VideoConfig {
   prompt: string;
   input_images?: string[];
   aspect_ratio: '9:16' | '16:9' | '1:1';
-  duration: '4s' | '6s' | '8s';
+  duration: '4s' | '6s' | '8s' | '10s';
   resolution: '720p' | '1080p';
   generate_audio: boolean;
   negative_prompt?: string;

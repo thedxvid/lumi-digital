@@ -85,7 +85,7 @@ export const VideoConfigForm = ({
   const [prompt, setPrompt] = useState('');
   const [inputImages, setInputImages] = useState<string[]>(preloadedImage ? [preloadedImage] : []);
   const [aspectRatio, setAspectRatio] = useState<'9:16' | '16:9' | '1:1'>('16:9');
-  const [duration, setDuration] = useState<'4s' | '6s' | '8s'>('8s');
+  const [duration, setDuration] = useState<'4s' | '6s' | '8s' | '10s'>('8s');
   const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
   const [generateAudio, setGenerateAudio] = useState(true);
   const [enhancePrompt, setEnhancePrompt] = useState(true);
@@ -440,8 +440,8 @@ export const VideoConfigForm = ({
 
           <div className="space-y-3">
             <Label className="text-base font-semibold">Duração</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['4s', '6s', '8s'] as const).map((dur) => (
+            <div className="grid grid-cols-4 gap-2">
+              {(['4s', '6s', '8s', '10s'] as const).map((dur) => (
                 <Button
                   key={dur}
                   type="button"
