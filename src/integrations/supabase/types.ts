@@ -1130,6 +1130,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_login_history: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          login_method: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          login_method?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          login_method?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

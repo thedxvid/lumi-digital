@@ -10,6 +10,7 @@ import { UsageBar } from './UsageBar';
 import { UserLimitsEditor } from './UserLimitsEditor';
 import { UserRolesManager } from './UserRolesManager';
 import { VideoLimitsDebug } from './VideoLimitsDebug';
+import { UserLoginHistory } from './UserLoginHistory';
 
 interface UserDetailsModalProps {
   userId: string;
@@ -294,13 +295,7 @@ export const UserDetailsModal = ({ userId, isOpen, onClose }: UserDetailsModalPr
               </TabsContent>
 
               <TabsContent value="history">
-                <Card>
-                  <CardContent className="p-6">
-                    <p className="text-muted-foreground text-center py-8">
-                      Histórico de atividades em desenvolvimento
-                    </p>
-                  </CardContent>
-                </Card>
+                <UserLoginHistory userId={userId} />
               </TabsContent>
 
               <TabsContent value="security">
