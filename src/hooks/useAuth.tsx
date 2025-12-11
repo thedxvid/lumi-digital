@@ -87,6 +87,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const logLoginEvent = async (userId: string, action: 'login' | 'logout' | 'token_refresh', loginMethod?: string) => {
+    try {
+      await supabase.from('user_login_history').insert({
+        user_id: userId,
+        action,
+        login_method: loginMethod || null,
+        user_agent: navigator.userAgent,
+        ip_address: null // IP será capturado via edge function se necessário
+      });
+    } catch (error) {
+      console.error('Error logging login event:', error);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -107,6 +121,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError) {
         console.error('Error checking access:', profileError);
+        // Registrar login mesmo com erro no perfil
+        logLoginEvent(data.user.id, 'login', 'password');
         return { error: null };
       }
 
@@ -121,12 +137,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } as any
         };
       }
+
+      // Registrar evento de login bem-sucedido
+      logLoginEvent(data.user.id, 'login', 'password');
     }
     
     return { error: null };
   };
 
   const signOut = async () => {
+    // Registrar logout antes de deslogar
+    if (user) {
+      await logLoginEvent(user.id, 'logout');
+    }
     await supabase.auth.signOut();
   };
 
