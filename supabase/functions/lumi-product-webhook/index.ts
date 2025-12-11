@@ -39,7 +39,7 @@ const LumiWebhookPayloadSchema = z.object({
   product_type: z.string().max(50).optional(),
   checkout_link: z.string().max(500).optional().nullable(), // Aceita códigos curtos ou URLs completas
   webhook_event_type: z.string().max(50).optional(),
-  approved_date: z.string().optional(),
+  approved_date: z.string().optional().nullable(),
   Product: ProductSchema,
   Customer: CustomerSchema,
   Subscription: SubscriptionSchema,
@@ -312,7 +312,7 @@ serve(async (req) => {
       .from('subscriptions')
       .insert({
         user_id: userId,
-        plan_type: 'lumi',
+        plan_type: 'basic',
         duration_months: subscription.months,
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
