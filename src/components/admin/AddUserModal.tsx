@@ -62,7 +62,7 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
       console.log('🔧 Chamando Edge Function para criar usuário...');
 
       // Chamar a Edge Function para criar o usuário
-      const { data, error } = await supabase.functions.invoke('create-user-admin', {
+      const response = await supabase.functions.invoke('create-user-admin', {
         body: {
           email: formData.email,
           password: generatedPassword,
@@ -73,29 +73,32 @@ const AddUserModal = ({ open, onOpenChange, onUserAdded }: AddUserModalProps) =>
         }
       });
 
-      console.log('📝 Resposta da Edge Function:', { data, error });
+      console.log('📝 Resposta da Edge Function:', response);
 
-      if (error) {
-        console.error('❌ Erro na Edge Function:', error);
-        const errorMsg = error.message || 'Erro desconhecido';
+      // Extrair mensagem de erro do response (Edge Function retorna no data mesmo com erro)
+      const { data, error } = response;
+      
+      // Quando a Edge Function retorna status 400/409, o erro vem no data
+      if (data && !data.success) {
+        const errorMsg = data.error || 'Erro desconhecido ao criar usuário';
+        console.error('❌ Erro retornado pela Edge Function:', errorMsg);
         
-        // Tratar mensagens específicas
-        if (errorMsg.includes('already been registered') || errorMsg.includes('Já existe um usuário')) {
-          throw new Error('Este email já está cadastrado no sistema');
+        // Mensagem amigável para email duplicado
+        if (errorMsg.includes('Já existe') || errorMsg.includes('already') || errorMsg.includes('EMAIL_EXISTS')) {
+          throw new Error('Este email já está cadastrado no sistema. Tente outro email.');
         }
         
         throw new Error(errorMsg);
       }
 
+      // Erro de rede ou conexão
+      if (error) {
+        console.error('❌ Erro de conexão com Edge Function:', error);
+        throw new Error('Erro de conexão com o servidor. Tente novamente.');
+      }
+
       if (!data?.success) {
-        const errorMsg = data?.error || 'Erro desconhecido ao criar usuário';
-        
-        // Tratar mensagens específicas
-        if (errorMsg.includes('already been registered') || errorMsg.includes('Já existe um usuário')) {
-          throw new Error('Este email já está cadastrado no sistema');
-        }
-        
-        throw new Error(errorMsg);
+        throw new Error('Resposta inesperada do servidor');
       }
 
       console.log('✅ Usuário criado com sucesso');

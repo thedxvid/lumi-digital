@@ -77,18 +77,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('🔧 Criando usuário:', { email, full_name: displayName, role, access_granted });
 
-    // Verificar se o usuário já existe
-    const { data: existingUser, error: checkError } = await supabase.auth.admin.listUsers();
-    if (checkError) {
-      console.error('❌ Erro ao verificar usuários existentes:', checkError);
-    } else {
-      const userExists = existingUser?.users?.find(u => u.email === email);
-      if (userExists) {
-        throw new Error('Já existe um usuário com este email');
-      }
-    }
-
     // 1. Criar usuário no auth.users usando Admin API
+    // Deixamos o Supabase Auth verificar duplicidade (mais eficiente que listUsers)
     console.log('🔨 Criando usuário na auth...');
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -102,9 +92,21 @@ const handler = async (req: Request): Promise<Response> => {
     if (authError) {
       console.error('❌ Erro ao criar usuário na auth:', authError);
       
-      // Tratar erro de email duplicado
-      if (authError.message?.includes('already been registered') || authError.code === 'email_exists') {
-        throw new Error('Já existe um usuário cadastrado com este email');
+      // Tratar erro de email duplicado (mais específico)
+      if (
+        authError.message?.includes('already been registered') || 
+        authError.message?.includes('already exists') ||
+        authError.code === 'email_exists' ||
+        authError.code === 'user_already_exists'
+      ) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Este email já está cadastrado no sistema',
+            code: 'EMAIL_EXISTS'
+          }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
       
       throw new Error(`Erro ao criar usuário: ${authError.message}`);
