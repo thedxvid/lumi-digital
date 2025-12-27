@@ -223,13 +223,19 @@ export default function AdminApiKeys() {
             <p className="text-2xl font-bold text-destructive">{stats.invalidKeys}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={stats.pendingKeys > 0 ? 'border-yellow-500/50 bg-yellow-500/5 cursor-pointer hover:bg-yellow-500/10 transition-colors' : ''}
+          onClick={() => stats.pendingKeys > 0 && setSearchTerm('')}
+        >
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-yellow-500" />
               <span className="text-sm text-muted-foreground">Pendentes</span>
             </div>
             <p className="text-2xl font-bold text-yellow-500">{stats.pendingKeys}</p>
+            {stats.pendingKeys > 0 && (
+              <p className="text-xs text-yellow-600 mt-1">Clique para ver</p>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -251,6 +257,56 @@ export default function AdminApiKeys() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Alert for pending keys */}
+      {stats.pendingKeys > 0 && (
+        <Card className="border-yellow-500/50 bg-yellow-500/5">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">
+                  {stats.pendingKeys} chave(s) pendente(s) de validação
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Essas chaves foram conectadas mas ainda não passaram pela validação. 
+                  Use o botão "Validar" ao lado de cada chave para verificá-las.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3 gap-2 border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10"
+                  onClick={async () => {
+                    const pendingKeys = apiKeys.filter(k => k.is_valid === null);
+                    sonnerToast.loading(`Validando ${pendingKeys.length} chave(s)...`, { id: 'bulk-validate' });
+                    
+                    let successCount = 0;
+                    for (const key of pendingKeys) {
+                      try {
+                        const { data } = await supabase.functions.invoke('validate-user-api-key', {
+                          body: { provider: 'fal_ai', admin_user_id: key.user_id }
+                        });
+                        if (data?.valid) successCount++;
+                      } catch (e) {
+                        console.error('Error validating key:', e);
+                      }
+                    }
+                    
+                    sonnerToast.success(`${successCount}/${pendingKeys.length} chaves validadas!`, { 
+                      id: 'bulk-validate',
+                      duration: 5000
+                    });
+                    fetchApiKeys();
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Validar Todas Pendentes
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Info Card */}
       {stats.totalKeys === 0 && !loading && (

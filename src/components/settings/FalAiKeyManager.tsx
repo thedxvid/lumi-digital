@@ -1,18 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useApiKeyIntegrations } from '@/hooks/useApiKeyIntegrations';
-import { Video, Check, X, Loader2, ExternalLink, AlertCircle } from 'lucide-react';
+import { Video, Check, X, Loader2, ExternalLink, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 export function FalAiKeyManager() {
   const { keys, loading, saving, validating, saveKey, validateKey, deleteKey, maskApiKey } = useApiKeyIntegrations();
   const [apiKey, setApiKey] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [autoValidating, setAutoValidating] = useState(false);
 
   const falKey = keys.find(k => k.provider === 'fal_ai');
   const isConnected = !!falKey && falKey.is_active;
@@ -23,6 +25,44 @@ export function FalAiKeyManager() {
     setIsEditing(!isConnected);
   }, [isConnected]);
 
+  // Auto-validação com retry
+  const autoValidateWithRetry = useCallback(async () => {
+    setAutoValidating(true);
+    let validated = false;
+    
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      console.log(`🔄 [FalAiKeyManager] Tentativa de auto-validação ${attempt}/3...`);
+      
+      // Delay progressivo: 1s, 2s, 3s
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+      
+      try {
+        validated = await validateKey('fal_ai');
+        console.log(`🔄 [FalAiKeyManager] Resultado tentativa ${attempt}: ${validated ? 'sucesso' : 'falhou'}`);
+        
+        if (validated) {
+          toast.success('Chave validada com sucesso!', {
+            description: 'Sua chave Fal.ai está funcionando corretamente.',
+          });
+          break;
+        }
+      } catch (error) {
+        console.error(`❌ [FalAiKeyManager] Erro na tentativa ${attempt}:`, error);
+      }
+    }
+    
+    setAutoValidating(false);
+    
+    if (!validated) {
+      toast.warning('Validação automática falhou', {
+        description: 'Clique em "Validar Key" para tentar novamente.',
+        duration: 6000,
+      });
+    }
+    
+    return validated;
+  }, [validateKey]);
+
   const handleSave = async () => {
     if (!apiKey.trim()) {
       return;
@@ -32,8 +72,10 @@ export function FalAiKeyManager() {
       setJustSaved(true);
       setApiKey('');
       setIsEditing(false);
-      // Auto-validate after saving
-      setTimeout(() => validateKey('fal_ai'), 500);
+      
+      // Auto-validate with retry após salvar
+      autoValidateWithRetry();
+      
       // Reset success state after 3 seconds
       setTimeout(() => setJustSaved(false), 3000);
     }
@@ -173,7 +215,7 @@ export function FalAiKeyManager() {
 
           {/* Validation in progress indicator */}
           <AnimatePresence>
-            {validating && !justSaved && (
+            {(validating || autoValidating) && !justSaved && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -183,9 +225,31 @@ export function FalAiKeyManager() {
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-center gap-3">
                   <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
                   <p className="text-sm text-blue-700 dark:text-blue-400">
-                    Validando sua API Key com a Fal.ai...
+                    {autoValidating ? 'Validando automaticamente...' : 'Validando sua API Key com a Fal.ai...'}
                   </p>
                 </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Alerta para chaves pendentes de validação */}
+          <AnimatePresence>
+            {isConnected && isValid === null && !validating && !autoValidating && !justSaved && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <Alert className="bg-yellow-500/10 border-yellow-500/30">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-sm">
+                    <strong className="text-yellow-700 dark:text-yellow-400">Sua chave ainda não foi validada.</strong>
+                    <p className="text-yellow-600 dark:text-yellow-500 mt-1">
+                      Clique no botão "Validar Key" abaixo para ativar os recursos ilimitados.
+                    </p>
+                  </AlertDescription>
+                </Alert>
               </motion.div>
             )}
           </AnimatePresence>
@@ -276,23 +340,27 @@ export function FalAiKeyManager() {
 
               <div className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant={isValid === null ? "default" : "outline"}
                   onClick={() => validateKey('fal_ai')}
-                  disabled={validating}
-                  className="flex-1"
+                  disabled={validating || autoValidating}
+                  className={`flex-1 ${isValid === null ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : ''}`}
                 >
-                  {validating ? (
+                  {validating || autoValidating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Validando...
                     </>
                   ) : (
-                    'Validar Key'
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      {isValid === null ? 'Validar Key (Pendente)' : 'Validar Key'}
+                    </>
                   )}
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={handleDisconnect}
+                  disabled={validating || autoValidating}
                 >
                   Desconectar
                 </Button>
