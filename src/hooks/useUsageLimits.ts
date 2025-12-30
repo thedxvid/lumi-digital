@@ -18,10 +18,23 @@ export const useUsageLimits = () => {
       loadLimits();
     };
     
+    // Refresh when user returns to the tab
+    const handleFocus = () => {
+      loadLimits();
+    };
+    
     window.addEventListener('usage-limits-updated', handleRefresh);
+    window.addEventListener('focus', handleFocus);
+    
+    // Periodic refresh every 5 minutes
+    const interval = setInterval(() => {
+      loadLimits();
+    }, 5 * 60 * 1000);
     
     return () => {
       window.removeEventListener('usage-limits-updated', handleRefresh);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
     };
   }, []);
 
