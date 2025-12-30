@@ -512,32 +512,80 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       throw error;
     }
 
-    // ✅ ATUALIZAR LIMITES PARA PLANO BÁSICO
+    // ✅ ATUALIZAR/CRIAR LIMITES PARA PLANO BÁSICO (usando UPSERT para garantir consistência)
     try {
-      console.log('🎯 Atualizando limites de uso para plano básico...');
+      console.log('🎯 Atualizando/criando limites de uso para plano básico...');
+      console.log('🎯 User ID:', userId);
       
-      const { error: limitsError } = await supabase
+      // Primeiro verificar se já existe registro
+      const { data: existingLimits, error: checkError } = await supabase
         .from('usage_limits')
-        .update({
-          plan_type: 'basic',
-          creative_images_daily_limit: 10,
-          creative_images_monthly_limit: 300,
-          profile_analysis_daily_limit: 5,
-          carousels_monthly_limit: 3,
-          videos_monthly_limit: 0,
-          sora_text_videos_lifetime_limit: 2,
-          kling_image_videos_lifetime_limit: 1
-        })
-        .eq('user_id', userId);
-
-      if (limitsError) {
-        console.error('Error updating usage limits:', limitsError);
-        throw limitsError;
-      }
+        .select('id, plan_type')
+        .eq('user_id', userId)
+        .single();
       
-      console.log('✅ Limites de uso atualizados com sucesso');
+      console.log('🎯 Limites existentes:', existingLimits ? `Sim (plan_type: ${existingLimits.plan_type})` : 'Não');
+      
+      if (existingLimits) {
+        // UPDATE - registro existe
+        const { error: updateError } = await supabase
+          .from('usage_limits')
+          .update({
+            plan_type: 'basic',
+            creative_images_daily_limit: 10,
+            creative_images_monthly_limit: 300,
+            profile_analysis_daily_limit: 5,
+            carousels_monthly_limit: 10,
+            carousel_images_monthly_limit: 30,
+            videos_monthly_limit: 0,
+            sora_text_videos_lifetime_limit: 2,
+            kling_image_videos_lifetime_limit: 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        if (updateError) {
+          console.error('Error updating usage limits:', updateError);
+          throw updateError;
+        }
+        console.log('✅ Limites de uso ATUALIZADOS com sucesso (plan_type: basic)');
+      } else {
+        // INSERT - registro não existe
+        const { error: insertError } = await supabase
+          .from('usage_limits')
+          .insert({
+            user_id: userId,
+            plan_type: 'basic',
+            creative_images_daily_limit: 10,
+            creative_images_daily_used: 0,
+            creative_images_monthly_limit: 300,
+            creative_images_monthly_used: 0,
+            profile_analysis_daily_limit: 5,
+            profile_analysis_daily_used: 0,
+            carousels_monthly_limit: 10,
+            carousels_monthly_used: 0,
+            carousel_images_monthly_limit: 30,
+            carousel_images_monthly_used: 0,
+            videos_monthly_limit: 0,
+            videos_monthly_used: 0,
+            video_credits: 0,
+            video_credits_used: 0,
+            sora_text_videos_lifetime_limit: 2,
+            sora_text_videos_lifetime_used: 0,
+            kling_image_videos_lifetime_limit: 1,
+            kling_image_videos_lifetime_used: 0,
+            last_daily_reset: new Date().toISOString(),
+            last_monthly_reset: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error inserting usage limits:', insertError);
+          throw insertError;
+        }
+        console.log('✅ Limites de uso CRIADOS com sucesso (plan_type: basic)');
+      }
     } catch (error) {
-      console.error('❌ Erro ao atualizar limites:', error);
+      console.error('❌ Erro ao atualizar/criar limites:', error);
       throw error;
     }
 
