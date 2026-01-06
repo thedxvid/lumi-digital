@@ -6,6 +6,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Função para validar formato da API Key Fal.ai
+function validateFalKeyFormat(key: string): { valid: boolean; error?: string } {
+  if (!key || typeof key !== 'string') {
+    return { valid: false, error: 'Chave vazia ou inválida' };
+  }
+  
+  const trimmedKey = key.trim();
+  
+  // Fal.ai keys geralmente começam com prefixos específicos
+  // Formato esperado: algo como "fal_..." ou uma string longa
+  if (trimmedKey.length < 20) {
+    return { valid: false, error: `Chave muito curta (${trimmedKey.length} caracteres). Chaves Fal.ai devem ter mais de 20 caracteres.` };
+  }
+  
+  if (trimmedKey.length > 200) {
+    return { valid: false, error: 'Chave muito longa. Verifique se copiou corretamente.' };
+  }
+  
+  // Verificar caracteres inválidos
+  if (!/^[a-zA-Z0-9_\-:]+$/.test(trimmedKey)) {
+    return { valid: false, error: 'Chave contém caracteres inválidos. Use apenas letras, números, underscores e hífens.' };
+  }
+  
+  return { valid: true };
+}
+
 serve(async (req) => {
   console.log('🔐 [validate-user-api-key] ========== INÍCIO ==========');
   
@@ -88,7 +114,7 @@ serve(async (req) => {
       );
     }
     
-    console.log('✅ [validate-user-api-key] Chave encontrada no banco de dados');
+    console.log(`✅ [validate-user-api-key] Chave encontrada (encrypted length: ${keyData.api_key_encrypted?.length || 0})`);
 
     // Decrypt the key
     console.log('🔐 [validate-user-api-key] Descriptografando chave...');
@@ -100,20 +126,57 @@ serve(async (req) => {
 
     if (decryptError || !decryptedKey) {
       console.error('❌ [validate-user-api-key] Erro ao descriptografar:', decryptError?.message);
+      
+      // Marcar como inválida no banco
+      await supabaseClient
+        .from('user_api_keys')
+        .update({
+          is_valid: false,
+          last_validated_at: new Date().toISOString()
+        })
+        .eq('user_id', targetUserId)
+        .eq('provider', provider);
+      
       return new Response(
-        JSON.stringify({ valid: false, error: 'Erro ao descriptografar key' }),
+        JSON.stringify({ valid: false, error: 'Erro ao descriptografar key. A chave pode estar corrompida.' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    console.log('✅ [validate-user-api-key] Chave descriptografada com sucesso');
+    console.log(`✅ [validate-user-api-key] Chave descriptografada (length: ${decryptedKey.length})`);
+
+    // Validar formato da chave ANTES de fazer chamada à Fal.ai
+    const formatValidation = validateFalKeyFormat(decryptedKey);
+    if (!formatValidation.valid) {
+      console.log(`❌ [validate-user-api-key] Formato inválido: ${formatValidation.error}`);
+      
+      // Marcar como inválida no banco
+      await supabaseClient
+        .from('user_api_keys')
+        .update({
+          is_valid: false,
+          last_validated_at: new Date().toISOString()
+        })
+        .eq('user_id', targetUserId)
+        .eq('provider', provider);
+      
+      return new Response(
+        JSON.stringify({ 
+          valid: false, 
+          error: formatValidation.error,
+          errorType: 'format'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Validate with Fal.ai by making a test call
     if (provider === 'fal_ai') {
       console.log('🔐 [validate-user-api-key] Iniciando validação com Fal.ai...');
       
       try {
-        // Make a minimal test call to Fal.ai
+        // Usar endpoint que não consome créditos significativos
+        // Fazendo uma chamada mínima para verificar autenticação
         console.log('🔐 [validate-user-api-key] Fazendo chamada de teste para Fal.ai...');
         const testResponse = await fetch('https://fal.run/fal-ai/fast-turbo-diffusion', {
           method: 'POST',
@@ -124,18 +187,37 @@ serve(async (req) => {
           body: JSON.stringify({
             prompt: 'test',
             image_size: 'square_hd',
-            num_inference_steps: 2
+            num_inference_steps: 1 // Mínimo possível para reduzir custo
           }),
         });
 
         console.log(`🔐 [validate-user-api-key] Resposta Fal.ai status: ${testResponse.status}`);
         
-        // 200 = success, 402 = out of credits but key is valid
-        const isValid = testResponse.ok || testResponse.status === 402;
-        console.log(`🔐 [validate-user-api-key] isValid: ${isValid} (status ${testResponse.status})`);
+        // Analisar resposta para determinar erro específico
+        let errorMessage = '';
+        let isValid = false;
+        
+        if (testResponse.ok) {
+          isValid = true;
+          console.log('✅ [validate-user-api-key] Chave válida - resposta OK');
+        } else if (testResponse.status === 402) {
+          // 402 = Sem créditos, mas a chave é válida
+          isValid = true;
+          console.log('✅ [validate-user-api-key] Chave válida - sem créditos (402)');
+        } else if (testResponse.status === 401 || testResponse.status === 403) {
+          isValid = false;
+          const errorText = await testResponse.text();
+          console.log(`❌ [validate-user-api-key] Chave não autorizada: ${errorText.substring(0, 200)}`);
+          errorMessage = 'Chave não autorizada. Verifique se a chave está ativa no painel Fal.ai.';
+        } else {
+          isValid = false;
+          const errorText = await testResponse.text();
+          console.log(`❌ [validate-user-api-key] Erro inesperado: ${testResponse.status} - ${errorText.substring(0, 200)}`);
+          errorMessage = `Erro ao validar (${testResponse.status}). Tente novamente.`;
+        }
 
         // Update validation status in database
-        console.log('🔐 [validate-user-api-key] Atualizando status no banco de dados...');
+        console.log(`🔐 [validate-user-api-key] Atualizando status no banco: is_valid=${isValid}`);
         const { error: updateError } = await supabaseClient
           .from('user_api_keys')
           .update({
@@ -170,12 +252,11 @@ serve(async (req) => {
         }
 
         if (!isValid) {
-          const errorText = await testResponse.text();
-          console.log(`❌ [validate-user-api-key] Chave inválida: ${errorText.substring(0, 200)}`);
           return new Response(
             JSON.stringify({ 
               valid: false, 
-              error: `Key inválida (${testResponse.status}): ${errorText.substring(0, 100)}` 
+              error: errorMessage,
+              errorType: 'api'
             }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
@@ -189,10 +270,22 @@ serve(async (req) => {
 
       } catch (error) {
         console.error('❌ [validate-user-api-key] Erro durante validação:', error);
+        
+        // Marcar como inválida no banco em caso de erro
+        await supabaseClient
+          .from('user_api_keys')
+          .update({
+            is_valid: false,
+            last_validated_at: new Date().toISOString()
+          })
+          .eq('user_id', targetUserId)
+          .eq('provider', provider);
+        
         return new Response(
           JSON.stringify({ 
             valid: false, 
-            error: error instanceof Error ? error.message : 'Erro ao validar key'
+            error: error instanceof Error ? error.message : 'Erro de conexão com Fal.ai',
+            errorType: 'network'
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );

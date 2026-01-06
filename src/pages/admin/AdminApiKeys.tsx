@@ -14,6 +14,7 @@ interface UserApiKey {
   id: string;
   user_id: string;
   provider: string;
+  api_key_encrypted: string;
   is_active: boolean;
   is_valid: boolean | null;
   last_validated_at: string | null;
@@ -120,7 +121,7 @@ export default function AdminApiKeys() {
 
   const handleValidateKey = async (userId: string) => {
     setValidatingId(userId);
-    sonnerToast.loading('Validando chave...', { id: 'validate-key' });
+    sonnerToast.loading('Validando chave...', { id: `validate-key-${userId}` });
 
     try {
       const { data, error } = await supabase.functions.invoke('validate-user-api-key', {
@@ -131,15 +132,25 @@ export default function AdminApiKeys() {
 
       if (data.valid) {
         sonnerToast.success('Chave Válida!', {
-          id: 'validate-key',
+          id: `validate-key-${userId}`,
           description: 'A chave Fal.ai foi validada com sucesso',
           duration: 5000
         });
       } else {
+        // Mostrar erro específico baseado no tipo
+        let errorDescription = data.error || 'A chave não passou na validação';
+        if (data.errorType === 'format') {
+          errorDescription = `Formato inválido: ${data.error}`;
+        } else if (data.errorType === 'api') {
+          errorDescription = `Erro na Fal.ai: ${data.error}`;
+        } else if (data.errorType === 'network') {
+          errorDescription = `Erro de conexão: ${data.error}`;
+        }
+        
         sonnerToast.error('Chave Inválida', {
-          id: 'validate-key',
-          description: data.error || 'A chave não passou na validação',
-          duration: 5000
+          id: `validate-key-${userId}`,
+          description: errorDescription,
+          duration: 8000
         });
       }
 
@@ -147,13 +158,22 @@ export default function AdminApiKeys() {
     } catch (error: any) {
       console.error('Error validating key:', error);
       sonnerToast.error('Erro ao Validar', {
-        id: 'validate-key',
+        id: `validate-key-${userId}`,
         description: error.message || 'Não foi possível validar a chave',
         duration: 5000
       });
     } finally {
       setValidatingId(null);
     }
+  };
+  
+  // Função para identificar chaves com formato suspeito
+  const getKeyFormatWarning = (key: UserApiKey): string | null => {
+    // Chaves encriptadas muito curtas indicam chaves originais inválidas
+    if (key.api_key_encrypted && key.api_key_encrypted.length < 50) {
+      return 'Chave muito curta - usuário pode ter copiado incorretamente';
+    }
+    return null;
   };
 
   const getStatusBadge = (isValid: boolean | null, isActive: boolean) => {
@@ -369,44 +389,57 @@ export default function AdminApiKeys() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredKeys.map((key) => (
-                    <TableRow key={key.id}>
-                      <TableCell className="font-medium">{key.user_name}</TableCell>
-                      <TableCell className="text-muted-foreground">{key.user_email}</TableCell>
-                      <TableCell>{getStatusBadge(key.is_valid, key.is_active)}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="gap-1">
-                          <Video className="h-3 w-3" />
-                          {key.credits_used_count || 0}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(key.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {key.last_validated_at 
-                          ? format(new Date(key.last_validated_at), "dd/MM/yy HH:mm", { locale: ptBR })
-                          : 'Nunca'
-                        }
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleValidateKey(key.user_id)}
-                          disabled={validatingId === key.user_id}
-                          className="gap-1"
-                        >
-                          {validatingId === key.user_id ? (
-                            <RefreshCw className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <CheckCircle className="h-3 w-3" />
-                          )}
-                          Validar
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredKeys.map((key) => {
+                    const formatWarning = getKeyFormatWarning(key);
+                    return (
+                      <TableRow key={key.id} className={formatWarning ? 'bg-yellow-500/5' : ''}>
+                        <TableCell className="font-medium">
+                          <div className="flex flex-col">
+                            <span>{key.user_name}</span>
+                            {formatWarning && (
+                              <span className="text-xs text-yellow-600 flex items-center gap-1 mt-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                {formatWarning}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{key.user_email}</TableCell>
+                        <TableCell>{getStatusBadge(key.is_valid, key.is_active)}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="gap-1">
+                            <Video className="h-3 w-3" />
+                            {key.credits_used_count || 0}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {format(new Date(key.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {key.last_validated_at 
+                            ? format(new Date(key.last_validated_at), "dd/MM/yy HH:mm", { locale: ptBR })
+                            : 'Nunca'
+                          }
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleValidateKey(key.user_id)}
+                            disabled={validatingId === key.user_id}
+                            className="gap-1"
+                          >
+                            {validatingId === key.user_id ? (
+                              <RefreshCw className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-3 w-3" />
+                            )}
+                            Validar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
