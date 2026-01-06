@@ -15,6 +15,30 @@ export interface UserApiKey {
   updated_at: string;
 }
 
+// Função para validar formato da API Key antes de salvar
+const validateFalKeyFormat = (key: string): { valid: boolean; error?: string } => {
+  if (!key || typeof key !== 'string') {
+    return { valid: false, error: 'Chave vazia ou inválida' };
+  }
+  
+  const trimmedKey = key.trim();
+  
+  if (trimmedKey.length < 20) {
+    return { valid: false, error: `Chave muito curta (${trimmedKey.length} caracteres). Chaves Fal.ai devem ter mais de 20 caracteres.` };
+  }
+  
+  if (trimmedKey.length > 200) {
+    return { valid: false, error: 'Chave muito longa. Verifique se copiou corretamente.' };
+  }
+  
+  // Verificar caracteres inválidos
+  if (!/^[a-zA-Z0-9_\-:]+$/.test(trimmedKey)) {
+    return { valid: false, error: 'Chave contém caracteres inválidos. Use apenas letras, números, underscores e hífens.' };
+  }
+  
+  return { valid: true };
+};
+
 export const useApiKeyIntegrations = () => {
   const [keys, setKeys] = useState<UserApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +75,18 @@ export const useApiKeyIntegrations = () => {
     try {
       console.log('🔐 [saveKey] Starting save process:', { provider, keyLength: apiKey.length });
       
+      // Validar formato antes de salvar
+      if (provider === 'fal_ai') {
+        const formatValidation = validateFalKeyFormat(apiKey);
+        if (!formatValidation.valid) {
+          console.error('❌ [saveKey] Invalid format:', formatValidation.error);
+          toast.error('Formato de chave inválido', {
+            description: formatValidation.error
+          });
+          return false;
+        }
+      }
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('❌ [saveKey] No user found');
@@ -66,7 +102,7 @@ export const useApiKeyIntegrations = () => {
       // Call encryption function
       console.log('🔒 [saveKey] Calling encrypt_api_key RPC...');
       const { data: encryptedKey, error: encryptError } = await supabase.rpc('encrypt_api_key', {
-        key_text: apiKey,
+        key_text: apiKey.trim(), // Trim antes de encriptar
         encryption_key: encryptionKey
       });
 

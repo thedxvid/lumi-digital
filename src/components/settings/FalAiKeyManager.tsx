@@ -9,16 +9,45 @@ import { Video, Check, X, Loader2, ExternalLink, AlertCircle, RefreshCw } from '
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
+// Validação de formato no frontend
+const validateKeyFormat = (key: string): { valid: boolean; error?: string } => {
+  if (!key || typeof key !== 'string') {
+    return { valid: false, error: 'Chave vazia' };
+  }
+  const trimmed = key.trim();
+  if (trimmed.length < 20) {
+    return { valid: false, error: `Chave muito curta (${trimmed.length} caracteres)` };
+  }
+  if (trimmed.length > 200) {
+    return { valid: false, error: 'Chave muito longa' };
+  }
+  if (!/^[a-zA-Z0-9_\-:]+$/.test(trimmed)) {
+    return { valid: false, error: 'Caracteres inválidos na chave' };
+  }
+  return { valid: true };
+};
+
 export function FalAiKeyManager() {
   const { keys, loading, saving, validating, saveKey, validateKey, deleteKey, maskApiKey } = useApiKeyIntegrations();
   const [apiKey, setApiKey] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [autoValidating, setAutoValidating] = useState(false);
+  const [formatError, setFormatError] = useState<string | null>(null);
 
   const falKey = keys.find(k => k.provider === 'fal_ai');
   const isConnected = !!falKey && falKey.is_active;
   const isValid = falKey?.is_valid;
+
+  // Validar formato enquanto digita
+  useEffect(() => {
+    if (apiKey.length > 0) {
+      const validation = validateKeyFormat(apiKey);
+      setFormatError(validation.valid ? null : validation.error || null);
+    } else {
+      setFormatError(null);
+    }
+  }, [apiKey]);
 
   useEffect(() => {
     // Só mostra o formulário de edição se não estiver conectado
@@ -276,14 +305,14 @@ export function FalAiKeyManager() {
                   <Input
                     id="fal-api-key"
                     type="password"
-                    placeholder="fal_*****************************"
+                    placeholder="Cole sua API Key aqui (mínimo 20 caracteres)"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    className="font-mono text-sm"
+                    className={`font-mono text-sm ${formatError ? 'border-destructive' : ''}`}
                   />
                   <Button 
                     onClick={handleSave}
-                    disabled={!apiKey.trim() || saving || validating}
+                    disabled={!apiKey.trim() || saving || validating || !!formatError}
                     className="bg-lumi-purple hover:bg-lumi-purple/90 min-w-[100px]"
                   >
                     {saving ? (
@@ -296,6 +325,18 @@ export function FalAiKeyManager() {
                     )}
                   </Button>
                 </div>
+                {formatError && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {formatError}
+                  </p>
+                )}
+                {apiKey.length > 0 && !formatError && (
+                  <p className="text-sm text-green-600 flex items-center gap-1">
+                    <Check className="h-3 w-3" />
+                    Formato válido ({apiKey.trim().length} caracteres)
+                  </p>
+                )}
               </div>
 
               <Alert className="bg-lumi-gold/10 border-lumi-gold/20">
