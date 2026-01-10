@@ -183,10 +183,10 @@ serve(async (req) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
         
-        // ✅ USAR ENDPOINT DE BILLING QUE NÃO CONSOME CRÉDITOS
-        // Este endpoint verifica se a chave é válida sem gastar créditos
-        console.log('🔐 [validate-user-api-key] Testando autenticação via billing endpoint...');
-        const testResponse = await fetch('https://rest.fal.ai/billing/usage', {
+        // ✅ USAR ENDPOINT DE MODELS QUE NÃO CONSOME CRÉDITOS
+        // Este endpoint verifica se a chave é válida listando modelos disponíveis
+        console.log('🔐 [validate-user-api-key] Testando autenticação via models endpoint...');
+        const testResponse = await fetch('https://api.fal.ai/v1/models?limit=1', {
           method: 'GET',
           headers: {
             'Authorization': `Key ${decryptedKey}`,
