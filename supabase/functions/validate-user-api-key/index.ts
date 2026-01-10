@@ -109,7 +109,7 @@ serve(async (req) => {
     if (keyError || !keyData) {
       console.log('❌ [validate-user-api-key] Chave não encontrada:', keyError?.message);
       return new Response(
-        JSON.stringify({ valid: false, error: 'API Key não encontrada' }),
+        JSON.stringify({ valid: false, error: 'API Key não encontrada. Conecte sua chave primeiro.' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -138,7 +138,11 @@ serve(async (req) => {
         .eq('provider', provider);
       
       return new Response(
-        JSON.stringify({ valid: false, error: 'Erro ao descriptografar key. A chave pode estar corrompida.' }),
+        JSON.stringify({ 
+          valid: false, 
+          error: 'Erro ao descriptografar key. Remova e adicione novamente.',
+          errorType: 'decrypt'
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -170,26 +174,28 @@ serve(async (req) => {
       );
     }
 
-    // Validate with Fal.ai by making a test call
+    // Validate with Fal.ai using a LIGHTWEIGHT endpoint that doesn't consume credits
     if (provider === 'fal_ai') {
-      console.log('🔐 [validate-user-api-key] Iniciando validação com Fal.ai...');
+      console.log('🔐 [validate-user-api-key] Iniciando validação RÁPIDA com Fal.ai...');
       
       try {
-        // Usar endpoint que não consome créditos significativos
-        // Fazendo uma chamada mínima para verificar autenticação
-        console.log('🔐 [validate-user-api-key] Fazendo chamada de teste para Fal.ai...');
-        const testResponse = await fetch('https://fal.run/fal-ai/fast-turbo-diffusion', {
-          method: 'POST',
+        // Usar AbortController para timeout de 10 segundos
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        // ✅ USAR ENDPOINT DE BILLING QUE NÃO CONSOME CRÉDITOS
+        // Este endpoint verifica se a chave é válida sem gastar créditos
+        console.log('🔐 [validate-user-api-key] Testando autenticação via billing endpoint...');
+        const testResponse = await fetch('https://rest.fal.ai/billing/usage', {
+          method: 'GET',
           headers: {
             'Authorization': `Key ${decryptedKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            prompt: 'test',
-            image_size: 'square_hd',
-            num_inference_steps: 1 // Mínimo possível para reduzir custo
-          }),
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
 
         console.log(`🔐 [validate-user-api-key] Resposta Fal.ai status: ${testResponse.status}`);
         
@@ -199,21 +205,33 @@ serve(async (req) => {
         
         if (testResponse.ok) {
           isValid = true;
-          console.log('✅ [validate-user-api-key] Chave válida - resposta OK');
-        } else if (testResponse.status === 402) {
-          // 402 = Sem créditos, mas a chave é válida
-          isValid = true;
-          console.log('✅ [validate-user-api-key] Chave válida - sem créditos (402)');
+          const usageData = await testResponse.json().catch(() => null);
+          console.log('✅ [validate-user-api-key] Chave VÁLIDA - billing endpoint OK');
+          if (usageData) {
+            console.log('📊 [validate-user-api-key] Dados de uso:', JSON.stringify(usageData).substring(0, 200));
+          }
         } else if (testResponse.status === 401 || testResponse.status === 403) {
           isValid = false;
-          const errorText = await testResponse.text();
+          const errorText = await testResponse.text().catch(() => '');
           console.log(`❌ [validate-user-api-key] Chave não autorizada: ${errorText.substring(0, 200)}`);
-          errorMessage = 'Chave não autorizada. Verifique se a chave está ativa no painel Fal.ai.';
+          
+          // Tentar extrair mensagem específica do erro
+          if (errorText.includes('Invalid API key')) {
+            errorMessage = 'Chave API inválida. Verifique se copiou corretamente do painel Fal.ai.';
+          } else if (errorText.includes('expired')) {
+            errorMessage = 'Chave expirada. Gere uma nova no painel Fal.ai.';
+          } else {
+            errorMessage = 'Chave não autorizada. Verifique se está ativa no painel Fal.ai.';
+          }
+        } else if (testResponse.status === 429) {
+          // Rate limit - assumir que a chave é válida mas está limitada
+          isValid = true;
+          console.log('⚠️ [validate-user-api-key] Rate limit atingido - assumindo chave válida');
         } else {
           isValid = false;
-          const errorText = await testResponse.text();
+          const errorText = await testResponse.text().catch(() => '');
           console.log(`❌ [validate-user-api-key] Erro inesperado: ${testResponse.status} - ${errorText.substring(0, 200)}`);
-          errorMessage = `Erro ao validar (${testResponse.status}). Tente novamente.`;
+          errorMessage = `Erro ao validar (status ${testResponse.status}). Tente novamente.`;
         }
 
         // Update validation status in database
@@ -252,10 +270,11 @@ serve(async (req) => {
         }
 
         if (!isValid) {
+          console.log('❌ [validate-user-api-key] ========== FALHA ==========');
           return new Response(
             JSON.stringify({ 
               valid: false, 
-              error: errorMessage,
+              error: errorMessage || 'Chave inválida',
               errorType: 'api'
             }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -264,27 +283,33 @@ serve(async (req) => {
 
         console.log('✅ [validate-user-api-key] ========== SUCESSO ==========');
         return new Response(
-          JSON.stringify({ valid: true }),
+          JSON.stringify({ valid: true, message: 'Chave validada com sucesso!' }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
       } catch (error) {
         console.error('❌ [validate-user-api-key] Erro durante validação:', error);
         
-        // Marcar como inválida no banco em caso de erro
-        await supabaseClient
-          .from('user_api_keys')
-          .update({
-            is_valid: false,
-            last_validated_at: new Date().toISOString()
-          })
-          .eq('user_id', targetUserId)
-          .eq('provider', provider);
+        // Verificar se foi timeout
+        const isTimeout = error instanceof Error && error.name === 'AbortError';
         
+        if (isTimeout) {
+          console.log('⏱️ [validate-user-api-key] Timeout na validação - não marcando como inválida');
+          return new Response(
+            JSON.stringify({ 
+              valid: false, 
+              error: 'Timeout na validação. A Fal.ai demorou para responder. Tente novamente.',
+              errorType: 'timeout'
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Erro de rede - não marcar como inválida
         return new Response(
           JSON.stringify({ 
             valid: false, 
-            error: error instanceof Error ? error.message : 'Erro de conexão com Fal.ai',
+            error: 'Erro de conexão com Fal.ai. Verifique sua internet e tente novamente.',
             errorType: 'network'
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -303,7 +328,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         valid: false,
-        error: error instanceof Error ? error.message : 'Erro ao validar API key'
+        error: error instanceof Error ? error.message : 'Erro ao validar API key',
+        errorType: 'internal'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

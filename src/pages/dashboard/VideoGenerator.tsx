@@ -54,6 +54,11 @@ const VideoGenerator = () => {
     videoType: 'sora' | 'kling';
     remainingCredits: number;
   } | null>(null);
+  const [balanceExhausted, setBalanceExhausted] = useState<{
+    show: boolean;
+    isUserKey: boolean;
+    message: string;
+  } | null>(null);
 
   // Handle preloaded image from creative generator
   useEffect(() => {
@@ -102,6 +107,24 @@ const VideoGenerator = () => {
     
     return () => {
       window.removeEventListener('video-policy-violation', handlePolicyViolation as EventListener);
+    };
+  }, []);
+
+  // Listen for balance exhausted events from video generation
+  useEffect(() => {
+    const handleBalanceExhausted = (event: CustomEvent) => {
+      console.log('💰 Balance exhausted event received:', event.detail);
+      setBalanceExhausted({
+        show: true,
+        isUserKey: event.detail.isUserKey || false,
+        message: event.detail.message || 'Saldo esgotado'
+      });
+    };
+
+    window.addEventListener('video-balance-exhausted', handleBalanceExhausted as EventListener);
+    
+    return () => {
+      window.removeEventListener('video-balance-exhausted', handleBalanceExhausted as EventListener);
     };
   }, []);
 
@@ -201,6 +224,38 @@ const VideoGenerator = () => {
                 <Wand2 className="h-4 w-4 mr-2" />
                 Melhorar Agora
               </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Balance Exhausted Alert */}
+      {balanceExhausted?.show && (
+        <Alert variant="destructive" className="border-orange-500/50 bg-orange-500/10">
+          <AlertCircle className="h-5 w-5" />
+          <AlertDescription className="space-y-2">
+            <p className="font-semibold">💰 {balanceExhausted.isUserKey ? 'Saldo Fal.ai Esgotado' : 'Créditos Temporariamente Indisponíveis'}</p>
+            <p className="text-sm">
+              {balanceExhausted.isUserKey 
+                ? 'O saldo da sua conta Fal.ai acabou. Adicione mais créditos no painel da Fal.ai para continuar gerando vídeos.'
+                : 'Os créditos da plataforma estão temporariamente esgotados. Conecte sua própria chave Fal.ai ou tente novamente mais tarde.'
+              }
+            </p>
+            <div className="flex gap-2 mt-3">
+              <Button size="sm" variant="outline" onClick={() => setBalanceExhausted(null)}>
+                Fechar
+              </Button>
+              {balanceExhausted.isUserKey ? (
+                <Button size="sm" asChild>
+                  <a href="https://fal.ai/billing" target="_blank" rel="noopener noreferrer">
+                    Adicionar Créditos Fal.ai
+                  </a>
+                </Button>
+              ) : (
+                <Button size="sm" onClick={() => navigate('/app/settings')}>
+                  🔑 Conectar Minha Chave
+                </Button>
+              )}
             </div>
           </AlertDescription>
         </Alert>
