@@ -152,6 +152,32 @@ export const useVideoGenerator = () => {
       }
 
       if (functionData?.error) {
+        // Verificar se é erro de saldo esgotado (BYOK ou plataforma)
+        if (functionData.errorType === 'balance_exhausted' || 
+            functionData.error.includes('Saldo esgotado') ||
+            functionData.error.includes('exhausted')) {
+          console.log('💰 BALANCE EXHAUSTED DETECTED');
+          
+          window.dispatchEvent(new CustomEvent('video-balance-exhausted', {
+            detail: {
+              isUserKey: functionData.isUserKey || false,
+              message: functionData.error
+            }
+          }));
+          
+          toast.error(functionData.isUserKey ? 'Saldo Fal.ai esgotado' : 'Créditos temporariamente indisponíveis', {
+            description: functionData.isUserKey 
+              ? 'Adicione créditos em fal.ai/billing'
+              : 'Conecte sua própria chave ou tente mais tarde',
+            duration: 8000
+          });
+          
+          setLoading(false);
+          setGenerationStatus('idle');
+          setResultModalOpen(false);
+          return null;
+        }
+        
         // Verificar se é erro de violação de política de conteúdo
         if (functionData.error.includes('filtros de segurança') || 
             functionData.error.includes('conteúdo do prompt foi bloqueado')) {

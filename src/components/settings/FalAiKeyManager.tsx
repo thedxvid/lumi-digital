@@ -58,11 +58,12 @@ export function FalAiKeyManager() {
   const autoValidateWithRetry = useCallback(async () => {
     setAutoValidating(true);
     let validated = false;
+    let lastError = '';
     
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      console.log(`🔄 [FalAiKeyManager] Tentativa de auto-validação ${attempt}/3...`);
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      console.log(`🔄 [FalAiKeyManager] Tentativa de auto-validação ${attempt}/2...`);
       
-      // Delay progressivo: 1s, 2s, 3s
+      // Delay progressivo: 1s, 2s
       await new Promise(resolve => setTimeout(resolve, attempt * 1000));
       
       try {
@@ -71,21 +72,27 @@ export function FalAiKeyManager() {
         
         if (validated) {
           toast.success('Chave validada com sucesso!', {
-            description: 'Sua chave Fal.ai está funcionando corretamente.',
+            description: 'Sua chave Fal.ai está funcionando. Você pode usar Veo 3.1 e outros recursos ilimitados.',
+            duration: 5000,
           });
           break;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ [FalAiKeyManager] Erro na tentativa ${attempt}:`, error);
+        lastError = error?.message || 'Erro desconhecido';
       }
     }
     
     setAutoValidating(false);
     
     if (!validated) {
-      toast.warning('Validação automática falhou', {
-        description: 'Clique em "Validar Key" para tentar novamente.',
-        duration: 6000,
+      toast.error('Validação falhou', {
+        description: lastError || 'Verifique se a chave está correta e tente novamente.',
+        duration: 8000,
+        action: {
+          label: 'Tentar novamente',
+          onClick: () => validateKey('fal_ai'),
+        },
       });
     }
     

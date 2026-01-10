@@ -93,7 +93,7 @@ serve(async (req) => {
     
     const { data: userKeyData } = await supabaseClient
       .from('user_api_keys')
-      .select('api_key_encrypted, is_active, is_valid')
+      .select('api_key_encrypted, is_active, is_valid, last_validated_at')
       .eq('user_id', user.id)
       .eq('provider', 'fal_ai')
       .eq('is_active', true)
@@ -101,18 +101,32 @@ serve(async (req) => {
 
     let userApiKey: string | null = null;
     let isUsingUserKey = false;
+    let byokError: string | null = null;
 
-    if (userKeyData && userKeyData.is_valid) {
-      // Decrypt user's key
-      const { data: decryptedKey, error: decryptError } = await supabaseClient.rpc('decrypt_api_key', {
-        encrypted_text: userKeyData.api_key_encrypted,
-        encryption_key: encryptionKey
-      });
+    // ✅ VERIFICAÇÃO APRIMORADA: Apenas usar chave se for válida
+    if (userKeyData) {
+      // Verificar se a chave foi validada e é válida
+      if (userKeyData.is_valid === false) {
+        console.log('⚠️ User has BYOK but is_valid=false - falling back to platform key');
+        byokError = 'Sua chave Fal.ai está marcada como inválida. Vá em Configurações → Integrações para revalidar.';
+      } else if (userKeyData.is_valid === null) {
+        console.log('⚠️ User has BYOK but never validated - falling back to platform key');
+        byokError = 'Sua chave Fal.ai ainda não foi validada. Vá em Configurações → Integrações para validar.';
+      } else if (userKeyData.is_valid === true) {
+        // Decrypt user's key
+        const { data: decryptedKey, error: decryptError } = await supabaseClient.rpc('decrypt_api_key', {
+          encrypted_text: userKeyData.api_key_encrypted,
+          encryption_key: encryptionKey
+        });
 
-      if (!decryptError && decryptedKey) {
-        userApiKey = decryptedKey;
-        isUsingUserKey = true;
-        console.log('✅ Using user\'s own Fal.ai API key');
+        if (!decryptError && decryptedKey) {
+          userApiKey = decryptedKey;
+          isUsingUserKey = true;
+          console.log('✅ Using user\'s own Fal.ai API key (validated)');
+        } else {
+          console.error('❌ Failed to decrypt user API key:', decryptError?.message);
+          byokError = 'Erro ao usar sua chave Fal.ai. Reconecte em Configurações → Integrações.';
+        }
       }
     }
 
@@ -396,10 +410,17 @@ serve(async (req) => {
         );
       }
       
-      // Handle insufficient credits
-      if (response.status === 402) {
+      // Handle insufficient credits / exhausted balance
+      if (response.status === 402 || (response.status === 403 && errorText.includes('exhausted'))) {
+        const isByok = isUsingUserKey;
         return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes na conta Fal.ai.' }),
+          JSON.stringify({ 
+            error: isByok 
+              ? 'Saldo esgotado na sua conta Fal.ai. Adicione créditos em fal.ai/billing.'
+              : 'Créditos da plataforma esgotados temporariamente. Tente novamente mais tarde ou conecte sua própria chave Fal.ai.',
+            errorType: 'balance_exhausted',
+            isUserKey: isByok
+          }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
