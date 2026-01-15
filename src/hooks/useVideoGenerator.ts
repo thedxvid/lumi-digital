@@ -6,6 +6,7 @@ import type { VideoHistoryItem, VideoConfig } from '@/types/video';
 import { getVideoGenerationEstimate, type TimeEstimate } from '@/utils/videoTimeEstimator';
 
 type GenerationStatus = 'idle' | 'generating' | 'ready' | 'error';
+export type ErrorType = 'limit' | 'balance' | 'policy' | 'network' | 'unknown';
 
 export const useVideoGenerator = () => {
   const [loading, setLoading] = useState(false);
@@ -17,6 +18,8 @@ export const useVideoGenerator = () => {
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus>('idle');
   const [timeEstimate, setTimeEstimate] = useState<TimeEstimate | null>(null);
   const [preloadedVideo, setPreloadedVideo] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<ErrorType | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const videoPreloadRef = useRef<HTMLVideoElement | null>(null);
   const { logActivity } = useActivity();
@@ -62,6 +65,10 @@ export const useVideoGenerator = () => {
   };
 
   const generateVideo = async (config: VideoConfig): Promise<string | null> => {
+    // Reset error states
+    setErrorType(null);
+    setErrorMessage(null);
+    
     // Abrir modal IMEDIATAMENTE com estado de geração
     setCurrentConfig(config);
     setGenerationStatus('generating');
@@ -88,51 +95,69 @@ export const useVideoGenerator = () => {
 
       console.log('🔍 [VideoGen] Checking video credits for user:', user.id);
 
-      const { data: userLimits, error: limitsError } = await supabase
-        .from('usage_limits')
-        .select('*')
+      // FIRST: Check if user has valid BYOK key - skip credit check if so
+      const { data: userKey } = await supabase
+        .from('user_api_keys')
+        .select('is_valid, is_active')
         .eq('user_id', user.id)
+        .eq('provider', 'fal_ai')
+        .eq('is_active', true)
         .single();
 
-      if (limitsError) {
-        console.error('❌ [VideoGen] Error fetching limits:', limitsError);
-        throw limitsError;
-      }
+      const hasByokValid = userKey?.is_valid === true;
+      
+      if (hasByokValid) {
+        console.log('✅ [VideoGen] User has valid BYOK key - skipping credit check');
+      } else {
+        // Only check credits if no BYOK
+        const { data: userLimits, error: limitsError } = await supabase
+          .from('usage_limits')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
-      if (userLimits) {
-        const isKling = config.api_provider?.includes('kling');
-        
-        const klingAvailable = (userLimits.kling_image_videos_lifetime_limit || 0) - (userLimits.kling_image_videos_lifetime_used || 0);
-        const extraCredits = (userLimits.video_credits || 0) - (userLimits.video_credits_used || 0);
-        
-        console.log('📊 [VideoGen] Credits status:', {
-          api_provider: config.api_provider,
-          isKling,
-          klingAvailable,
-          extraCredits,
-          total_available: klingAvailable + extraCredits
-        });
-        
-        // Verificar créditos disponíveis
-        if (isKling && klingAvailable === 0 && extraCredits === 0) {
-          console.warn('⚠️ [VideoGen] No Kling credits available');
-          window.dispatchEvent(new CustomEvent('video-limit-reached', {
-            detail: { videoType: 'kling', remainingCredits: extraCredits }
-          }));
-          setLoading(false);
-          setGenerationStatus('idle');
-          setResultModalOpen(false);
-          return null;
+        if (limitsError) {
+          console.error('❌ [VideoGen] Error fetching limits:', limitsError);
+          throw limitsError;
         }
-        
-        console.log('✅ [VideoGen] Credits check passed - proceeding with generation');
+
+        if (userLimits) {
+          const isKling = config.api_provider?.includes('kling');
+          
+          const klingAvailable = (userLimits.kling_image_videos_lifetime_limit || 0) - (userLimits.kling_image_videos_lifetime_used || 0);
+          const extraCredits = (userLimits.video_credits || 0) - (userLimits.video_credits_used || 0);
+          
+          console.log('📊 [VideoGen] Credits status:', {
+            api_provider: config.api_provider,
+            isKling,
+            klingAvailable,
+            extraCredits,
+            total_available: klingAvailable + extraCredits
+          });
+          
+          // Verificar créditos disponíveis
+          if (isKling && klingAvailable === 0 && extraCredits === 0) {
+            console.warn('⚠️ [VideoGen] No Kling credits available');
+            setErrorType('limit');
+            setErrorMessage('Você não tem mais créditos Kling disponíveis. Conecte sua chave Fal.ai para uso ilimitado.');
+            setGenerationStatus('error');
+            setLoading(false);
+            window.dispatchEvent(new CustomEvent('video-limit-reached', {
+              detail: { videoType: 'kling', remainingCredits: extraCredits }
+            }));
+            return null;
+          }
+          
+          console.log('✅ [VideoGen] Credits check passed - proceeding with generation');
+        }
       }
     } catch (checkError) {
       console.error('❌ [VideoGen] Error checking limits:', checkError);
-      toast.error('Erro ao verificar limites de vídeo');
+      setErrorType('network');
+      setErrorMessage('Erro ao verificar limites de vídeo. Verifique sua conexão.');
+      setGenerationStatus('error');
       setLoading(false);
-      setGenerationStatus('idle');
-      setResultModalOpen(false);
+      toast.error('Erro ao verificar limites de vídeo');
       return null;
     }
 
@@ -148,6 +173,15 @@ export const useVideoGenerator = () => {
 
       if (functionError) {
         console.error('Function error:', functionError);
+        // Check if it's a network error
+        if (functionError.message?.includes('fetch') || functionError.message?.includes('network')) {
+          setErrorType('network');
+          setErrorMessage('Erro de conexão. Verifique sua internet e tente novamente.');
+        } else {
+          setErrorType('unknown');
+          setErrorMessage(functionError.message || 'Erro desconhecido ao gerar vídeo.');
+        }
+        setGenerationStatus('error');
         throw new Error(functionError.message);
       }
 
@@ -157,6 +191,12 @@ export const useVideoGenerator = () => {
             functionData.error.includes('Saldo esgotado') ||
             functionData.error.includes('exhausted')) {
           console.log('💰 BALANCE EXHAUSTED DETECTED');
+          
+          setErrorType('balance');
+          setErrorMessage(functionData.isUserKey 
+            ? 'O saldo da sua conta Fal.ai acabou. Adicione mais créditos para continuar.'
+            : 'Os créditos da plataforma estão temporariamente esgotados.');
+          setGenerationStatus('error');
           
           window.dispatchEvent(new CustomEvent('video-balance-exhausted', {
             detail: {
@@ -173,8 +213,6 @@ export const useVideoGenerator = () => {
           });
           
           setLoading(false);
-          setGenerationStatus('idle');
-          setResultModalOpen(false);
           return null;
         }
         
@@ -185,6 +223,10 @@ export const useVideoGenerator = () => {
           console.log('Error details:', functionData.error);
           console.log('Prompt:', config.prompt?.substring(0, 100) + '...');
           console.log('API Provider:', config.api_provider);
+          
+          setErrorType('policy');
+          setErrorMessage('O prompt foi bloqueado pelos filtros de segurança. Reformule usando termos mais genéricos.');
+          setGenerationStatus('error');
           
           // Disparar evento customizado para o componente capturar
           window.dispatchEvent(new CustomEvent('video-policy-violation', {
@@ -199,8 +241,13 @@ export const useVideoGenerator = () => {
             description: 'Use "Prompt Seguro" ou "Melhorar Prompt" para reformular',
             duration: 8000
           });
+          setLoading(false);
           return null;
         }
+        
+        setErrorType('unknown');
+        setErrorMessage(functionData.error);
+        setGenerationStatus('error');
         throw new Error(functionData.error);
       }
 
@@ -298,9 +345,15 @@ export const useVideoGenerator = () => {
         return null;
       }
       
+      // Only set error state if not already set
+      if (!errorType) {
+        setErrorType('unknown');
+        setErrorMessage(error instanceof Error ? error.message : 'Erro ao gerar vídeo');
+      }
       setGenerationStatus('error');
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao gerar vídeo';
-      toast.error(errorMessage);
+      
+      const errMsg = error instanceof Error ? error.message : 'Erro ao gerar vídeo';
+      toast.error(errMsg);
       return null;
     } finally {
       setLoading(false);
@@ -383,6 +436,8 @@ export const useVideoGenerator = () => {
     generationStatus,
     timeEstimate,
     preloadedVideo,
+    errorType,
+    errorMessage,
     generateVideo,
     loadHistory,
     deleteHistoryItem,

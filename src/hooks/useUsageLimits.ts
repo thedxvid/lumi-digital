@@ -9,6 +9,7 @@ type FeatureType = 'creative_images' | 'profile_analysis' | 'carousels' | 'video
 export const useUsageLimits = () => {
   const [limits, setLimits] = useState<UsageLimits | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasByok, setHasByok] = useState(false);
 
   useEffect(() => {
     loadLimits();
@@ -47,6 +48,7 @@ export const useUsageLimits = () => {
         return;
       }
 
+      // Load usage limits
       const { data, error } = await supabase
         .from('usage_limits')
         .select('*')
@@ -58,6 +60,17 @@ export const useUsageLimits = () => {
       }
 
       setLimits(data as UsageLimits || null);
+
+      // Check if user has valid BYOK key
+      const { data: userKey } = await supabase
+        .from('user_api_keys')
+        .select('is_valid, is_active')
+        .eq('user_id', user.id)
+        .eq('provider', 'fal_ai')
+        .eq('is_active', true)
+        .single();
+
+      setHasByok(userKey?.is_valid === true);
     } catch (error) {
       console.error('Error loading limits:', error);
     } finally {
@@ -184,6 +197,7 @@ export const useUsageLimits = () => {
   return {
     limits,
     loading,
+    hasByok,
     checkLimit,
     purchaseVideoAddon,
     getUsagePercentage,
