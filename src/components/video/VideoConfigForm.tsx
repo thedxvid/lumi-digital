@@ -145,6 +145,17 @@ export const VideoConfigForm = ({
     }
   }, [mode, apiProvider, hasFalApiKey]);
 
+  // Auto-corrigir duração quando selecionar Veo 3.1 (que só suporta até 8s)
+  useEffect(() => {
+    if (apiProvider.includes('veo31') && duration === '10s') {
+      console.log('⚠️ Auto-corrigindo duração para 8s (Veo 3.1 não suporta 10s)');
+      setDuration('8s');
+      toast.info('Duração ajustada para 8s', {
+        description: 'Veo 3.1 suporta no máximo 8 segundos de vídeo'
+      });
+    }
+  }, [apiProvider]);
+
   // Filter APIs based on mode - show all APIs but mark locked ones
   const availableAPIs = VIDEO_APIS.filter(api => api.mode === mode);
 
@@ -441,18 +452,37 @@ export const VideoConfigForm = ({
           <div className="space-y-3">
             <Label className="text-base font-semibold">Duração</Label>
             <div className="grid grid-cols-4 gap-2">
-              {(['4s', '6s', '8s', '10s'] as const).map((dur) => (
-                <Button
-                  key={dur}
-                  type="button"
-                  variant={duration === dur ? 'default' : 'outline'}
-                  onClick={() => setDuration(dur)}
-                  disabled={loading}
-                >
-                  {dur}
-                </Button>
-              ))}
+              {(['4s', '6s', '8s', '10s'] as const).map((dur) => {
+                // Veo 3.1 só suporta até 8s
+                const isVeo = apiProvider.includes('veo31');
+                const isDisabledForVeo = isVeo && dur === '10s';
+                
+                return (
+                  <Button
+                    key={dur}
+                    type="button"
+                    variant={duration === dur ? 'default' : 'outline'}
+                    onClick={() => {
+                      if (isDisabledForVeo) {
+                        toast.info('Veo 3.1 suporta no máximo 8 segundos');
+                        return;
+                      }
+                      setDuration(dur);
+                    }}
+                    disabled={loading}
+                    className={isDisabledForVeo ? 'opacity-50 cursor-not-allowed' : ''}
+                  >
+                    {dur}
+                    {isDisabledForVeo && <Lock className="h-3 w-3 ml-1" />}
+                  </Button>
+                );
+              })}
             </div>
+            {apiProvider.includes('veo31') && duration === '10s' && (
+              <p className="text-xs text-amber-500">
+                ⚠️ Veo 3.1 suporta no máximo 8s. Será ajustado automaticamente.
+              </p>
+            )}
           </div>
 
           <div className="space-y-3">
