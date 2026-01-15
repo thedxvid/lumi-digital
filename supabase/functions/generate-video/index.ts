@@ -284,10 +284,17 @@ serve(async (req) => {
     
     // === VEO 3.1 TEXT-TO-VIDEO ===
     if (api_provider === 'fal_veo31') {
+      // 🚨 VALIDAÇÃO: Veo 3.1 só suporta durações de 4s, 6s ou 8s
+      let veoDuration = parseInt(duration.replace('s', ''));
+      if (veoDuration > 8) {
+        console.log('⚠️ Veo 3.1: Auto-fixing duration from', duration, 'to 8s');
+        veoDuration = 8;
+      }
+      
       requestBody = {
         prompt,
         aspect_ratio,
-        duration: parseInt(duration.replace('s', '')), // Veo espera número
+        duration: veoDuration, // Veo espera número
         negative_prompt: negative_prompt || 'blur, distortion, low quality'
       };
     }
@@ -301,10 +308,17 @@ serve(async (req) => {
         );
       }
       
+      // 🚨 VALIDAÇÃO: Veo 3.1 só suporta durações de 4s, 6s ou 8s
+      let veoDuration = parseInt(duration.replace('s', ''));
+      if (veoDuration > 8) {
+        console.log('⚠️ Veo 3.1 I2V: Auto-fixing duration from', duration, 'to 8s');
+        veoDuration = 8;
+      }
+      
       requestBody = {
         prompt: prompt || 'Animate this image',
         image_url: input_images[0],
-        duration: parseInt(duration.replace('s', '')),
+        duration: veoDuration,
         negative_prompt: negative_prompt || 'blur, distortion, low quality'
       };
     }
