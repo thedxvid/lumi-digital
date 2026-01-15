@@ -4,6 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 
+export type CreativeErrorType = 'limit' | 'policy' | 'network' | 'unknown' | null;
+
 export interface CreativeHistoryItem {
   id: string;
   original_images: string[];
@@ -42,10 +44,16 @@ export function useCreativeEngine() {
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [suggestedCopy, setSuggestedCopy] = useState<any>(null);
+  const [errorType, setErrorType] = useState<CreativeErrorType>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { session } = useAuth();
   const { logActivity } = useActivity();
 
   const generateCreative = async (images: string[], prompt: string, config?: CreativeConfig): Promise<string | null> => {
+    // Reset error state
+    setErrorType(null);
+    setErrorMessage(null);
+    
     if (!session?.access_token) {
       toast.error('Você precisa estar logado para usar a Máquina de Criativos');
       return null;
@@ -78,11 +86,35 @@ export function useCreativeEngine() {
 
       if (error) {
         console.error('Error calling creative-engine:', error);
+        // Check for network errors
+        if (error.message?.includes('fetch') || error.message?.includes('network')) {
+          setErrorType('network');
+          setErrorMessage('Erro de conexão. Verifique sua internet e tente novamente.');
+        } else {
+          setErrorType('unknown');
+          setErrorMessage(error.message || 'Erro desconhecido ao gerar criativo.');
+        }
         throw error;
       }
 
       if (data?.error) {
         console.error('Error from creative-engine:', data.error);
+        
+        // Check if it's a limit error
+        if (data.error.includes('limite') || data.error.includes('limit')) {
+          setErrorType('limit');
+          setErrorMessage('Você atingiu o limite diário de criativos. Conecte sua chave Fal.ai para uso ilimitado.');
+        } 
+        // Check if it's a policy violation
+        else if (data.error.includes('filtros') || data.error.includes('bloqueado') || data.error.includes('policy')) {
+          setErrorType('policy');
+          setErrorMessage('O prompt foi bloqueado pelos filtros de segurança. Use termos mais genéricos.');
+        }
+        else {
+          setErrorType('unknown');
+          setErrorMessage(data.error);
+        }
+        
         toast.error(data.error);
         return null;
       }
@@ -165,6 +197,11 @@ export function useCreativeEngine() {
 
     } catch (error) {
       console.error('Error generating creative:', error);
+      // Only set generic error if not already set
+      if (!errorType) {
+        setErrorType('unknown');
+        setErrorMessage('Erro ao gerar criativo. Tente novamente.');
+      }
       toast.error('Erro ao gerar criativo. Tente novamente.');
       return null;
     } finally {
@@ -289,6 +326,8 @@ export function useCreativeEngine() {
   return {
     loading,
     history,
+    errorType,
+    errorMessage,
     generateCreative,
     applyTextToCreative,
     loadHistory,
@@ -298,5 +337,9 @@ export function useCreativeEngine() {
     setResultModalOpen,
     generatedImageUrl,
     suggestedCopy,
+    clearError: () => {
+      setErrorType(null);
+      setErrorMessage(null);
+    }
   };
 }

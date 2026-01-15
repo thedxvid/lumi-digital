@@ -6,6 +6,7 @@ import { VideoPlayer } from './VideoPlayer';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { VideoGenerationProgress } from './VideoGenerationProgress';
+import { GenerationErrorCard, type ErrorType } from '@/components/shared/GenerationErrorCard';
 import type { TimeEstimate } from '@/utils/videoTimeEstimator';
 
 interface VideoResultModalProps {
@@ -19,6 +20,9 @@ interface VideoResultModalProps {
   timeEstimate?: TimeEstimate | null;
   onCancel?: () => void;
   thumbnailUrl?: string | null;
+  errorType?: ErrorType | null;
+  errorMessage?: string | null;
+  hasByok?: boolean;
 }
 
 export const VideoResultModal = ({
@@ -31,11 +35,15 @@ export const VideoResultModal = ({
   generationStatus = 'idle',
   timeEstimate,
   onCancel,
-  thumbnailUrl
+  thumbnailUrl,
+  errorType,
+  errorMessage,
+  hasByok = false
 }: VideoResultModalProps) => {
   const [downloading, setDownloading] = useState(false);
   const isGenerating = generationStatus === 'generating';
   const isReady = generationStatus === 'ready';
+  const isError = generationStatus === 'error';
 
   const handleDownload = () => {
     if (!videoUrl) return;
@@ -60,13 +68,18 @@ export const VideoResultModal = ({
     }
   };
 
+  const getModalTitle = () => {
+    if (isGenerating) return '🎬 Gerando Vídeo...';
+    if (isReady) return 'Vídeo Gerado com Sucesso! 🎉';
+    if (isError) return '❌ Erro na Geração';
+    return 'Resultado do Vídeo';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className={`${isGenerating ? 'max-w-2xl' : 'max-w-4xl'} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent className={`${isGenerating || isError ? 'max-w-2xl' : 'max-w-4xl'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
-          <DialogTitle>
-            {isGenerating ? '🎬 Gerando Vídeo...' : isReady ? 'Vídeo Gerado com Sucesso! 🎉' : 'Resultado do Vídeo'}
-          </DialogTitle>
+          <DialogTitle>{getModalTitle()}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -77,6 +90,18 @@ export const VideoResultModal = ({
               aspectRatio={config?.aspect_ratio}
               onCancel={onCancel}
               thumbnailUrl={thumbnailUrl}
+            />
+          )}
+
+          {/* Mostrar erro quando houver falha */}
+          {isError && (
+            <GenerationErrorCard
+              errorType={errorType || 'unknown'}
+              errorMessage={errorMessage || undefined}
+              featureType="video"
+              hasByok={hasByok}
+              onRetry={onRegenerate}
+              onClose={onClose}
             />
           )}
 
@@ -118,38 +143,40 @@ export const VideoResultModal = ({
             </div>
           )}
 
-          {/* Botões */}
-          <div className="flex gap-2 justify-end">
-            {isReady && onRegenerate && (
-              <Button
-                variant="outline"
-                onClick={onRegenerate}
-                disabled={loading}
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Gerar Novamente
-              </Button>
-            )}
-            
-            {isReady && videoUrl && (
-              <Button
-                variant="outline"
-                onClick={handleDownload}
-                disabled={downloading}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {downloading ? 'Baixando...' : 'Download'}
-              </Button>
-            )}
+          {/* Botões - mostrar apenas quando não está em erro */}
+          {!isError && (
+            <div className="flex gap-2 justify-end">
+              {isReady && onRegenerate && (
+                <Button
+                  variant="outline"
+                  onClick={onRegenerate}
+                  disabled={loading}
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Gerar Novamente
+                </Button>
+              )}
+              
+              {isReady && videoUrl && (
+                <Button
+                  variant="outline"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {downloading ? 'Baixando...' : 'Download'}
+                </Button>
+              )}
 
-            <Button
-              variant={isGenerating ? "destructive" : "default"}
-              onClick={isGenerating ? onCancel : onClose}
-            >
-              <X className="h-4 w-4 mr-2" />
-              {isGenerating ? 'Cancelar' : 'Fechar'}
-            </Button>
-          </div>
+              <Button
+                variant={isGenerating ? "destructive" : "default"}
+                onClick={isGenerating ? onCancel : onClose}
+              >
+                <X className="h-4 w-4 mr-2" />
+                {isGenerating ? 'Cancelar' : 'Fechar'}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

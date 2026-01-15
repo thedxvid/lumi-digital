@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 const VideoGenerator = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { limits } = useUsageLimits();
+  const { limits, hasByok } = useUsageLimits();
   const { hasBYOK, registerCost, estimateVideoCost } = useBYOKCosts();
   const [selectedModel, setSelectedModel] = useState('kling-2.5-turbo');
   const [videoDuration, setVideoDuration] = useState(5);
@@ -35,6 +35,8 @@ const VideoGenerator = () => {
     currentConfig,
     generationStatus,
     timeEstimate,
+    errorType,
+    errorMessage,
     generateVideo,
     deleteHistoryItem,
     toggleFavorite,
@@ -171,7 +173,24 @@ const VideoGenerator = () => {
       </div>
 
       {/* BYOK Status Indicator */}
-      {limits && (
+      {hasByok ? (
+        <Alert className="bg-green-500/10 border-green-500/30">
+          <AlertCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-green-700 dark:text-green-400">
+                ✨ Modo Ilimitado Ativo
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-500">
+                Você está usando sua própria chave Fal.ai. Gere vídeos sem limite!
+              </p>
+            </div>
+            <div className="ml-4 px-3 py-1 bg-green-500/20 rounded-full">
+              <span className="text-xs font-medium text-green-700 dark:text-green-400">BYOK Ativo</span>
+            </div>
+          </AlertDescription>
+        </Alert>
+      ) : limits && (
         <Alert className="bg-primary/5 border-primary/20">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
@@ -347,6 +366,9 @@ const VideoGenerator = () => {
         timeEstimate={timeEstimate}
         onCancel={cancelGeneration}
         thumbnailUrl={thumbnailUrl}
+        errorType={errorType}
+        errorMessage={errorMessage}
+        hasByok={hasByok}
       />
 
       <Dialog open={!!fullscreenVideo} onOpenChange={() => setFullscreenVideo(null)}>
