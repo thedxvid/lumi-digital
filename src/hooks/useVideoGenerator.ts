@@ -190,12 +190,12 @@ export const useVideoGenerator = () => {
         if (functionData.errorType === 'balance_exhausted' || 
             functionData.error.includes('Saldo esgotado') ||
             functionData.error.includes('exhausted')) {
-          console.log('💰 BALANCE EXHAUSTED DETECTED');
+          console.log('💰 BALANCE EXHAUSTED DETECTED - isUserKey:', functionData.isUserKey);
           
           setErrorType('balance');
           setErrorMessage(functionData.isUserKey 
-            ? 'O saldo da sua conta Fal.ai acabou. Adicione mais créditos para continuar.'
-            : 'Os créditos da plataforma estão temporariamente esgotados.');
+            ? '💳 O saldo da sua conta Fal.ai acabou. Sua chave está funcionando corretamente, mas você precisa adicionar créditos em fal.ai/dashboard/billing para continuar gerando.'
+            : 'Os créditos da plataforma estão temporariamente esgotados. Conecte sua própria chave Fal.ai para uso ilimitado.');
           setGenerationStatus('error');
           
           window.dispatchEvent(new CustomEvent('video-balance-exhausted', {
@@ -205,12 +205,21 @@ export const useVideoGenerator = () => {
             }
           }));
           
-          toast.error(functionData.isUserKey ? 'Saldo Fal.ai esgotado' : 'Créditos temporariamente indisponíveis', {
-            description: functionData.isUserKey 
-              ? 'Adicione créditos em fal.ai/billing'
-              : 'Conecte sua própria chave ou tente mais tarde',
-            duration: 8000
-          });
+          if (functionData.isUserKey) {
+            toast.error('💳 Saldo Fal.ai Esgotado', {
+              description: 'Sua chave está OK, mas precisa de recarga',
+              duration: 10000,
+              action: {
+                label: 'Recarregar',
+                onClick: () => window.open('https://fal.ai/dashboard/billing', '_blank')
+              }
+            });
+          } else {
+            toast.error('Créditos temporariamente indisponíveis', {
+              description: 'Conecte sua própria chave Fal.ai para continuar',
+              duration: 8000
+            });
+          }
           
           setLoading(false);
           return null;

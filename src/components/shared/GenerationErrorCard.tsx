@@ -1,4 +1,4 @@
-import { AlertCircle, XCircle, Shield, Wifi, CreditCard, RefreshCw, ExternalLink, Settings } from 'lucide-react';
+import { AlertCircle, XCircle, Shield, Wifi, CreditCard, RefreshCw, ExternalLink, Settings, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +9,7 @@ interface GenerationErrorCardProps {
   errorMessage?: string;
   featureType: 'video' | 'creative';
   hasByok?: boolean;
+  isUserKeyBalance?: boolean; // Specific flag for BYOK balance exhausted
   onRetry?: () => void;
   onClose?: () => void;
 }
@@ -23,7 +24,7 @@ const errorConfig = {
     defaultMessage: 'Você atingiu o limite de uso para esta funcionalidade.'
   },
   balance: {
-    icon: AlertCircle,
+    icon: Wallet,
     color: 'text-orange-500',
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/30',
@@ -61,11 +62,26 @@ export function GenerationErrorCard({
   errorMessage,
   featureType,
   hasByok = false,
+  isUserKeyBalance = false,
   onRetry,
   onClose
 }: GenerationErrorCardProps) {
   const navigate = useNavigate();
-  const config = errorConfig[errorType];
+  
+  // Override config for BYOK balance exhausted
+  const isByokBalanceExhausted = errorType === 'balance' && (isUserKeyBalance || hasByok);
+  
+  const config = isByokBalanceExhausted 
+    ? {
+        icon: Wallet,
+        color: 'text-amber-500',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/30',
+        title: '💳 Saldo Fal.ai Esgotado',
+        defaultMessage: 'Sua chave API está funcionando corretamente! O saldo da sua conta Fal.ai acabou. Adicione mais créditos para continuar gerando.'
+      }
+    : errorConfig[errorType];
+    
   const Icon = config.icon;
 
   const renderActions = () => {
@@ -97,9 +113,24 @@ export function GenerationErrorCard({
       case 'balance':
         return (
           <>
-            {hasByok ? (
+            {isByokBalanceExhausted ? (
+              <>
+                <Button size="sm" className="bg-amber-600 hover:bg-amber-700" asChild>
+                  <a href="https://fal.ai/dashboard/billing" target="_blank" rel="noopener noreferrer">
+                    <Wallet className="h-4 w-4 mr-2" />
+                    Adicionar Créditos na Fal.ai
+                  </a>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="https://fal.ai/dashboard" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Ver Dashboard Fal.ai
+                  </a>
+                </Button>
+              </>
+            ) : hasByok ? (
               <Button size="sm" asChild>
-                <a href="https://fal.ai/billing" target="_blank" rel="noopener noreferrer">
+                <a href="https://fal.ai/dashboard/billing" target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Adicionar Créditos Fal.ai
                 </a>
