@@ -427,11 +427,12 @@ serve(async (req) => {
       // Handle insufficient credits / exhausted balance
       if (response.status === 402 || (response.status === 403 && errorText.includes('exhausted'))) {
         const isByok = isUsingUserKey;
+        console.log('💳 Balance exhausted detected - isByok:', isByok);
         return new Response(
           JSON.stringify({ 
             error: isByok 
-              ? 'Saldo esgotado na sua conta Fal.ai. Adicione créditos em fal.ai/billing.'
-              : 'Créditos da plataforma esgotados temporariamente. Tente novamente mais tarde ou conecte sua própria chave Fal.ai.',
+              ? '💳 Saldo esgotado na sua conta Fal.ai. Sua chave está funcionando corretamente! Acesse fal.ai/dashboard/billing para adicionar mais créditos e continuar gerando.'
+              : 'Créditos da plataforma esgotados temporariamente. Tente novamente mais tarde ou conecte sua própria chave Fal.ai em Configurações → Integrações.',
             errorType: 'balance_exhausted',
             isUserKey: isByok
           }),
