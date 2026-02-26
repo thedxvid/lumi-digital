@@ -377,8 +377,11 @@ serve(async (req) => {
       };
     }
 
-    // Call selected API
-    const response = await fetch(selectedAPI.endpoint, {
+    // Call selected API using queue endpoint for async processing
+    const queueEndpoint = selectedAPI.endpoint.replace('https://fal.run/', 'https://queue.fal.run/');
+    console.log('🚀 Submitting to queue:', queueEndpoint);
+    
+    const submitResponse = await fetch(queueEndpoint, {
       method: 'POST',
       headers: {
         'Authorization': `${selectedAPI.authPrefix} ${apiKeyToUse}`,
@@ -387,9 +390,9 @@ serve(async (req) => {
       body: JSON.stringify(requestBody),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Fal.ai API error:', response.status, errorText);
+    if (!submitResponse.ok) {
+      const errorText = await submitResponse.text();
+      console.error('Fal.ai queue submit error:', submitResponse.status, errorText);
       
       // Devolver crédito em caso de falha (SOMENTE se usou créditos da plataforma)
       if (!isUsingUserKey && creditType) {
@@ -407,17 +410,17 @@ serve(async (req) => {
         mode,
         prompt: prompt || null,
         credits_before: creditsBeforeAttempt - creditsUsedBefore,
-        credits_after: creditsBeforeAttempt - creditsUsedBefore, // crédito devolvido
+        credits_after: creditsBeforeAttempt - creditsUsedBefore,
         kling_lifetime_before: klingLifetimeBefore,
         kling_lifetime_after: klingLifetimeBefore,
         success: false,
-        error_message: `API Error ${response.status}: ${errorText}`,
+        error_message: `API Error ${submitResponse.status}: ${errorText}`,
         ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
         user_agent: req.headers.get('user-agent')
       });
       
       // Handle rate limit
-      if (response.status === 429) {
+      if (submitResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -425,7 +428,7 @@ serve(async (req) => {
       }
       
       // Handle insufficient credits / exhausted balance
-      if (response.status === 402 || (response.status === 403 && errorText.includes('exhausted'))) {
+      if (submitResponse.status === 402 || (submitResponse.status === 403 && errorText.includes('exhausted'))) {
         const isByok = isUsingUserKey;
         console.log('💳 Balance exhausted detected - isByok:', isByok);
         return new Response(
@@ -441,21 +444,13 @@ serve(async (req) => {
       }
       
       // Handle content policy violations
-      if (response.status === 422) {
+      if (submitResponse.status === 422) {
         console.log('Checking for content policy violation...');
         try {
           const errorData = JSON.parse(errorText);
-          console.log('Parsed error data:', errorData);
-          
-          const isContentViolation = errorData.detail?.some((d: any) => {
-            console.log('Checking detail:', d);
-            return d.type === 'content_policy_violation';
-          });
-          
-          console.log('Is content violation:', isContentViolation);
+          const isContentViolation = errorData.detail?.some((d: any) => d.type === 'content_policy_violation');
           
           if (isContentViolation) {
-            console.log('Returning content policy violation error with status 200');
             return new Response(
               JSON.stringify({ 
                 error: 'O conteúdo do prompt foi bloqueado pelos filtros de segurança da API. Tente usar descrições mais genéricas, evitando: marcas comerciais (Rolex, Mercedes, etc), produtos específicos, ou conteúdo sensível. Exemplo: ao invés de "Rolex", use "relógio de pulso".'
@@ -468,16 +463,91 @@ serve(async (req) => {
         }
       }
       
-      // Generic error for other cases
-      console.error('Returning generic error');
       return new Response(
-        JSON.stringify({ error: `Erro ao gerar vídeo: ${response.status}. Por favor, tente novamente.` }),
+        JSON.stringify({ error: `Erro ao gerar vídeo: ${submitResponse.status}. Por favor, tente novamente.` }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const data = await response.json();
-    console.log('Video generated successfully:', data.video?.url);
+    const queueData = await submitResponse.json();
+    const requestId = queueData.request_id;
+    const statusUrl = queueData.status_url || `${queueEndpoint}/${requestId}/status`;
+    const responseUrl = queueData.response_url || `${queueEndpoint}/${requestId}`;
+    
+    console.log('📋 Queue request submitted. ID:', requestId);
+
+    // Poll for completion with 250s max timeout
+    const MAX_POLL_TIME = 250_000; // 250 seconds
+    const POLL_INTERVAL = 3_000; // 3 seconds
+    const startTime = Date.now();
+    let data: any = null;
+
+    while (Date.now() - startTime < MAX_POLL_TIME) {
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+      
+      const statusResponse = await fetch(statusUrl, {
+        headers: {
+          'Authorization': `${selectedAPI.authPrefix} ${apiKeyToUse}`,
+        },
+      });
+
+      if (!statusResponse.ok) {
+        console.error('Status check failed:', statusResponse.status);
+        continue;
+      }
+
+      const statusData = await statusResponse.json();
+      console.log('📊 Poll status:', statusData.status, `(${Math.round((Date.now() - startTime) / 1000)}s elapsed)`);
+
+      if (statusData.status === 'COMPLETED') {
+        // Fetch the actual result
+        const resultResponse = await fetch(responseUrl, {
+          headers: {
+            'Authorization': `${selectedAPI.authPrefix} ${apiKeyToUse}`,
+          },
+        });
+        
+        if (resultResponse.ok) {
+          data = await resultResponse.json();
+          console.log('Video generated successfully:', data.video?.url);
+        } else {
+          console.error('Failed to fetch result:', resultResponse.status);
+        }
+        break;
+      } else if (statusData.status === 'FAILED') {
+        console.error('❌ Video generation failed:', statusData.error);
+        
+        // Rollback credit
+        if (!isUsingUserKey && creditType) {
+          await supabaseClient.rpc('rollback_video_credit', {
+            p_user_id: user.id,
+            p_credit_type: creditType
+          });
+        }
+        
+        return new Response(
+          JSON.stringify({ error: statusData.error || 'A geração do vídeo falhou. Tente novamente.' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    if (!data) {
+      console.error('❌ Video generation timed out after', MAX_POLL_TIME / 1000, 'seconds');
+      
+      // Rollback credit on timeout
+      if (!isUsingUserKey && creditType) {
+        await supabaseClient.rpc('rollback_video_credit', {
+          p_user_id: user.id,
+          p_credit_type: creditType
+        });
+      }
+      
+      return new Response(
+        JSON.stringify({ error: 'A geração do vídeo demorou mais que o esperado. Tente novamente.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Buscar limites atualizados após o decremento
     const { data: updatedLimits } = await supabaseClient
