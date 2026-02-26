@@ -506,7 +506,7 @@ ${qualityModifiers}`;
 
     } else {
       // Use Lovable AI Gateway (standard tier)
-      console.log('🌐 Using Lovable AI Gateway (gemini-2.5-flash-image-preview)')
+      console.log('🌐 Using Lovable AI Gateway (gemini-3-pro-image-preview)')
       
       const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
       if (!lovableApiKey) {
@@ -531,7 +531,7 @@ ${qualityModifiers}`;
           'Content-Type': 'application/json; charset=utf-8',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-image-preview',
+          model: 'google/gemini-3-pro-image-preview',
           messages: [{ role: "user", content: messageContent }],
           modalities: ["image", "text"]
         })
