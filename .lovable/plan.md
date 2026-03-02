@@ -1,44 +1,42 @@
 
-## Plano de Correção: Videos e Imagens
 
-### Problema 1: Videos dando timeout (504)
+## Plano: Mudar cor dos botoes para verde + verificar criativos
 
-**Causa raiz:** O endpoint `fal.run` (sincrono) espera a resposta completa. Kling v2.6 leva ~170s, mas o timeout do gateway e 150s.
+### 1. Mudar cor primary de azul para verde
 
-**Solucao:** Trocar para o endpoint `queue.fal.run` com polling interno. O video e enfileirado, e a edge function verifica o status a cada 2-3 segundos ate completar.
+A cor dos botoes e controlada pela variavel CSS `--primary` em `src/index.css`. Basta alterar os valores HSL nos dois temas (light e dark):
 
-**Arquivo:** `supabase/functions/generate-video/index.ts`
+**Arquivo:** `src/index.css`
 
-**Mudancas:**
-- Linha 381: Trocar `selectedAPI.endpoint` (que usa `fal.run`) para a versao `queue.fal.run` automaticamente
-- Adicionar logica de polling: apos o POST inicial, fazer GET no `response_url` ate o status ser `COMPLETED`
-- Timeout maximo de 250 segundos para cobrir videos longos
+**Light mode (linha 28):**
+- De: `--primary: 221.2 83.2% 53.3%` (azul)
+- Para: `--primary: 142 71% 45%` (verde visivel)
 
-### Problema 2: Imagens nao geram (modelo descontinuado)
+**Light mode (linha 40 - ring):**
+- De: `--ring: 221.2 83.2% 53.3%`
+- Para: `--ring: 142 71% 45%`
 
-**Causa raiz:** O modelo `gemini-2.5-flash-image-preview` usado no tier standard da creative-engine foi descontinuado. O modelo correto agora e `google/gemini-3-pro-image-preview`.
+**Dark mode (linha 78):**
+- De: `--primary: 217.2 91.2% 59.8%` (azul)
+- Para: `--primary: 142 71% 50%` (verde visivel no escuro)
 
-**Arquivo:** `supabase/functions/creative-engine/index.ts`
+**Dark mode (linha 79 - foreground):**
+- Manter: `--primary-foreground: 0 0% 0%` (texto preto sobre verde funciona bem)
 
-**Mudancas:**
-- Linha 509: Trocar `gemini-2.5-flash-image-preview` por `google/gemini-3-pro-image-preview`
-- Linha 534: Atualizar referencia no body da request
+Isso muda automaticamente TODOS os botoes `default`, links, rings e qualquer elemento que use a cor `primary` em todo o projeto.
 
-**Arquivo:** `supabase/functions/lumi-image-generation/index.ts`
+### 2. Verificacao da funcao de criativos
 
-**Mudancas:**
-- Linha 65: Trocar `google/gemini-2.5-flash-image-preview` por `google/gemini-3-pro-image-preview`
+A funcao `creative-engine` foi corrigida na ultima sessao (modelo atualizado de `gemini-2.5-flash-image-preview` para `google/gemini-3-pro-image-preview`). O deploy foi confirmado. Nao ha logs recentes de erro nem de uso, indicando que ninguem tentou gerar criativos desde a correcao.
 
-### Resumo tecnico
+Apos implementar a mudanca de cor, recomendo testar a geracao de criativos diretamente no preview para confirmar que esta operacional.
 
-| Problema | Causa | Solucao | Arquivo |
-|----------|-------|---------|---------|
-| Videos 504 | Timeout sincrono 150s < tempo geracao 170s | Usar queue.fal.run + polling | generate-video/index.ts |
-| Imagens nao geram | Modelo AI descontinuado | Atualizar para gemini-3-pro-image-preview | creative-engine/index.ts, lumi-image-generation/index.ts |
+### Resumo
 
-### Ordem de implementacao
+| Mudanca | Arquivo | Linhas |
+|---------|---------|--------|
+| Primary light: azul para verde | src/index.css | 28, 40 |
+| Primary dark: azul para verde | src/index.css | 78 |
 
-1. Atualizar modelo de imagem na creative-engine (correcao rapida)
-2. Atualizar modelo na lumi-image-generation
-3. Refatorar generate-video para usar queue com polling
-4. Deploy e teste das 3 funcoes
+Nenhuma outra mudanca necessaria — a variavel CSS propaga para todos os componentes automaticamente.
+
