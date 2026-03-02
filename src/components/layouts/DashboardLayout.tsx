@@ -3,7 +3,7 @@ import { AnimatedDashboardSidebar } from '@/components/dashboard/AnimatedDashboa
 import { MobileHeader } from '@/components/dashboard/MobileHeader';
 import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
-import { ChangelogModal } from '@/components/ChangelogModal';
+
 import { cn } from '@/lib/utils';
 
 const DashboardLayout = () => {
@@ -34,8 +34,6 @@ const DashboardLayout = () => {
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
       
-      {/* Changelog Modal */}
-      <ChangelogModal />
     </>
   );
 };
