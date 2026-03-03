@@ -239,7 +239,60 @@ OUTPUT SIZE: ${width}x${height} pixels`;
       }
     }
 
+    // Helper function to generate with Lovable AI Gateway
+    const generateWithLovableAI = async (): Promise<string | undefined> => {
+      console.log('🌐 Using Lovable AI Gateway (gemini-3-pro-image-preview)')
+      
+      const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
+      if (!lovableApiKey) {
+        throw new Error('Lovable API key not configured')
+      }
+
+      const imageContent = images.map((img: string) => ({
+        type: "image_url",
+        image_url: { url: img }
+      }))
+
+      const messageContent = [
+        { type: "text", text: enhancedPrompt },
+        ...imageContent
+      ]
+
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-3-pro-image-preview',
+          messages: [{ role: "user", content: messageContent }],
+          modalities: ["image", "text"]
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Lovable AI Gateway error:', response.status, errorText)
+        
+        if (response.status === 429) {
+          throw new Error('RATE_LIMIT')
+        }
+        if (response.status === 402) {
+          throw new Error('PAYMENT_REQUIRED')
+        }
+        throw new Error(`AI Gateway error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const img = data.choices?.[0]?.message?.images?.[0]?.image_url?.url
+      console.log('✅ Lovable AI Gateway image generated successfully')
+      return img
+    }
+
     let baseImage: string | undefined
+    let usedFallback = false
+
     // Route to appropriate API based on tier
     if (apiTier === 'pro') {
       const falApiKey = userHasByok && userFalKey ? userFalKey : Deno.env.get('FAL_KEY')
@@ -325,7 +378,7 @@ CRITICAL RULES:
         const falRequestBody: Record<string, any> = {
           prompt: editingPrompt,
           image_urls: images,
-          aspect_ratio: falAspectRatio, // CRITICAL: Set correct aspect ratio to prevent stretching
+          aspect_ratio: falAspectRatio,
           num_inference_steps: 28,
           guidance_scale: 4.5,
           num_images: 1,
@@ -352,24 +405,47 @@ CRITICAL RULES:
             )
           }
 
-          if (falResponse.status === 402 || falResponse.status === 401) {
+          // 403 (locked/exhausted) or 402/401 - fallback to Lovable AI if NOT BYOK
+          if (falResponse.status === 403 && !userHasByok) {
+            console.log('⚠️ Fal.ai balance exhausted (403) - falling back to Lovable AI Gateway')
+            try {
+              baseImage = await generateWithLovableAI()
+              usedFallback = true
+            } catch (fallbackError: any) {
+              if (fallbackError.message === 'RATE_LIMIT') {
+                return new Response(
+                  JSON.stringify({ error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.' }),
+                  { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+                )
+              }
+              if (fallbackError.message === 'PAYMENT_REQUIRED') {
+                return new Response(
+                  JSON.stringify({ error: 'Créditos de IA esgotados. Por favor, adicione mais créditos.' }),
+                  { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+                )
+              }
+              throw fallbackError
+            }
+          } else if (falResponse.status === 402 || falResponse.status === 401 || falResponse.status === 403) {
             return new Response(
               JSON.stringify({ error: 'Créditos Fal.ai esgotados ou chave inválida. Verifique sua configuração.' }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
             )
+          } else {
+            throw new Error(`Fal.ai /edit API error: ${falResponse.status}`)
           }
-
-          throw new Error(`Fal.ai /edit API error: ${falResponse.status}`)
         }
 
-        const falData = await falResponse.json()
-        console.log('📦 Fal.ai /edit response keys:', JSON.stringify(Object.keys(falData)))
-        
-        baseImage = falData.images?.[0]?.url || 
-                    falData.images?.[0]?.image_url ||
-                    (typeof falData.images?.[0] === 'string' ? falData.images[0] : undefined)
+        if (!usedFallback) {
+          const falData = await falResponse.json()
+          console.log('📦 Fal.ai /edit response keys:', JSON.stringify(Object.keys(falData)))
+          
+          baseImage = falData.images?.[0]?.url || 
+                      falData.images?.[0]?.image_url ||
+                      (typeof falData.images?.[0] === 'string' ? falData.images[0] : undefined)
 
-        console.log('✅ Fal.ai /edit image generated, baseImage exists:', !!baseImage)
+          console.log('✅ Fal.ai /edit image generated, baseImage exists:', !!baseImage)
+        }
 
       } else {
         // ===== TEXT-TO-IMAGE MODE: Use standard endpoint =====
@@ -432,140 +508,121 @@ ${qualityModifiers}`;
             )
           }
 
-          if (falResponse.status === 402 || falResponse.status === 401) {
+          // 403 (locked/exhausted) - fallback to Lovable AI if NOT BYOK
+          if (falResponse.status === 403 && !userHasByok) {
+            console.log('⚠️ Fal.ai balance exhausted (403) - falling back to Lovable AI Gateway')
+            try {
+              baseImage = await generateWithLovableAI()
+              usedFallback = true
+            } catch (fallbackError: any) {
+              if (fallbackError.message === 'RATE_LIMIT') {
+                return new Response(
+                  JSON.stringify({ error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.' }),
+                  { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+                )
+              }
+              if (fallbackError.message === 'PAYMENT_REQUIRED') {
+                return new Response(
+                  JSON.stringify({ error: 'Créditos de IA esgotados. Por favor, adicione mais créditos.' }),
+                  { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+                )
+              }
+              throw fallbackError
+            }
+          } else if (falResponse.status === 402 || falResponse.status === 401 || falResponse.status === 403) {
             return new Response(
               JSON.stringify({ error: 'Créditos Fal.ai esgotados ou chave inválida. Verifique sua configuração.' }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
             )
+          } else {
+            throw new Error(`Fal.ai API error: ${falResponse.status}`)
           }
-
-          throw new Error(`Fal.ai API error: ${falResponse.status}`)
         }
 
-        const falData = await falResponse.json()
-        console.log('📦 Fal.ai response keys:', JSON.stringify(Object.keys(falData)))
-        
-        // Handle both sync and queue responses
-        let imageData = falData
-        
-        // If we got a queue response, poll for the result
-        if (falData.status && falData.response_url) {
-          console.log('⏳ Got queue response, polling for result...')
-          let attempts = 0
-          const maxAttempts = 60 // Max 60 seconds
+        if (!usedFallback) {
+          const falData = await falResponse.json()
+          console.log('📦 Fal.ai response keys:', JSON.stringify(Object.keys(falData)))
           
-          while (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 1000))
+          // Handle both sync and queue responses
+          let imageData = falData
+          
+          // If we got a queue response, poll for the result
+          if (falData.status && falData.response_url) {
+            console.log('⏳ Got queue response, polling for result...')
+            let attempts = 0
+            const maxAttempts = 60
             
-            const statusResponse = await fetch(falData.response_url, {
-              headers: { 'Authorization': `Key ${falApiKey}` }
-            })
-            
-            if (statusResponse.ok) {
-              const statusData = await statusResponse.json()
-              console.log('📦 Poll response status:', statusData.status)
+            while (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 1000))
               
-              if (statusData.status === 'COMPLETED' || statusData.images) {
-                imageData = statusData
-                break
-              } else if (statusData.status === 'FAILED') {
-                throw new Error('Fal.ai generation failed')
+              const statusResponse = await fetch(falData.response_url, {
+                headers: { 'Authorization': `Key ${falApiKey}` }
+              })
+              
+              if (statusResponse.ok) {
+                const statusData = await statusResponse.json()
+                console.log('📦 Poll response status:', statusData.status)
+                
+                if (statusData.status === 'COMPLETED' || statusData.images) {
+                  imageData = statusData
+                  break
+                } else if (statusData.status === 'FAILED') {
+                  throw new Error('Fal.ai generation failed')
+                }
               }
+              attempts++
             }
-            attempts++
+            
+            if (attempts >= maxAttempts) {
+              throw new Error('Fal.ai generation timed out')
+            }
           }
           
-          if (attempts >= maxAttempts) {
-            throw new Error('Fal.ai generation timed out')
-          }
-        }
-        
-        // Extract image from the result
-        baseImage = imageData.images?.[0]?.url || 
-                    imageData.images?.[0]?.image_url ||
-                    imageData.output?.images?.[0]?.url ||
-                    (typeof imageData.images?.[0] === 'string' ? imageData.images[0] : undefined)
+          // Extract image from the result
+          baseImage = imageData.images?.[0]?.url || 
+                      imageData.images?.[0]?.image_url ||
+                      imageData.output?.images?.[0]?.url ||
+                      (typeof imageData.images?.[0] === 'string' ? imageData.images[0] : undefined)
 
-        console.log('✅ Fal.ai Nano Banana PRO image generated, baseImage exists:', !!baseImage)
+          console.log('✅ Fal.ai Nano Banana PRO image generated, baseImage exists:', !!baseImage)
+        }
       }
 
-      // Track API cost for Fal.ai
+      // Track API cost
       if (userId) {
         await supabase.from('api_cost_tracking').insert({
           user_id: userId,
           feature_type: 'creative_image',
-          api_provider: userHasByok ? 'fal_ai_byok' : 'fal_ai',
-          cost_usd: userHasByok ? 0 : 0.003,
+          api_provider: usedFallback ? 'lovable_ai_fallback' : (userHasByok ? 'fal_ai_byok' : 'fal_ai'),
+          cost_usd: usedFallback ? 0.0015 : (userHasByok ? 0 : 0.003),
           metadata: { 
             format: config?.format, 
             prompt: prompt.substring(0, 100), 
-            model: hasBaseImages ? 'nano-banana-pro/edit' : 'nano-banana-pro' 
+            model: usedFallback ? 'gemini-3-pro-image-preview' : (hasBaseImages ? 'nano-banana-pro/edit' : 'nano-banana-pro'),
+            fallback: usedFallback
           }
         })
       }
 
     } else {
       // Use Lovable AI Gateway (standard tier)
-      console.log('🌐 Using Lovable AI Gateway (gemini-3-pro-image-preview)')
-      
-      const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
-      if (!lovableApiKey) {
-        throw new Error('Lovable API key not configured')
-      }
-
-      // Prepare the message content with images
-      const imageContent = images.map((img: string) => ({
-        type: "image_url",
-        image_url: { url: img }
-      }))
-
-      const messageContent = [
-        { type: "text", text: enhancedPrompt },
-        ...imageContent
-      ]
-
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json; charset=utf-8',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-3-pro-image-preview',
-          messages: [{ role: "user", content: messageContent }],
-          modalities: ["image", "text"]
-        })
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Lovable AI Gateway error:', response.status, errorText)
-        
-        if (response.status === 429) {
+      try {
+        baseImage = await generateWithLovableAI()
+      } catch (fallbackError: any) {
+        if (fallbackError.message === 'RATE_LIMIT') {
           return new Response(
-            JSON.stringify({ 
-              error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.'
-            }),
+            JSON.stringify({ error: 'Muitas requisições ao mesmo tempo. Tente novamente em alguns instantes.' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
           )
         }
-
-        if (response.status === 402) {
+        if (fallbackError.message === 'PAYMENT_REQUIRED') {
           return new Response(
-            JSON.stringify({ 
-              error: 'Créditos de IA esgotados. Por favor, adicione mais créditos.'
-            }),
+            JSON.stringify({ error: 'Créditos de IA esgotados. Por favor, adicione mais créditos.' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
           )
         }
-
-        throw new Error(`AI Gateway error: ${response.status}`)
+        throw fallbackError
       }
-
-      const data = await response.json()
-      baseImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url
-
-      console.log('✅ Lovable AI Gateway image generated successfully')
 
       // Track API cost for Lovable AI
       if (userId) {
