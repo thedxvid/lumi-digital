@@ -514,20 +514,29 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       throw error;
     }
 
-    // ✅ CRIAR ASSINATURA DE 3 MESES
+    // ✅ CRIAR ASSINATURA COM DURAÇÃO DINÂMICA
     try {
-      console.log('📅 Criando assinatura de 3 meses...');
+      const offerId = payload.Product?.product_offer_id || '';
+      const orderValue = payload.Commissions?.charge_amount || payload.order_value || 0;
+      const duration = determineDuration(offerId, orderValue);
+      
+      console.log('📅 Criando assinatura...', {
+        offerId,
+        orderValue,
+        durationMonths: duration.months,
+        durationSource: duration.source
+      });
       
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 3);
+      endDate.setMonth(endDate.getMonth() + duration.months);
 
       const { error: subscriptionError } = await supabase
         .from('subscriptions')
         .insert({
           user_id: userId,
           plan_type: 'basic',
-          duration_months: 3,
+          duration_months: duration.months,
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString(),
           is_active: true,
@@ -539,7 +548,7 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         throw subscriptionError;
       }
       
-      console.log('✅ Assinatura de 3 meses criada com sucesso');
+      console.log(`✅ Assinatura de ${duration.months} meses criada com sucesso (source: ${duration.source})`);
     } catch (error) {
       console.error('❌ Erro ao criar assinatura:', error);
       throw error;
