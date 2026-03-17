@@ -144,6 +144,39 @@ interface KiwifyWebhookPayload {
   updated_at?: string;
 }
 
+// ✅ Mapeamento de offer_id conhecidos para duração em meses
+const OFFER_DURATION_MAP: Record<string, number> = {
+  '5f66f057-d013-459f-aaaa-2100a8621e94': 12, // BLACK FRIDAY - VA - Z10 - LUMI
+  '908eb5a8-91a0-49a0-ad86-582c06667ade': 12, // BLACK FRIDAY - VA + Z10 + IA
+};
+
+// ✅ Determina a duração do plano com base no offer_id e/ou valor do pedido
+function determineDuration(offerId: string, orderValue: number): { months: number; source: string } {
+  // 1. Verificar offer_id conhecido
+  if (offerId && OFFER_DURATION_MAP[offerId]) {
+    return { months: OFFER_DURATION_MAP[offerId], source: `offer_id:${offerId}` };
+  }
+
+  // 2. Usar valor do pedido (order_value vem em centavos da Kiwify)
+  // Normalizar: se valor > 1000, provavelmente está em centavos
+  const valueInCents = orderValue > 10000 ? orderValue : orderValue * 100;
+  
+  if (valueInCents > 0) {
+    if (valueInCents <= 20000) {        // Até R$200 → 1 mês
+      return { months: 1, source: `order_value:${valueInCents}cents(<=20000)` };
+    } else if (valueInCents <= 50000) {  // R$200-R$500 → 3 meses
+      return { months: 3, source: `order_value:${valueInCents}cents(20001-50000)` };
+    } else if (valueInCents <= 80000) {  // R$500-R$800 → 6 meses
+      return { months: 6, source: `order_value:${valueInCents}cents(50001-80000)` };
+    } else {                             // > R$800 → 12 meses
+      return { months: 12, source: `order_value:${valueInCents}cents(>80000)` };
+    }
+  }
+
+  // 3. Fallback: 1 mês (mais seguro, não dá dias a mais)
+  return { months: 1, source: 'fallback(no_offer_no_value)' };
+}
+
 // Função para mapear status do formato flat para padrão
 function mapStatus(status: string): string {
   const statusMap: Record<string, string> = {
@@ -481,20 +514,29 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
       throw error;
     }
 
-    // ✅ CRIAR ASSINATURA DE 3 MESES
+    // ✅ CRIAR ASSINATURA COM DURAÇÃO DINÂMICA
     try {
-      console.log('📅 Criando assinatura de 3 meses...');
+      const offerId = payload.Product?.product_offer_id || '';
+      const orderValue = payload.Commissions?.charge_amount || payload.order_value || 0;
+      const duration = determineDuration(offerId, orderValue);
+      
+      console.log('📅 Criando assinatura...', {
+        offerId,
+        orderValue,
+        durationMonths: duration.months,
+        durationSource: duration.source
+      });
       
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 3);
+      endDate.setMonth(endDate.getMonth() + duration.months);
 
       const { error: subscriptionError } = await supabase
         .from('subscriptions')
         .insert({
           user_id: userId,
           plan_type: 'basic',
-          duration_months: 3,
+          duration_months: duration.months,
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString(),
           is_active: true,
@@ -506,7 +548,7 @@ async function handlePaidOrder(payload: KiwifyWebhookPayload, supabase: any) {
         throw subscriptionError;
       }
       
-      console.log('✅ Assinatura de 3 meses criada com sucesso');
+      console.log(`✅ Assinatura de ${duration.months} meses criada com sucesso (source: ${duration.source})`);
     } catch (error) {
       console.error('❌ Erro ao criar assinatura:', error);
       throw error;
