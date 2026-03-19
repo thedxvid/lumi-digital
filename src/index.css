@@ -45,7 +45,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
     
-    /* LUMI Brand Colors - Corrigidos */
+    /* LUMI Brand Colors */
     --lumi-gold: 45 100% 60%;
     --lumi-gold-light: 48 100% 70%;
     --lumi-gold-dark: 42 100% 50%;
@@ -56,6 +56,13 @@
     --lumi-purple-light: 266 100% 60%;
     --lumi-chat-user: 217 91% 60%;
     --lumi-chat-ai: 45 100% 60%;
+
+    /* Semantic surface & accent tokens */
+    --lumi-surface-elevated: 40 20% 97%;
+    --lumi-surface-sunken: 40 10% 95%;
+    --lumi-accent-subtle: 45 60% 92%;
+    --lumi-accent-hover: 42 100% 48%;
+    --lumi-neutral-border: 40 15% 88%;
   }
 
   /* Support for iOS safe areas */
@@ -105,6 +112,13 @@
     --lumi-purple-light: 266 100% 60%;
     --lumi-chat-user: 217 91% 60%;
     --lumi-chat-ai: 45 100% 60%;
+
+    /* Semantic surface & accent tokens - Dark Mode */
+    --lumi-surface-elevated: 30 8% 10%;
+    --lumi-surface-sunken: 30 5% 6%;
+    --lumi-accent-subtle: 45 40% 12%;
+    --lumi-accent-hover: 42 100% 48%;
+    --lumi-neutral-border: 30 8% 18%;
   }
 }
 
@@ -115,6 +129,12 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  button, a, [role="button"] {
+    @apply transition-colors duration-150;
   }
 }
 

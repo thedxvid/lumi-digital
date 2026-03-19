@@ -5,14 +5,16 @@ import { cn } from "@/lib/utils"
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & {
-    variant?: 'default' | 'glass' | 'neomorphic' | 'interactive'
+    variant?: 'default' | 'glass' | 'flat' | 'elevated' | 'neomorphic' | 'interactive'
   }
 >(({ className, variant = 'default', ...props }, ref) => {
   const variants = {
-    default: "rounded-lg border bg-card text-card-foreground shadow-sm",
+    default: "rounded-xl border border-border/60 bg-card text-card-foreground",
+    flat: "rounded-xl bg-muted/30 text-card-foreground",
+    elevated: "rounded-xl bg-card text-card-foreground shadow-md shadow-black/[0.03] border border-border/30",
     glass: "glass-card rounded-xl",
     neomorphic: "neomorphic rounded-xl",
-    interactive: "interactive-card glass-card rounded-xl cursor-pointer"
+    interactive: "rounded-xl border border-border/60 bg-card text-card-foreground cursor-pointer hover:border-lumi-gold/30 hover:shadow-sm transition-all duration-200"
   }
 
   return (

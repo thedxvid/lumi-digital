@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
 import { composeTextOnCarouselImage } from '@/utils/carouselTextComposer';
+import { classifyError } from '@/utils/errorClassifier';
+import type { ErrorType } from '@/components/shared/GenerationErrorCard';
 
 export interface CarouselImage {
   url: string;
@@ -39,6 +41,8 @@ export function useCarousel() {
   const [history, setHistory] = useState<CarouselHistoryItem[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
+  const [errorType, setErrorType] = useState<ErrorType | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { logActivity } = useActivity();
 
   // Load history on mount
@@ -62,6 +66,8 @@ export function useCarousel() {
     setLoading(true);
     setCurrentSlide(0);
     setTotalSlides(config.imageCount);
+    setErrorType(null);
+    setErrorMessage(null);
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -136,15 +142,10 @@ export function useCarousel() {
       return data.carousel;
     } catch (error: any) {
       console.error('❌ Error generating carousel:', error);
-      
-      if (error.message?.includes('429')) {
-        toast.error('Limite de requisições atingido. Tente novamente em alguns instantes.');
-      } else if (error.message?.includes('402')) {
-        toast.error('Créditos insuficientes. Por favor, adicione créditos.');
-      } else {
-        toast.error('Erro ao gerar carrossel: ' + (error.message || 'Erro desconhecido'));
-      }
-      
+      const classified = classifyError(error, 'gerar carrossel');
+      setErrorType(classified.errorType);
+      setErrorMessage(classified.errorMessage);
+      toast.error(classified.errorMessage);
       return null;
     } finally {
       setLoading(false);
@@ -196,5 +197,8 @@ export function useCarousel() {
     history,
     currentSlide,
     totalSlides,
+    errorType,
+    errorMessage,
+    clearError: () => { setErrorType(null); setErrorMessage(null); },
   };
 }

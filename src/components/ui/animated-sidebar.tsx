@@ -146,11 +146,11 @@ export const SidebarLink = ({
       end={end}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-2 py-2 rounded-md transition-colors relative",
-          open ? "justify-start px-2" : "justify-center px-0",
+          "flex items-center gap-2 py-2 rounded-md transition-all duration-150 relative",
+          open ? "justify-start px-2 hover:translate-x-0.5" : "justify-center px-0",
           isActive
-            ? "bg-lumi-gold text-white"
-            : "text-foreground hover:bg-muted",
+            ? "bg-lumi-gold/10 text-lumi-gold font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:bg-lumi-gold before:rounded-full"
+            : "text-foreground/70 hover:text-foreground hover:bg-muted/40",
           className
         )
       }

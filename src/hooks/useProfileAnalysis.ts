@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
+import { classifyError } from '@/utils/errorClassifier';
 import type { ProfileAnalysisInput, ProfileAnalysisOutput, SavedProfileAnalysis } from '@/types/profile';
 
 export function useProfileAnalysis() {
@@ -68,14 +69,8 @@ export function useProfileAnalysis() {
       return data;
     } catch (error: any) {
       console.error('❌ Erro ao analisar perfil:', error);
-      
-      if (error.message?.includes('429')) {
-        toast.error('Limite de análises atingido. Tente novamente em alguns minutos.');
-      } else if (error.message?.includes('402')) {
-        toast.error('Créditos insuficientes. Adicione créditos no seu workspace.');
-      } else {
-        toast.error('Erro ao analisar perfil. Tente novamente.');
-      }
+      const classified = classifyError(error, 'analisar perfil');
+      toast.error(classified.errorMessage);
       return null;
     } finally {
       setLoading(false);
@@ -106,6 +101,7 @@ export function useProfileAnalysis() {
       await loadHistory();
     } catch (error) {
       console.error('❌ Erro ao salvar no histórico:', error);
+      toast.warning('Análise concluída, mas houve um erro ao salvar no histórico.');
     }
   };
 

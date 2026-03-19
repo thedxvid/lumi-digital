@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,29 +33,30 @@ export const WeeklyActivityChart = () => {
 
       const { data: activityData, error } = await supabase
         .from('user_activity_log')
-        .select('activity_date')
+        .select('activity_date, chats_started, results_generated, modules_used')
         .eq('user_id', session.user.id)
         .gte('activity_date', sevenDaysAgo.toISOString().split('T')[0]);
 
       if (error) throw error;
 
-      // Count activities per day
+      // Build a map of date -> total activity count
       const activityCounts: Record<string, number> = {};
-      activityData?.forEach((activity) => {
-        const date = activity.activity_date;
-        activityCounts[date] = (activityCounts[date] || 0) + 1;
+      activityData?.forEach((row) => {
+        const date = row.activity_date;
+        const modulesUsed = typeof row.modules_used === 'number' ? row.modules_used : 0;
+        const total = (row.chats_started || 0) + (row.results_generated || 0) + modulesUsed;
+        activityCounts[date] = (activityCounts[date] || 0) + total;
       });
 
-      // Create array for last 7 days
       const chartData: ActivityData[] = [];
       const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-      
+
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         const dayName = dayNames[date.getDay()];
-        
+
         chartData.push({
           date: dateStr,
           count: activityCounts[dateStr] || 0,
@@ -75,7 +76,7 @@ export const WeeklyActivityChart = () => {
     return (
       <Card>
         <CardContent className="p-6">
-          <Skeleton className="h-6 w-48 mb-4" />
+          <Skeleton className="h-4 w-32 mb-4" />
           <Skeleton className="h-[200px] w-full" />
         </CardContent>
       </Card>
@@ -87,37 +88,52 @@ export const WeeklyActivityChart = () => {
   return (
     <Card>
       <CardContent className="p-6">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Atividade Semanal</h2>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">
+          Atividade Semanal
+        </h2>
         <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={data}>
-            <XAxis 
-              dataKey="dayName" 
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(45, 100%, 60%)" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="hsl(45, 100%, 60%)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="dayName"
               stroke="hsl(var(--muted-foreground))"
               fontSize={12}
+              tickLine={false}
+              axisLine={false}
             />
-            <YAxis 
+            <YAxis
               stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               allowDecimals={false}
               domain={[0, maxValue]}
+              tickLine={false}
+              axisLine={false}
             />
-            <Tooltip 
+            <Tooltip
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
+                fontSize: '13px',
               }}
               labelStyle={{ color: 'hsl(var(--foreground))' }}
+              formatter={(value: number) => [`${value} ações`, 'Atividade']}
             />
-            <Line 
-              type="monotone" 
-              dataKey="count" 
-              stroke="hsl(var(--primary))" 
-              strokeWidth={3}
-              dot={{ fill: 'hsl(var(--primary))', r: 4 }}
-              activeDot={{ r: 6 }}
+            <Area
+              type="monotone"
+              dataKey="count"
+              stroke="hsl(var(--lumi-gold))"
+              strokeWidth={2}
+              fill="url(#goldGradient)"
+              dot={{ fill: 'hsl(var(--lumi-gold))', r: 3, strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: 'hsl(var(--lumi-gold))', stroke: 'hsl(var(--background))', strokeWidth: 2 }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

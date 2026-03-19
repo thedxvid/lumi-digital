@@ -5,6 +5,7 @@ import { CarouselGallery } from '@/components/creative/CarouselGallery';
 import { CarouselConfigForm, type CarouselConfig } from '@/components/creative/CarouselConfigForm';
 import { CarouselResultModal } from '@/components/creative/CarouselResultModal';
 import { CarouselGenerationProgress } from '@/components/creative/CarouselGenerationProgress';
+import { GenerationErrorCard } from '@/components/shared/GenerationErrorCard';
 import { ApiTierBadge } from '@/components/dashboard/ApiTierBadge';
 import { BYOKCostIndicator } from '@/components/byok/BYOKCostIndicator';
 import { useCarousel } from '@/hooks/useCarousel';
@@ -12,7 +13,10 @@ import { useBYOKCosts } from '@/hooks/useBYOKCosts';
 export default function CreativeCarousel() {
   const {
     generateCarousel,
-    loading
+    loading,
+    errorType,
+    errorMessage,
+    clearError,
   } = useCarousel();
   const { hasBYOK, registerCost, estimateCarouselCost: estimateCost } = useBYOKCosts();
   const [slideCount, setSlideCount] = useState(3);
@@ -52,10 +56,19 @@ export default function CreativeCarousel() {
         </TabsList>
 
         <TabsContent value="create" className="mt-6 space-y-4">
+          {errorType && (
+            <GenerationErrorCard
+              errorType={errorType}
+              errorMessage={errorMessage || undefined}
+              featureType="carousel"
+              onRetry={() => clearError()}
+              onClose={() => clearError()}
+            />
+          )}
           {hasBYOK && (
-            <BYOKCostIndicator 
-              estimatedCost={estimateCost(slideCount, 'nano-banana-pro')} 
-              featureType="carousel" 
+            <BYOKCostIndicator
+              estimatedCost={estimateCost(slideCount, 'nano-banana-pro')}
+              featureType="carousel"
               model="Nano Banana PRO"
               slideCount={slideCount}
             />

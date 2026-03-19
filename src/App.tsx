@@ -11,7 +11,7 @@ import LandingPage from '@/pages/LandingPage';
 import Install from '@/pages/Install';
 import Chat from '@/pages/dashboard/Chat';
 import Overview from '@/pages/dashboard/Overview';
-import Tutorial from '@/pages/dashboard/Tutorial';
+
 import VoiceChat from '@/pages/dashboard/VoiceChat';
 import History from '@/pages/dashboard/History';
 import CreativeEngine from '@/pages/dashboard/CreativeEngine';
@@ -54,7 +54,7 @@ function App() {
           {/* App Routes - Requires Authentication */}
           <Route path="/app" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<Overview />} />
-            <Route path="tutorial" element={<Tutorial />} />
+
             <Route path="chat" element={<Chat />} />
             <Route path="voice-chat" element={<VoiceChat />} />
             <Route path="history" element={<History />} />

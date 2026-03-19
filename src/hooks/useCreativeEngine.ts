@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
+import { classifyError } from '@/utils/errorClassifier';
 
 export type CreativeErrorType = 'limit' | 'policy' | 'network' | 'unknown' | null;
 
@@ -86,36 +87,18 @@ export function useCreativeEngine() {
 
       if (error) {
         console.error('Error calling creative-engine:', error);
-        // Check for network errors
-        if (error.message?.includes('fetch') || error.message?.includes('network')) {
-          setErrorType('network');
-          setErrorMessage('Erro de conexão. Verifique sua internet e tente novamente.');
-        } else {
-          setErrorType('unknown');
-          setErrorMessage(error.message || 'Erro desconhecido ao gerar criativo.');
-        }
+        const classified = classifyError(error, 'gerar criativo');
+        setErrorType(classified.errorType);
+        setErrorMessage(classified.errorMessage);
         throw error;
       }
 
       if (data?.error) {
         console.error('Error from creative-engine:', data.error);
-        
-        // Check if it's a limit error
-        if (data.error.includes('limite') || data.error.includes('limit')) {
-          setErrorType('limit');
-          setErrorMessage('Você atingiu o limite diário de criativos. Conecte sua chave Fal.ai para uso ilimitado.');
-        } 
-        // Check if it's a policy violation
-        else if (data.error.includes('filtros') || data.error.includes('bloqueado') || data.error.includes('policy')) {
-          setErrorType('policy');
-          setErrorMessage('O prompt foi bloqueado pelos filtros de segurança. Use termos mais genéricos.');
-        }
-        else {
-          setErrorType('unknown');
-          setErrorMessage(data.error);
-        }
-        
-        toast.error(data.error);
+        const classified = classifyError({ message: data.error }, 'gerar criativo');
+        setErrorType(classified.errorType);
+        setErrorMessage(classified.errorMessage);
+        toast.error(classified.errorMessage);
         return null;
       }
 
@@ -160,7 +143,7 @@ export function useCreativeEngine() {
 
       if (insertError) {
         console.error('Error saving to history:', insertError);
-        // Don't throw, still return the image
+        toast.warning('Criativo gerado, mas houve um erro ao salvar no histórico.');
       } else {
         // Increment creative images usage counter
         const { error: limitError } = await supabase.functions.invoke('check-limits', {

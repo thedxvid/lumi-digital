@@ -16,8 +16,7 @@ import {
   TrendingUp,
   Shield,
   BookUser,
-  Sparkles,
-  GraduationCap
+  Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -75,13 +74,6 @@ export function AnimatedDashboardSidebar() {
       href: "/app",
       icon: (
         <Home className="text-foreground h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Tutorial",
-      href: "/app/tutorial",
-      icon: (
-        <GraduationCap className="text-foreground h-5 w-5 flex-shrink-0" />
       ),
     },
     {
@@ -163,23 +155,6 @@ export function AnimatedDashboardSidebar() {
 
   return (
     <>
-      {/* Botão discreto para toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(!open)}
-        className="hidden md:flex fixed top-4 z-50 h-6 w-6 rounded-full bg-card border border-border shadow-md hover:bg-muted transition-[left] duration-300"
-        style={{
-          left: open ? 'calc(300px - 12px)' : 'calc(72px - 12px)'
-        }}
-      >
-        {open ? (
-          <ChevronLeft className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
-      </Button>
-
       <Sidebar open={open} setOpen={setOpen} animate={false}>
         <SidebarBody className="flex flex-col justify-between gap-0 py-4">
           <div className="flex flex-col overflow-x-hidden overflow-y-auto flex-1 min-h-0">
@@ -251,7 +226,7 @@ export function AnimatedDashboardSidebar() {
               <>
                 {open && (
                   <div className="mt-6 mb-2 px-2">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.15em]">
                       Administração
                     </p>
                   </div>
@@ -351,7 +326,7 @@ export function AnimatedDashboardSidebar() {
             <button
               onClick={handleLogout}
               className={cn(
-                "flex items-center gap-2 py-2 w-full text-foreground hover:bg-muted rounded-md transition-colors",
+                "flex items-center gap-2 py-2 w-full text-foreground/70 hover:text-foreground hover:bg-muted/40 rounded-md transition-colors",
                 open ? "justify-start px-2" : "justify-center"
               )}
             >
@@ -361,6 +336,18 @@ export function AnimatedDashboardSidebar() {
               )}
             </button>
           </div>
+
+          {/* Toggle sidebar integrado */}
+          <button
+            onClick={() => setOpen(!open)}
+            className="hidden md:flex items-center justify-center w-full py-2.5 border-t border-border text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/30 transition-colors flex-shrink-0"
+          >
+            {open ? (
+              <ChevronLeft className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </button>
         </SidebarBody>
       </Sidebar>
     </>
@@ -376,7 +363,7 @@ export const Logo = () => {
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="font-bold text-xl text-foreground whitespace-pre"
+        className="font-space-grotesk font-semibold text-lg tracking-tight text-foreground whitespace-pre"
       >
         LUMI
       </motion.span>

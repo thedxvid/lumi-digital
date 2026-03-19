@@ -7,7 +7,7 @@ export type ErrorType = 'limit' | 'balance' | 'policy' | 'network' | 'unknown';
 interface GenerationErrorCardProps {
   errorType: ErrorType;
   errorMessage?: string;
-  featureType: 'video' | 'creative';
+  featureType: 'video' | 'creative' | 'carousel' | 'profile' | 'sales';
   hasByok?: boolean;
   isUserKeyBalance?: boolean; // Specific flag for BYOK balance exhausted
   onRetry?: () => void;

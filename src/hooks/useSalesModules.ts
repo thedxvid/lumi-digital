@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActivity } from '@/hooks/useActivity';
 import { toast } from 'sonner';
+import { classifyError } from '@/utils/errorClassifier';
 
 export function useSalesModules() {
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,8 @@ export function useSalesModules() {
 
       if (error) {
         console.error('Error calling sales module:', error);
-        toast.error('Erro ao processar solicitação');
+        const classified = classifyError(error, 'processar solicitação');
+        toast.error(classified.errorMessage);
         return null;
       }
 
@@ -44,7 +46,8 @@ export function useSalesModules() {
       return result;
     } catch (error) {
       console.error('Error in sales module call:', error);
-      toast.error('Erro inesperado. Tente novamente.');
+      const classified = classifyError(error, 'processar solicitação');
+      toast.error(classified.errorMessage);
       return null;
     } finally {
       setLoading(false);
@@ -77,6 +80,7 @@ export function useSalesModules() {
 
       if (error) {
         console.error('Error auto-saving result:', error);
+        toast.warning('Resultado gerado, mas houve um erro ao salvar automaticamente.');
       } else {
         console.log('Result auto-saved successfully');
         // Log activity after successful save
@@ -84,6 +88,7 @@ export function useSalesModules() {
       }
     } catch (error) {
       console.error('Error in auto-save:', error);
+      toast.warning('Resultado gerado, mas houve um erro ao salvar automaticamente.');
     }
   };
 

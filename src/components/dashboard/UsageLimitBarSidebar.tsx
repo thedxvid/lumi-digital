@@ -20,7 +20,6 @@ export function UsageLimitBarSidebar() {
       name: 'Imagens',
       used: limits.creative_images_daily_used,
       limit: limits.creative_images_daily_limit,
-      color: 'text-purple-600',
       isMonthly: false,
     },
     {
@@ -28,7 +27,6 @@ export function UsageLimitBarSidebar() {
       name: 'Análises',
       used: limits.profile_analysis_daily_used,
       limit: limits.profile_analysis_daily_limit,
-      color: 'text-blue-600',
       isMonthly: false,
     },
     {
@@ -36,7 +34,6 @@ export function UsageLimitBarSidebar() {
       name: 'Carrosséis',
       used: limits.carousels_monthly_used || 0,
       limit: limits.carousels_monthly_limit || 3,
-      color: 'text-orange-600',
       isMonthly: true,
     },
     {
@@ -44,14 +41,13 @@ export function UsageLimitBarSidebar() {
       name: 'Vídeos',
       used: (limits.kling_image_videos_lifetime_used || 0) + limits.video_credits_used,
       limit: (limits.kling_image_videos_lifetime_limit || 1) + limits.video_credits,
-      color: 'text-green-600',
       isMonthly: true,
     },
   ];
   const getStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 80) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (percentage >= 80) return 'bg-amber-500';
+    return 'bg-foreground/40';
   };
 
   const shouldShowUpgrade = features.some(f => (f.used / f.limit) * 100 >= 80);
@@ -74,7 +70,7 @@ export function UsageLimitBarSidebar() {
                   <div className="space-y-1 cursor-help hover:bg-muted/30 rounded px-2 py-1.5 transition-colors">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <Icon className={cn("h-3 w-3", feature.color)} />
+                        <Icon className="h-3 w-3 text-muted-foreground" />
                         <span className="text-xs text-foreground">
                           {feature.name}
                         </span>
@@ -94,7 +90,7 @@ export function UsageLimitBarSidebar() {
                   <TooltipContent side="right" className="w-56 p-3">
                     {/* Header com ícone e nome */}
                     <div className="flex items-center gap-2 mb-3">
-                      <Icon className={cn("h-4 w-4", feature.color)} />
+                      <Icon className="h-4 w-4 text-foreground/60" />
                       <p className="font-semibold text-base">{feature.name}</p>
                     </div>
                     
@@ -106,7 +102,7 @@ export function UsageLimitBarSidebar() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Disponível:</span>
-                        <span className="font-medium text-green-600">{feature.limit - feature.used}</span>
+                        <span className="font-medium text-foreground">{feature.limit - feature.used}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Progresso:</span>
@@ -147,7 +143,7 @@ export function UsageLimitBarSidebar() {
             onClick={handleUpgrade}
             variant="outline"
             size="sm"
-            className="w-full mt-1 text-xs gap-1.5 h-7 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/40"
+            className="w-full mt-1 text-xs gap-1.5 h-7 bg-lumi-gold/10 border-lumi-gold/20 text-lumi-gold hover:bg-lumi-gold/20 hover:border-lumi-gold/30"
           >
             <ShoppingCart className="h-3 w-3" />
             Comprar Créditos
